@@ -1,4 +1,5 @@
-import Marquee from 'react-fast-marquee';
+import MarqueeMod from 'react-fast-marquee';
+const Marquee = ((MarqueeMod as any).default ?? MarqueeMod) as typeof MarqueeMod;
 
 const items = [
   '⚡ React Projects', '🛒 E-Commerce Sites', '📊 Admin Dashboards',
