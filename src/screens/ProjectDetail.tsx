@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Eye, ShoppingCart, Download, Lock, ShieldCheck, Code2, Star, Heart,
   MessageCircle, Send, History, Mail, Link as LinkIcon, KeyRound, Copy, Share2,
-  ChevronLeft, ChevronRight, ChevronDown,
+  ChevronLeft, ChevronRight, ChevronDown, Maximize2,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
@@ -23,6 +23,8 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import SafeDescription from '@/components/SafeDescription';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 function toEmbed(url: string): string {
@@ -48,6 +50,7 @@ export default function ProjectDetail() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
+  const [galleryOpen, setGalleryOpen] = useState(false);
   const [selectedVersion, setSelectedVersion] = useState<string>('');
   const [commentText, setCommentText] = useState('');
   const [rating, setRating] = useState(5);
@@ -285,8 +288,8 @@ export default function ProjectDetail() {
         <div className="grid lg:grid-cols-3 gap-6 md:gap-10">
           <div className="lg:col-span-2 space-y-8 min-w-0 w-full">
             {/* GALLERY with swipe + arrows + counter — locked aspect, never overflows */}
-            <div className="relative w-full max-w-full rounded-2xl md:rounded-3xl overflow-hidden border border-border shadow-card-hover bg-ink" {...swipe}>
-              <div className="relative w-full aspect-[16/10] bg-black overflow-hidden">
+            <div className="relative w-full max-w-full rounded-lg overflow-hidden border border-border shadow-card bg-muted" {...swipe}>
+              <div className="relative w-full aspect-[16/10] bg-muted overflow-hidden">
                 <AnimatePresence mode="wait">
                   <motion.img key={activeImg}
                     initial={{ opacity: 0, scale: 1.03, filter: 'blur(8px)' }}
@@ -295,9 +298,10 @@ export default function ProjectDetail() {
                     transition={{ duration: 0.45, ease: [0.2, 0.8, 0.2, 1] }}
                     src={images[activeImg] || '/placeholder.svg'} alt={`${project.title} screenshot ${activeImg + 1}`}
                     loading="lazy" decoding="async"
-                    className="absolute inset-0 w-full h-full object-cover select-none" draggable={false} />
+                    className="absolute inset-0 w-full h-full object-contain select-none" draggable={false} />
                 </AnimatePresence>
               </div>
+              <Button variant="secondary" size="icon" aria-label="Expand gallery" title="Expand gallery" className="absolute right-3 top-3 z-10" onClick={() => setGalleryOpen(true)}><Maximize2 className="h-4 w-4" /></Button>
               {images.length > 1 && (
                 <>
                   <button onClick={galleryPrev} aria-label="Previous image"
@@ -351,7 +355,7 @@ export default function ProjectDetail() {
                   <span className="font-display font-bold text-base text-ink">About this project</span>
                 </AccordionTrigger>
                 <AccordionContent className="px-5 pb-5">
-                  <div className="prose prose-sm max-w-none text-muted-foreground" dangerouslySetInnerHTML={{ __html: project.full_desc || project.short_desc }} />
+                  <SafeDescription value={project.full_desc || project.short_desc} />
                 </AccordionContent>
               </AccordionItem>
 
@@ -530,7 +534,7 @@ export default function ProjectDetail() {
           {/* DESKTOP STICKY SIDEBAR */}
           <div className="space-y-6 hidden lg:block">
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
-              className="bg-white rounded-2xl p-6 sticky top-28 border border-border shadow-card">
+              className="bg-card rounded-lg p-6 sticky top-28 border border-border shadow-card">
               <p className="text-muted-foreground text-sm mb-4">{project.short_desc}</p>
 
               {purchased && (
@@ -570,7 +574,7 @@ export default function ProjectDetail() {
 
               <div className="flex flex-wrap gap-2 text-xs text-muted-foreground border-t border-border pt-4">
                 <span className="inline-flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5 text-green-600" />Secure</span>
-                <span className="inline-flex items-center gap-1">💳 Razorpay</span>
+                <span className="inline-flex items-center gap-1">Demo checkout</span>
                 <span className="inline-flex items-center gap-1"><Download className="h-3.5 w-3.5 text-fire" />Instant download</span>
               </div>
               <p className="text-xs text-muted-foreground mt-3">✨ 30-day support included</p>
@@ -647,6 +651,13 @@ export default function ProjectDetail() {
         )}
       </AnimatePresence>
 
+      <Dialog open={galleryOpen} onOpenChange={setGalleryOpen}>
+        <DialogContent className="max-w-5xl w-[calc(100%-32px)] p-4 bg-background">
+          <DialogTitle className="pr-10">{project.title} · {activeImg + 1}/{images.length}</DialogTitle>
+          <img src={images[activeImg] || '/placeholder.svg'} alt={`${project.title} enlarged screenshot`} className="w-full max-h-[70vh] object-contain" />
+          <div className="flex items-center justify-between"><Button variant="outline" disabled={images.length < 2} onClick={galleryPrev}><ChevronLeft className="h-4 w-4" />Previous</Button><Button variant="outline" disabled={images.length < 2} onClick={galleryNext}>Next<ChevronRight className="h-4 w-4" /></Button></div>
+        </DialogContent>
+      </Dialog>
       <PreviewModal url={previewUrl} onClose={() => setPreviewUrl(null)}
         watermark={(project as any).preview_watermark || 'Bnoy Studios Preview'} title={project.title} />
       <Footer />

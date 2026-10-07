@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { signInWithGoogle } from '@/lib/google-signin';
 import TruecallerButton from '@/components/TruecallerButton';
+import creatorWorkspace from '@/assets/creator-workspace.png';
 
 /**
  * Premium Crextio-inspired auth screen. Mirrors the reference layout:
@@ -15,10 +16,10 @@ import TruecallerButton from '@/components/TruecallerButton';
  *  ▸ Left: cream gradient form panel with pill inputs + yellow CTA
  *  ▸ Right: warm team meeting image with floating UI stickers
  */
-export default function Signup() {
+export default function Signup({ embedded = false, onSuccess, intent }: { embedded?: boolean; onSuccess?: () => void; intent?: string | null }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const isLogin = location.pathname === '/login';
+  const isLogin = embedded || location.pathname === '/login';
   const { toast } = useToast();
 
   const [mode, setMode] = useState<'login' | 'signup'>(isLogin ? 'login' : 'signup');
@@ -27,9 +28,12 @@ export default function Signup() {
   const [password, setPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [truecallerBusy, setTruecallerBusy] = useState(false);
+  const busy = loading || truecallerBusy;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (busy) return;
     setLoading(true);
     try {
       if (mode === 'signup') {
@@ -43,7 +47,7 @@ export default function Signup() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast({ title: 'Welcome back!' });
-        navigate('/');
+        if (onSuccess) onSuccess(); else navigate('/');
       }
     } catch (err: any) {
       toast({ title: 'Auth error', description: err.message, variant: 'destructive' });
@@ -53,12 +57,14 @@ export default function Signup() {
   };
 
   const oauth = async (provider: 'google' | 'apple') => {
+    if (busy) return;
     setLoading(true);
-    const r = await signInWithGoogle(provider);
-    if (r.error) {
-      toast({ title: 'Sign-in failed', description: r.error, variant: 'destructive' });
-      setLoading(false);
-    }
+    try {
+      const r = await signInWithGoogle(provider);
+      if (r.error) throw new Error(r.error);
+      onSuccess?.();
+    } catch (err) { toast({ title: 'Sign-in failed', description: err instanceof Error ? err.message : 'Please retry.', variant: 'destructive' }); }
+    finally { setLoading(false); }
   };
 
   const forgot = async () => {
@@ -68,13 +74,13 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#dadde2] flex items-center justify-center p-3 md:p-8 font-sans">
+    <div className={embedded ? "auth-page auth-embedded" : "auth-page"}>
       <motion.div
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, ease: 'easeOut' }}
-      className="signup-card w-full max-w-[1080px] grid lg:grid-cols-2 rounded-[28px] overflow-hidden bg-white shadow-[0_30px_80px_-20px_rgba(20,20,40,0.25)]"
+      className="auth-card signup-card"
       >
         {/* LEFT — Form */}
-        <div className="signup-form-panel relative flex flex-col bg-gradient-to-b from-white via-[#fdf6e6] to-[#f6e9c7] p-6 md:p-8 min-h-[570px]">
+        <div className="auth-form-panel signup-form-panel">
           <Link to="/" className="inline-flex items-center justify-center self-start rounded-full border border-zinc-300/80 bg-white/60 backdrop-blur px-5 py-2 text-sm font-medium text-zinc-700 hover:bg-white transition">
             Bnoy Studios
           </Link>
@@ -87,11 +93,11 @@ export default function Signup() {
                 transition={{ duration: 0.25 }}
                 className="text-center mb-5"
               >
-                <h1 className="font-serif text-[34px] leading-tight font-medium text-zinc-900">
+                <h1 className="font-display text-[30px] leading-tight font-semibold text-foreground">
                   {mode === 'signup' ? 'Create an account' : 'Welcome back'}
                 </h1>
                 <p className="text-sm text-zinc-500 mt-1">
-                  {mode === 'signup' ? 'Sign up to buy, preview and download projects' : 'Sign in to continue to Bnoy Studios'}
+                  {intent || (mode === 'signup' ? 'Sign up to buy, preview and download projects' : 'Sign in to continue to Bnoy Studios')}
                 </p>
               </motion.div>
             </AnimatePresence>
@@ -119,9 +125,9 @@ export default function Signup() {
                   placeholder="••••••••••••••••"
                   className="w-full bg-transparent text-[15px] text-zinc-900 placeholder:text-zinc-400 focus:outline-none"
                 />
-                <button type="button" onClick={() => setShowPwd(s => !s)} className="text-zinc-400 hover:text-zinc-600">
+                <Button type="button" variant="ghost" size="icon" aria-label={showPwd ? "Hide password" : "Show password"} onClick={() => setShowPwd(s => !s)} className="h-7 w-7 text-muted-foreground">
                   {showPwd ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                </button>
+                </Button>
               </Field>
               {mode === 'login' && (
                 <div className="text-right -mt-2">
@@ -132,23 +138,23 @@ export default function Signup() {
               )}
 
               <Button
-                type="submit" disabled={loading}
-                className="w-full h-12 mt-2 rounded-full bg-[#f5d048] hover:bg-[#f0c63a] text-zinc-900 font-semibold text-[15px] shadow-[0_8px_20px_-8px_rgba(245,208,72,0.6)] transition"
+                type="submit" disabled={busy}
+                className="auth-submit w-full h-12 mt-2 rounded-full font-semibold text-[15px] transition"
               >
                 {loading ? 'Please wait…' : mode === 'signup' ? 'Submit' : 'Sign in'} <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
 
               <div className="grid grid-cols-2 gap-3 pt-2">
-                <button type="button" disabled={loading} onClick={() => oauth('apple')}
+                <Button variant="outline" type="button" disabled={busy} onClick={() => oauth('apple')}
                   className="h-11 rounded-full border border-zinc-300 bg-white/60 backdrop-blur text-sm font-medium text-zinc-700 hover:bg-white transition inline-flex items-center justify-center gap-2">
                   <AppleGlyph /> Apple
-                </button>
-                <button type="button" disabled={loading} onClick={() => oauth('google')}
+                </Button>
+                <Button variant="outline" type="button" disabled={busy} onClick={() => oauth('google')}
                   className="h-11 rounded-full border border-zinc-300 bg-white/60 backdrop-blur text-sm font-medium text-zinc-700 hover:bg-white transition inline-flex items-center justify-center gap-2">
                   <GoogleGlyph /> Google
-                </button>
+                </Button>
               </div>
-              <TruecallerButton />
+              <TruecallerButton disabled={loading} onBusyChange={setTruecallerBusy} />
             </form>
           </div>
 
@@ -163,74 +169,9 @@ export default function Signup() {
           </div>
         </div>
 
-        {/* RIGHT — Image with floating UI cards */}
-        <div className="relative hidden lg:block bg-gradient-to-br from-[#fde9b8] to-[#f4cf78]">
-          <img
-            src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1400&q=80"
-            alt="Team collaborating in a sunlit office"
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-          {/* close icon */}
-          <Link to="/" aria-label="Close" className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/90 backdrop-blur hover:bg-white shadow-md flex items-center justify-center text-zinc-700 text-xl">×</Link>
-
-          {/* floating sticker — task review */}
-          <motion.div
-            initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-            className="absolute top-8 left-8 max-w-[230px] rounded-2xl bg-[#f5d048] shadow-lg p-3"
-          >
-            <p className="text-[13px] font-semibold text-zinc-900 leading-tight">Task Review With Team</p>
-            <p className="text-[11px] text-zinc-700/80">09:30am–10:00am</p>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
-            className="absolute top-[88px] left-14 max-w-[220px] rounded-xl bg-zinc-900/80 backdrop-blur text-white px-3 py-1.5 text-[11px]"
-          >
-            09:30am–10:00am
-          </motion.div>
-
-          {/* avatars */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5 }}
-            className="absolute right-12 top-1/2 -translate-y-1/2 flex flex-col gap-2"
-          >
-            {[
-              'https://i.pravatar.cc/64?img=47',
-              'https://i.pravatar.cc/64?img=32',
-              'https://i.pravatar.cc/64?img=12',
-            ].map((src) => (
-              <img key={src} src={src} alt="" className="w-11 h-11 rounded-full border-2 border-white shadow" />
-            ))}
-          </motion.div>
-
-          {/* week strip */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}
-            className="absolute bottom-32 left-1/2 -translate-x-1/2 rounded-2xl bg-white/85 backdrop-blur px-4 py-2 flex gap-3 text-center"
-          >
-            {[['Sun', 22], ['Mon', 23], ['Tue', 24], ['Wed', 25], ['Thu', 26], ['Fri', 27], ['Sat', 28]].map(([d, n]) => (
-              <div key={d as string} className="text-[10px] text-zinc-600">
-                <p>{d}</p>
-                <p className="text-zinc-900 font-bold text-sm">{n}</p>
-              </div>
-            ))}
-          </motion.div>
-
-          {/* daily meeting card */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }}
-            className="absolute bottom-10 left-10 rounded-2xl bg-white shadow-xl p-3 min-w-[210px]"
-          >
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-sm font-semibold text-zinc-900">Daily Meeting</p>
-              <span className="w-2 h-2 rounded-full bg-[#f5d048]" />
-            </div>
-            <p className="text-[11px] text-zinc-500">12:00pm–01:00pm</p>
-            <div className="flex -space-x-2 mt-2">
-              {['img=14', 'img=22', 'img=33', 'img=45'].map((q) => (
-                <img key={q} src={`https://i.pravatar.cc/40?${q}`} alt="" className="w-6 h-6 rounded-full border-2 border-white" />
-              ))}
-            </div>
-          </motion.div>
+        <div className="auth-art-panel">
+          <img src={creatorWorkspace} alt="Creative workspace with software, laptop and design tools" width={1024} height={1024} className="auth-creator-art" />
+          <div className="auth-art-caption"><p className="font-display text-2xl font-bold">Bnoy Studios</p><p className="text-sm text-muted-foreground mt-2">Your next project starts here.</p></div>
         </div>
       </motion.div>
     </div>
@@ -241,7 +182,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   return (
     <div>
       <label className="text-xs text-zinc-500 ml-4 mb-1 block">{label}</label>
-      <div className="flex items-center gap-2 h-12 rounded-full bg-white/85 border border-zinc-200 px-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_2px_4px_-2px_rgba(0,0,0,0.05)] focus-within:border-[#f5d048] focus-within:ring-2 focus-within:ring-[#f5d048]/30 transition">
+      <div className="auth-field flex items-center gap-2 h-12 rounded-full px-5 transition">
         {children}
       </div>
     </div>

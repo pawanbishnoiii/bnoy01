@@ -17,3 +17,6 @@
 - Normalize phone identities with libphonenumber-js and protect verified identity fields from browser writes; Truecaller email is not proof of email ownership.
 - Source purchases use server-priced checkout orders and verified Razorpay signatures/capture; browser purchase inserts stay disabled.
 - Login auditing is deduplicated by validated auth session ID and uses server-observed IP with HTTPS geolocation.
+- Reuse Signup for full-page and modal authentication so appearance and busy states remain consistent.
+- Truecaller polling is single-flight, resumes on browser focus, and accepts signup/session issuance only after server-fetched phone verification.
+- Project descriptions use a standalone Tiptap editor and sanitized Markdown/HTML rendering to preserve formatting without executing user markup.

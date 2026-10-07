@@ -7,19 +7,22 @@ import { normalizePhone } from '@/lib/identity';
 export const startTruecaller = createServerFn({ method: 'POST' }).handler(async () => {
   const request = getRequest();
   const { supabaseAdmin: db } = await import('@/integrations/supabase/client.server');
-  const { data: settings } = await db.from('truecaller_settings').select('*').eq('id', true).single();
+  const { data: settings, error: settingsError } = await db.from('truecaller_settings').select('*').eq('id', true).single();
+  if (settingsError) throw new Error('Truecaller settings are unavailable. Please try another sign-in method.');
   if (!settings?.enabled || !settings.app_key) throw new Error('Truecaller is not configured.');
   const origin = new URL(request.url).origin;
   if (origin !== settings.app_domain && !origin.startsWith('http://localhost:')) throw new Error('Use the registered app domain for Truecaller sign-in.');
+  const callback = new URL(settings.callback_url);
+  if (callback.protocol !== 'https:' || callback.origin !== settings.app_domain || !['/auth/true-sdk', '/api/public/truecaller'].includes(callback.pathname)) throw new Error('Ask the administrator to register /auth/true-sdk as the Truecaller callback on the app domain.');
   let userId: string | null = null;
   const token = request.headers.get('authorization')?.replace(/^Bearer /, '');
-  if (token) { const { data } = await db.auth.getUser(token); userId = data.user?.id || null; }
+  if (token) { const { data, error } = await db.auth.getUser(token); if (error || !data.user) throw new Error('Your session expired. Sign in again before linking a phone.'); userId = data.user.id; }
   const proof = crypto.randomUUID() + crypto.randomUUID();
   const { createHash } = await import('node:crypto');
-  const { data, error } = await db.from('truecaller_requests').insert({ proof_hash: createHash('sha256').update(proof).digest('hex'), user_id: userId }).select('id').single();
+  const { data, error } = await db.from('truecaller_requests').insert({ proof_hash: createHash('sha256').update(proof).digest('hex'), user_id: userId }).select('id,expires_at').single();
   if (error || !data) throw new Error('Could not start verification.');
   const params = new URLSearchParams({ requestNonce: data.id, partnerKey: settings.app_key, partnerName: 'Bnoy Studios', lang: 'en', privacyUrl: `${settings.app_domain}/refund`, termsUrl: `${settings.app_domain}/refund` });
-  return { requestId: data.id, proof, deepLink: `truecallersdk://truesdk/web_verify?${params}` };
+  return { requestId: data.id, proof, expiresAt: data.expires_at, deepLink: `truecallersdk://truesdk/web_verify?${params}` };
 });
 
 const requestSchema = z.object({ requestId: z.string().uuid(), proof: z.string().min(64).max(100) });
@@ -30,6 +33,7 @@ export const finishTruecaller = createServerFn({ method: 'POST' }).inputValidato
   const { data: attempt } = await db.from('truecaller_requests').select('*').eq('id', data.requestId).eq('proof_hash', hash).maybeSingle();
   if (!attempt || Date.parse(attempt.expires_at) < Date.now()) return { status: 'error', message: 'Verification expired. Please retry.' };
   if (attempt.status === 'pending') return { status: 'pending' };
+  if (attempt.status === 'consuming') return { status: 'pending' };
   if (attempt.status !== 'verified') return { status: 'error', message: attempt.error || 'Verification could not be completed.' };
   const { data: claimed } = await db.from('truecaller_requests').update({ status: 'consuming' }).eq('id', attempt.id).eq('status', 'verified').select('id').maybeSingle();
   if (!claimed) return { status: 'error', message: 'Verification has already been used.' };
@@ -42,25 +46,32 @@ export const finishTruecaller = createServerFn({ method: 'POST' }).inputValidato
       return { status: 'conflict', message: 'This phone is already linked to another account. Sign in to that account to resolve the conflict.' };
     }
     let userId = attempt.user_id || existing?.id;
+    let createdUser: Awaited<ReturnType<typeof db.auth.admin.createUser>>['data']['user'] = null;
     if (!userId) {
       const uuid = crypto.randomUUID();
       const { data, error } = await db.auth.admin.createUser({ email: `${uuid}@phone.bnoy.invalid`, email_confirm: true, phone, phone_confirm: true, user_metadata: { name: [p.name?.first, p.name?.last].filter(Boolean).join(' '), provider: 'truecaller' } });
       if (error || !data.user) throw new Error('Could not create your verified account.');
       userId = data.user.id;
+      createdUser = data.user;
     }
-    const { data: authUser, error: userError } = await db.auth.admin.getUserById(userId);
-    if (userError || !authUser.user) throw new Error('Account unavailable.');
+    const authUser = createdUser ? { user: createdUser } : (await db.auth.admin.getUserById(userId)).data;
+    if (!authUser.user) throw new Error('Account unavailable.');
     const actualEmail = authUser.user.email && !authUser.user.email.endsWith('@phone.bnoy.invalid') && authUser.user.email_confirmed_at ? authUser.user.email.toLowerCase() : null;
-    const { error: phoneError } = await db.auth.admin.updateUserById(userId, { phone, phone_confirm: true });
-    if (phoneError) throw new Error('This verified phone is already linked to another account.');
+    if (authUser.user.phone !== phone.replace(/^\+/, '') && authUser.user.phone !== phone) {
+      const { error: phoneError } = await db.auth.admin.updateUserById(userId, { phone, phone_confirm: true });
+      if (phoneError) throw new Error('This verified phone is already linked to another account.');
+    }
     const fields = { id: userId, phone, country_code: countryCode, phone_verified: true, first_name: String(p.name?.first || '').slice(0,100), last_name: String(p.name?.last || '').slice(0,100), name: [p.name?.first, p.name?.last].filter(Boolean).join(' ').slice(0,200), avatar_url: typeof p.avatarUrl === 'string' && p.avatarUrl.startsWith('https://') ? p.avatarUrl : null, gender: typeof p.gender === 'string' ? p.gender : null, city: p.addresses?.[0]?.city || null, company: p.companyName || null, job_title: p.jobTitle || null, verified_name: Array.isArray(p.badges) && p.badges.includes('verified'), email: actualEmail, email_verified: !!actualEmail };
     const { error } = await db.from('profiles').upsert(fields);
     if (error) throw new Error('Could not link verified profile.');
-    await db.from('truecaller_requests').update({ status: 'consumed', verified_profile: null }).eq('id', attempt.id);
-    if (attempt.user_id) return { status: 'linked' };
+    if (attempt.user_id) {
+      await db.from('truecaller_requests').update({ status: 'consumed', verified_profile: null }).eq('id', attempt.id);
+      return { status: 'linked' };
+    }
     if (!authUser.user.email) throw new Error('Account session cannot be issued.');
     const { data: link, error: linkError } = await db.auth.admin.generateLink({ type: 'magiclink', email: authUser.user.email });
     if (linkError || !link.properties?.hashed_token) throw new Error('Could not create a secure session.');
+    await db.from('truecaller_requests').update({ status: 'consumed', verified_profile: null }).eq('id', attempt.id);
     return { status: 'ready', tokenHash: link.properties.hashed_token };
   } catch (err) {
     await db.from('truecaller_requests').update({ status: 'error', verified_profile: null, error: 'Verification failed. Please retry.' }).eq('id', attempt.id);

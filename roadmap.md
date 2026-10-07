@@ -1,4 +1,9 @@
 # Requested upgrades
+- [ ] Improve Truecaller callback latency, recovery, verification and loading states.
+- [ ] Reuse the /login card in the popup and add uploaded loading/success videos.
+- [ ] Add modern admin/project presentation and advanced editor options.
+- [ ] Generate and use transparent creator illustrations.
+- [ ] Verify public pages, editor controls, callback errors, and authentication prerequisites.
 - [ ] Slightly reduce signup card and verify fit.
 - [ ] Add dynamic Creative Team Showcase and admin editing.
 - [ ] Add admin-managed Truecaller callback URL and app domain.
