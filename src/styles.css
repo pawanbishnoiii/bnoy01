@@ -63,7 +63,7 @@
     @apply bg-background text-foreground font-body antialiased;
     font-feature-settings: "ss01", "cv01";
   }
-  h1, h2, h3, h4, h5, h6 { @apply font-display; letter-spacing: -0.02em; }
+  h1, h2, h3, h4, h5, h6 { @apply font-display; letter-spacing: 0; }
 }
 
 @layer utilities {
@@ -201,4 +201,9 @@
   }
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { scrollbar-width: none; }
+}
+
+@media (min-width: 768px) and (max-height: 720px) {
+  .signup-form-panel { min-height: 540px; padding: 22px 30px; }
+  .signup-form-content { margin-top: 12px; }
 }

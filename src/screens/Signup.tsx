@@ -70,21 +70,21 @@ export default function Signup() {
     <div className="min-h-screen w-full bg-[#dadde2] flex items-center justify-center p-3 md:p-8 font-sans">
       <motion.div
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, ease: 'easeOut' }}
-        className="w-full max-w-[1200px] grid lg:grid-cols-2 rounded-[36px] overflow-hidden bg-white shadow-[0_30px_80px_-20px_rgba(20,20,40,0.25)]"
+      className="signup-card w-full max-w-[1080px] grid lg:grid-cols-2 rounded-[28px] overflow-hidden bg-white shadow-[0_30px_80px_-20px_rgba(20,20,40,0.25)]"
       >
         {/* LEFT — Form */}
-        <div className="relative flex flex-col bg-gradient-to-b from-white via-[#fdf6e6] to-[#f6e9c7] p-7 md:p-12 min-h-[640px]">
+        <div className="signup-form-panel relative flex flex-col bg-gradient-to-b from-white via-[#fdf6e6] to-[#f6e9c7] p-6 md:p-8 min-h-[570px]">
           <Link to="/" className="inline-flex items-center justify-center self-start rounded-full border border-zinc-300/80 bg-white/60 backdrop-blur px-5 py-2 text-sm font-medium text-zinc-700 hover:bg-white transition">
             Bnoy Studios
           </Link>
 
-          <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full mt-8">
+          <div className="signup-form-content flex-1 flex flex-col justify-center max-w-sm mx-auto w-full mt-5">
             <AnimatePresence mode="wait">
               <motion.div
                 key={mode}
                 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.25 }}
-                className="text-center mb-7"
+                className="text-center mb-5"
               >
                 <h1 className="font-serif text-[34px] leading-tight font-medium text-zinc-900">
                   {mode === 'signup' ? 'Create an account' : 'Welcome back'}
@@ -95,7 +95,7 @@ export default function Signup() {
               </motion.div>
             </AnimatePresence>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3">
               {mode === 'signup' && (
                 <Field label="Full name">
                   <input
@@ -150,7 +150,7 @@ export default function Signup() {
             </form>
           </div>
 
-          <div className="flex items-center justify-between text-xs text-zinc-500 mt-8">
+          <div className="flex flex-wrap gap-2 items-center justify-between text-xs text-zinc-500 mt-5">
             <span>
               {mode === 'signup' ? 'Have any account?' : 'New here?'}{' '}
               <button onClick={() => setMode(mode === 'signup' ? 'login' : 'signup')} className="underline text-zinc-700 hover:text-zinc-900">
