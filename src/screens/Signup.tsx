@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { lovable } from '@/integrations/lovable';
+import { signInWithGoogle } from '@/lib/google-signin';
 
 /**
  * Premium Crextio-inspired auth screen. Mirrors the reference layout:
@@ -53,11 +53,18 @@ export default function Signup() {
 
   const oauth = async (provider: 'google' | 'apple') => {
     setLoading(true);
-    const r = await lovable.auth.signInWithOAuth(provider, { redirect_uri: window.location.origin });
+    void provider;
+    const r = await signInWithGoogle();
     if (r.error) {
-      toast({ title: 'Sign-in failed', description: String(r.error.message || r.error), variant: 'destructive' });
+      toast({ title: 'Sign-in failed', description: r.error, variant: 'destructive' });
       setLoading(false);
     }
+  };
+
+  const forgot = async () => {
+    if (!email) return toast({ title: 'Enter your email first', description: 'Type your email above, then tap "Forgot password".' });
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` });
+    toast(error ? { title: 'Could not send', description: error.message, variant: 'destructive' } : { title: 'Check your inbox', description: 'We sent you a link to set a new password.' });
   };
 
   return (
@@ -69,7 +76,7 @@ export default function Signup() {
         {/* LEFT — Form */}
         <div className="relative flex flex-col bg-gradient-to-b from-white via-[#fdf6e6] to-[#f6e9c7] p-7 md:p-12 min-h-[640px]">
           <Link to="/" className="inline-flex items-center justify-center self-start rounded-full border border-zinc-300/80 bg-white/60 backdrop-blur px-5 py-2 text-sm font-medium text-zinc-700 hover:bg-white transition">
-            Crextio
+            Bnoy Studios
           </Link>
 
           <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full mt-8">
@@ -84,7 +91,7 @@ export default function Signup() {
                   {mode === 'signup' ? 'Create an account' : 'Welcome back'}
                 </h1>
                 <p className="text-sm text-zinc-500 mt-1">
-                  {mode === 'signup' ? 'Sing up and get 30 day free trial' : 'Sign in to continue to Crextio'}
+                  {mode === 'signup' ? 'Sign up to buy, preview and download projects' : 'Sign in to continue to Bnoy Studios'}
                 </p>
               </motion.div>
             </AnimatePresence>
@@ -94,7 +101,7 @@ export default function Signup() {
                 <Field label="Full name">
                   <input
                     value={name} onChange={(e) => setName(e.target.value)}
-                    placeholder="Amélie Laurent"
+                    placeholder="Your name"
                     className="w-full bg-transparent text-[15px] text-zinc-900 placeholder:text-zinc-400 focus:outline-none"
                   />
                 </Field>
@@ -102,7 +109,7 @@ export default function Signup() {
               <Field label="Email">
                 <input
                   type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-                  placeholder="amelielaurent7622@gmail.com"
+                  placeholder="you@example.com"
                   className="w-full bg-transparent text-[15px] text-zinc-900 placeholder:text-zinc-400 focus:outline-none"
                 />
               </Field>
@@ -116,6 +123,13 @@ export default function Signup() {
                   {showPwd ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                 </button>
               </Field>
+              {mode === 'login' && (
+                <div className="text-right -mt-2">
+                  <button type="button" onClick={forgot} className="text-xs font-medium text-zinc-500 hover:text-zinc-900 underline-offset-2 hover:underline">
+                    Forgot password? (also for returning members)
+                  </button>
+                </div>
+              )}
 
               <Button
                 type="submit" disabled={loading}

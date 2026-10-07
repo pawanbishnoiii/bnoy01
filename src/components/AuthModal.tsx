@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/integrations/supabase/client';
-import { lovable } from '@/integrations/lovable';
+import { signInWithGoogle } from '@/lib/google-signin';
 
 export default function AuthModal() {
   const { showAuthModal, setShowAuthModal, authIntent } = useAuthStore();
@@ -46,13 +46,13 @@ export default function AuthModal() {
 
   const oauth = async (provider: 'google' | 'apple') => {
     setLoading(true);
-    const result = await lovable.auth.signInWithOAuth(provider, { redirect_uri: window.location.origin });
+    void provider;
+    const result = await signInWithGoogle();
     if (result.error) {
-      toast({ title: 'Sign-in failed', description: String(result.error.message || result.error), variant: 'destructive' });
+      toast({ title: 'Sign-in failed', description: result.error, variant: 'destructive' });
       setLoading(false);
       return;
     }
-    if (result.redirected) return;
     setShowAuthModal(false);
     setLoading(false);
   };

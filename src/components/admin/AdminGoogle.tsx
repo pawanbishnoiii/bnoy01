@@ -55,7 +55,7 @@ export default function AdminGoogle() {
     if (!auth) return;
     setClientId((auth as any).google_client_id || '');
     setCallback((auth as any).google_callback_url || `${window.location.origin}/`);
-    setMode((auth as any).google_auth_mode || 'lovable');
+    setMode((site as any)?.google_auth_mode === 'managed' ? 'auto' : ((site as any)?.google_auth_mode || 'auto'));
     setGoogleOn((auth as any).google_login_enabled !== false);
   }, [auth]);
 
@@ -101,9 +101,12 @@ export default function AdminGoogle() {
     const { error } = id
       ? await supabase.from('auth_settings').update(payload).eq('id', id)
       : await supabase.from('auth_settings').insert(payload as any);
+    const siteId = (site as any)?.id;
+    if (!error && siteId) await supabase.from('site_settings').update({ google_auth_mode: mode }).eq('id', siteId);
     setSaving(false);
     if (error) return toast.error('Could not save', { description: error.message });
     qc.invalidateQueries({ queryKey: ['auth-settings'] });
+    qc.invalidateQueries({ queryKey: ['site-settings'] });
     toast.success('Google login settings saved');
   };
 
