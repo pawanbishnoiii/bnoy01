@@ -20,6 +20,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           { loc: `${base}/`, priority: "1.0" },
           { loc: `${base}/marketplace`, priority: "0.9" },
           { loc: `${base}/apps`, priority: "0.8" },
+          { loc: `${base}/windows`, priority: "0.8" },
           { loc: `${base}/refund`, priority: "0.3" },
           ...(projects ?? [])
             .filter((p) => !p.noindex)

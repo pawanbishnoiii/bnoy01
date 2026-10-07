@@ -12,11 +12,13 @@ const defaultCardImages = [
 ];
 
 const ASCII_CHARS = "abcdefghijklmnopqrstuvwxyz0123456789(){}[]<>;:,._-+=!@#$%^&*|/\\?";
-const generateCode = (width: number, height: number): string => {
+const generateCode = (width: number, height: number, seed = 1): string => {
   let out = '';
+  let state = seed;
+  const random = () => { state = (state * 1664525 + 1013904223) >>> 0; return state / 4294967296; };
   for (let i = 0; i < height; i++) {
     let line = '';
-    for (let j = 0; j < width; j++) line += ASCII_CHARS[Math.floor(Math.random() * ASCII_CHARS.length)];
+    for (let j = 0; j < width; j++) line += ASCII_CHARS[Math.floor(random() * ASCII_CHARS.length)];
     out += line + '\n';
   }
   return out;
@@ -59,7 +61,7 @@ export const ScannerCardStream = ({
     return Array.from({ length: total }, (_, i) => ({
       id: i,
       image: cardImages[i % cardImages.length],
-      ascii: generateCode(Math.floor(280 / 7), Math.floor(180 / 13)),
+      ascii: generateCode(Math.floor(280 / 7), Math.floor(180 / 13), i + 1),
     }));
   }, [cardImages, repeat]);
 
@@ -121,7 +123,7 @@ export const ScannerCardStream = ({
       const original = originalAscii.current.get(id) || '';
       let n = 0;
       const it = setInterval(() => {
-        el.textContent = generateCode(Math.floor(280 / 7), Math.floor(180 / 13));
+        el.textContent = generateCode(Math.floor(280 / 7), Math.floor(180 / 13), n + id + 10);
         if (++n >= 8) {
           clearInterval(it);
           el.textContent = original;

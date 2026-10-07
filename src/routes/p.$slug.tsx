@@ -4,6 +4,8 @@ import Screen from "@/screens/ProjectDetail";
 export const Route = createFileRoute("/p/$slug")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Project — Bnoy Studios" },
       { name: "description", content: "Project details, live preview and pricing." },
       { property: "og:title", content: "Project — Bnoy Studios" },

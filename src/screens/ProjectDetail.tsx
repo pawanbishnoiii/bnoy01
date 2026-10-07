@@ -52,7 +52,7 @@ export default function ProjectDetail() {
   const [rating, setRating] = useState(5);
   const [stickyVisible, setStickyVisible] = useState(false);
 
-  const { data: project, isLoading } = useQuery({
+  const { data: baseProject, isLoading } = useQuery({
     queryKey: ['project', idOrSlug],
     queryFn: async () => {
       if (!idOrSlug) return null;
@@ -65,6 +65,27 @@ export default function ProjectDetail() {
     },
     enabled: !!idOrSlug,
   });
+  const { data: releases = [] } = useQuery({
+    queryKey: ['project-versions', baseProject?.id],
+    queryFn: async () => {
+      if (!baseProject?.id) return [];
+      const { data, error } = await supabase.from('project_versions').select('*').eq('project_id', baseProject.id).order('is_latest', { ascending: false }).order('released_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!baseProject?.id,
+  });
+  const activeRelease = releases.find(release => release.version === selectedVersion);
+  const project = baseProject && activeRelease ? { ...baseProject,
+    version: activeRelease.version,
+    short_desc: activeRelease.short_desc ?? baseProject.short_desc,
+    full_desc: activeRelease.full_desc ?? baseProject.full_desc,
+    thumbnail_url: activeRelease.thumbnail_url ?? baseProject.thumbnail_url,
+    screenshots: activeRelease.screenshots.length ? activeRelease.screenshots : baseProject.screenshots,
+    video_url: activeRelease.video_url ?? baseProject.video_url,
+    preview_url: activeRelease.preview_url ?? baseProject.preview_url,
+    source_code_url: activeRelease.source_code_url ?? baseProject.source_code_url,
+  } : baseProject;
   const id = project?.id;
 
   useEffect(() => { if (id) supabase.rpc('increment_project_views', { _project_id: id }); }, [id]);
@@ -127,15 +148,17 @@ export default function ProjectDetail() {
     else if (typeof raw === 'string' && raw.trim()) {
       try { arr = JSON.parse(raw); } catch { arr = [{ version: project?.version || 'v1.0', notes: raw }]; }
     }
-    if (project?.version && !arr.find(e => e.version === project.version)) {
-      arr = [{ version: project.version, date: new Date(project.created_at).toISOString().slice(0,10), notes: 'Initial release.' }, ...arr];
+    if (!Array.isArray(arr)) arr = [];
+    if (baseProject && !arr.find(e => e.version === (baseProject.version || 'v1.0'))) {
+      arr = [{ version: baseProject.version || 'v1.0', date: baseProject.created_at.slice(0,10), notes: 'Initial release.' }, ...arr];
     }
-    return arr;
+    const fromReleases = releases.map(r => ({ version: r.version, date: r.released_at, notes: r.changelog || r.notes || '', screenshots: r.screenshots }));
+    return [...fromReleases, ...arr.filter(c => !fromReleases.some(r => r.version === c.version))];
   })();
 
   useEffect(() => {
-    if (changelog.length && !selectedVersion) setSelectedVersion(changelog[0].version);
-  }, [changelog.length]); // eslint-disable-line
+    if (changelog.length && !changelog.some(c => c.version === selectedVersion)) setSelectedVersion(changelog[0].version);
+  }, [idOrSlug, changelog.length, selectedVersion]);
 
   const activeChange = changelog.find(c => c.version === selectedVersion) || changelog[0];
   const versionScreenshots = (activeChange as any)?.screenshots as string[] | undefined;
@@ -251,6 +274,10 @@ export default function ProjectDetail() {
           <Link to="/marketplace" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-fire">
             <ArrowLeft className="h-4 w-4" /> Back
           </Link>
+          <Select value={selectedVersion || changelog[0]?.version || 'v1.0'} onValueChange={setSelectedVersion}>
+            <SelectTrigger aria-label="Select project version" className="mx-3 w-48 h-11 rounded-lg border-primary/30 bg-primary/10 text-primary font-semibold shadow-card"><History className="h-4 w-4 shrink-0" /><SelectValue /></SelectTrigger>
+            <SelectContent>{changelog.map((c, i) => <SelectItem key={c.version} value={c.version}>{c.version}{i === 0 ? ' · Latest' : ''}</SelectItem>)}</SelectContent>
+          </Select>
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="sm" onClick={toggleLike} aria-label="Like" className={likeData?.liked ? 'text-fire' : ''}>
               <Heart className={`h-4 w-4 ${likeData?.liked ? 'fill-fire' : ''}`} />
@@ -419,7 +446,7 @@ export default function ProjectDetail() {
                   </AccordionTrigger>
                   <AccordionContent className="px-5 pb-5 space-y-3">
                     <Select value={selectedVersion} onValueChange={setSelectedVersion}>
-                      <SelectTrigger className="w-44 h-9"><SelectValue /></SelectTrigger>
+                      <SelectTrigger aria-label="Changelog version" className="w-48 h-11 border-primary/30 bg-primary/10 text-primary font-semibold"><History className="h-4 w-4" /><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {changelog.map(c => <SelectItem key={c.version} value={c.version}>{c.version}</SelectItem>)}
                       </SelectContent>

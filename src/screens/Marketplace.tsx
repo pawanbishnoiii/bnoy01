@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from '@/lib/router';
+import { Link, useSearchParams } from '@/lib/router';
 import { motion } from 'framer-motion';
-import { SlidersHorizontal, Sparkles, X } from 'lucide-react';
+import { SlidersHorizontal, Code2, Monitor, Smartphone, X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/Navbar';
@@ -49,10 +49,11 @@ export default function Marketplace() {
     setParams(next, { replace: true });
   };
 
-  const { data: projects, isLoading } = useQuery({
+  const { data: projects, isLoading, error: projectsError, refetch: retryProjects } = useQuery({
     queryKey: ['marketplace-projects'],
     queryFn: async () => {
-      const { data } = await supabase.from('projects').select('*').eq('status', 'published');
+      const { data, error } = await supabase.from('projects').select('*').eq('status', 'published');
+      if (error) throw error;
       return data || [];
     },
   });
@@ -121,23 +122,14 @@ export default function Marketplace() {
       <AuthModal />
 
       {/* Cinematic hero — typographic, no Lottie. */}
-      <section className="relative pt-28 pb-10 bg-gradient-to-br from-warm-bg via-white to-warm-bg overflow-hidden">
-        <div className="absolute -top-20 -right-20 w-[420px] h-[420px] rounded-full opacity-50 blur-3xl pointer-events-none"
-          style={{ background: 'radial-gradient(closest-side, hsl(14 100% 56% / 0.4), transparent)' }} />
-        <div className="absolute -bottom-32 -left-20 w-[360px] h-[360px] rounded-full opacity-40 blur-3xl pointer-events-none"
-          style={{ background: 'radial-gradient(closest-side, hsl(43 100% 55% / 0.4), transparent)' }} />
-        <div className="container mx-auto px-4 relative text-center max-w-3xl">
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-border shadow-card text-xs font-bold tracking-[0.18em] uppercase text-fire">
-            <Sparkles className="h-3.5 w-3.5" /> Bnoy Marketplace
-          </span>
-          <h1 className="mt-4 font-display text-4xl md:text-6xl font-extrabold text-ink leading-[1.02] tracking-tight">
-            Let some <span className="gradient-text">light in.</span>
-          </h1>
-          <p className="text-muted-foreground mt-3 max-w-xl mx-auto text-base">
-            Browse every published project. Filter by stack, price or category — preview live, then buy with one click.
-          </p>
-        </div>
-      </section>
+       <section className="pt-28 pb-8 bg-background border-b border-border">
+         <div className="container mx-auto px-4">
+           <div className="flex flex-wrap justify-between items-end gap-5">
+             <div><p className="text-sm text-primary font-semibold mb-2">Bnoy Studios</p><h1 className="font-display text-4xl md:text-5xl font-extrabold text-foreground">Project Marketplace</h1></div>
+             <div className="flex flex-wrap gap-2"><Button variant="secondary"><Code2 className="h-4 w-4" />Web projects</Button><Button variant="outline" asChild><Link to="/apps"><Smartphone className="h-4 w-4" />Apps</Link></Button><Button variant="outline" asChild><Link to="/windows"><Monitor className="h-4 w-4" />Windows</Link></Button></div>
+           </div>
+         </div>
+       </section>
 
       {/* Sticky glass filter bar */}
       <section className="py-4 bg-white/80 border-b border-border sticky top-16 z-30 backdrop-blur-xl">
@@ -146,7 +138,7 @@ export default function Marketplace() {
             <div className="flex-1 min-w-0">
               <SearchBar value={searchInput} onChange={setSearchInput} suggestions={suggestions} />
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Select value={category} onValueChange={(v) => setParam('category', v)}>
                 <SelectTrigger className="h-10 w-[130px] rounded-full md:hidden"><SelectValue /></SelectTrigger>
                 <SelectContent>{allCats.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
@@ -173,10 +165,7 @@ export default function Marketplace() {
 
           <div className="hidden md:flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
             {allCats.map((c) => (
-              <button key={c} onClick={() => setParam('category', c)}
-                className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition ${
-                  category === c ? 'gradient-fire-strong text-white border-transparent shadow-card' : 'border-border bg-white text-muted-foreground hover:text-fire hover:border-fire/40'
-                }`}>{c}</button>
+              <Button key={c} size="sm" variant={category === c ? 'default' : 'outline'} onClick={() => setParam('category', c)} className="shrink-0 text-xs">{c}</Button>
             ))}
           </div>
 
@@ -200,7 +189,7 @@ export default function Marketplace() {
 
       <section className="py-12 bg-white">
         <div className="container mx-auto px-4">
-          {isLoading ? (
+          {projectsError ? <div className="text-center py-12" role="alert"><p className="text-destructive mb-4">Projects could not load.</p><Button variant="outline" onClick={() => retryProjects()}>Retry</Button></div> : isLoading ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div key={i}><Skeleton className="aspect-video rounded-2xl" /><Skeleton className="h-5 w-3/4 mt-3" /></div>

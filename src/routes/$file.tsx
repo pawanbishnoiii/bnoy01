@@ -25,6 +25,6 @@ export const Route = createFileRoute("/$file")({
       },
     },
   },
-  head: () => ({ meta: [{ title: "Page not found — Bnoy Studios" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Page not found — Bnoy Studios" }, { name: "description", content: "This Bnoy Studios page is unavailable." }, { property: "og:title", content: "Page not found — Bnoy Studios" }, { property: "og:description", content: "This Bnoy Studios page is unavailable." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }),
   component: NotFound,
 });
