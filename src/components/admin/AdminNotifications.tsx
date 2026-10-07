@@ -109,12 +109,14 @@ export default function AdminNotifications() {
   });
 
   async function pushNow(id: string) {
-    const { data, error } = await supabase.functions.invoke('send-notification', { body: { notificationId: id } });
-    if (error) {
-      let details = error.message;
-      try { details = await (error as unknown as { context: Response }).context.text(); } catch { /* ignore */ }
-      throw new Error(details);
-    }
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch('/api/public/send-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token ?? ''}` },
+      body: JSON.stringify({ notificationId: id }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.error || `Failed (${res.status})`);
     return data as { sent: number; failed: number };
   }
 
