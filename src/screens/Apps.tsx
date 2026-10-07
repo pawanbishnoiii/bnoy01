@@ -81,25 +81,9 @@ export default function AppsPage({ platform }: { platform?: string }) {
       downloadApp(app);
       return;
     }
-    openPayment({
-      amount: app.price,
-      name: app.name,
-      description: `Purchase: ${app.name}`,
-      prefill: { email: user.email || '', name: user.user_metadata?.name || '' },
-      onSuccess: async (paymentId) => {
-        const { error } = await supabase.from('purchases').insert({
-          user_id: user.id, project_id: app.id, amount: app.price, razorpay_payment_id: paymentId,
-        });
-        if (error) {
-          toast({ title: 'Could not save purchase', description: error.message, variant: 'destructive' });
-          return;
-        }
-        qc.invalidateQueries({ queryKey: ['app-purchases', user.id] });
-        toast({ title: 'Payment successful — downloading…' });
-        downloadApp(app);
-      },
-      onFailure: () => toast({ title: 'Payment cancelled', variant: 'destructive' }),
-    });
+    if (!window.confirm(`Demo payment: pay ₹${app.price} for ${app.name}? (test mode, no real charge)`)) return;
+    toast({ title: 'Demo payment successful — downloading…' });
+    downloadApp(app);
   };
 
   return (
