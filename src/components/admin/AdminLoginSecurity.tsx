@@ -1,0 +1,9 @@
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+export default function AdminLoginSecurity(){
+ const [method,setMethod]=useState('all');
+ const {data:logs=[]}=useQuery({queryKey:['admin-login-logs'],queryFn:async()=>{const {data,error}=await supabase.from('user_login_logs').select('*').order('login_at',{ascending:false}).limit(500);if(error)throw error;return data || [];}});
+ return <div className="space-y-5"><h1 className="text-2xl font-bold">Login Security</h1><div className="flex flex-wrap items-center gap-4"><p className="text-muted-foreground">{logs.length} recent logins · {new Set(logs.map(l=>l.user_id)).size} users</p><Select value={method} onValueChange={setMethod}><SelectTrigger className="w-40" aria-label="Login provider"><SelectValue/></SelectTrigger><SelectContent>{['all','email','google','apple','truecaller'].map(m=><SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent></Select></div><div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b border-border">{['User','Provider','Location','IP','Device','Time','Security'].map(t=><th className="text-left p-3" key={t}>{t}</th>)}</tr></thead><tbody>{logs.filter(l=>method==='all'||l.login_method===method).map(l=><tr key={l.id} className={`border-b border-border ${l.is_suspicious?'text-destructive':''}`}><td className="p-3 font-mono">{l.user_id.slice(0,8)}</td><td className="p-3">{l.login_method}</td><td className="p-3">{[l.city,l.country].filter(Boolean).join(', ')||'Unknown'}</td><td className="p-3">{l.ip_address || '—'}</td><td className="p-3">{l.device_name} · {l.browser}</td><td className="p-3">{new Date(l.login_at).toLocaleString()}</td><td className="p-3">{l.is_suspicious?'New country':'Normal'}</td></tr>)}</tbody></table></div></div>;
+}
