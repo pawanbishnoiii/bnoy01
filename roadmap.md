@@ -1,17 +1,19 @@
 # Requested upgrades
-- [ ] Improve Truecaller callback latency, recovery, verification and loading states.
-- [ ] Reuse the /login card in the popup and add uploaded loading/success videos.
-- [ ] Add modern admin/project presentation and advanced editor options.
-- [ ] Generate and use transparent creator illustrations.
-- [ ] Verify public pages, editor controls, callback errors, and authentication prerequisites.
-- [ ] Slightly reduce signup card and verify fit.
+- [x] Implement faster single-flight Truecaller polling, recovery and clear loading/error states.
+- [x] Reuse the /login card in the popup and add uploaded loading/success videos with browser-compatible alternatives.
+- [x] Add modern admin/project presentation, formatting editor, preview and screenshot ordering.
+- [x] Generate and use transparent creator illustration.
+- [x] Verify public pages, editor formatting/preview, invalid callback attempt and authenticated admin access.
+- [x] Reduce signup card; desktop fit verified.
 - [ ] Add dynamic Creative Team Showcase and admin editing.
 - [ ] Add admin-managed Truecaller callback URL and app domain.
 - [ ] Improve project version selection.
 - [ ] Add Windows software marketplace and publishing metadata.
 - [ ] Upgrade marketplace layout and verify main pages and admin saves.
-- [ ] Grant approved admin account access and verify saves.
+- [x] Verify existing admin access and restore 24 projects plus 5 apps with original publication states, excluding copied credentials.
 - [ ] Add editable Truecaller app key and verified profile fields.
 - [ ] Implement verified phone/email matching and account linking without automatic unverified merges.
-- [ ] Route source purchases through checkout with server-verified pricing and payment.
+- [x] Keep source purchases routed through the existing server-priced demo checkout.
+- [ ] Verify live Truecaller approval and success redirect — requires registered domain deployment and real Android Truecaller approval; cannot simulate identity proof.
+- [ ] Verify imported media/source downloads — backup contains URLs, not original storage files; inaccessible files require source storage access.
 - [ ] Add login location/security logs and admin monitoring.
