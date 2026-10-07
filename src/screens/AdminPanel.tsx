@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Package, PlusCircle, ShoppingBag, Users2, BarChart3,
-  Pencil, Trash2, IndianRupee, TrendingUp, Eye, Settings2, Smartphone, Tags, Search, Globe2, Bell
+  Pencil, Trash2, IndianRupee, TrendingUp, Eye, Settings2, Smartphone, Tags, Search, Globe2, Bell, Lock as LockIcon
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
@@ -28,6 +28,7 @@ import AdminNotifications from '@/components/admin/AdminNotifications';
 import AdminVisitors from '@/components/admin/AdminVisitors';
 import AdminTeam from '@/components/admin/AdminTeam';
 import AdminTruecaller from '@/components/admin/AdminTruecaller';
+import AdminLoginSecurity from '@/components/admin/AdminLoginSecurity';
 import { TECH_SUGGESTIONS, techIcon } from '@/lib/techIcons';
 
 const sidebarItems = [
@@ -40,6 +41,7 @@ const sidebarItems = [
   { id: 'users', label: 'Users', icon: Users2 },
   { id: 'team', label: 'Creative Team', icon: Users2 },
   { id: 'truecaller', label: 'Truecaller', icon: Smartphone },
+  { id: 'login-security', label: 'Login Security', icon: LockIcon },
   { id: 'visitors', label: 'Visitors', icon: Globe2 },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   { id: 'notifications', label: 'Notifications', icon: Bell },
@@ -115,6 +117,7 @@ export default function AdminPanel() {
             {activeTab === 'users' && <AdminUsers />}
             {activeTab === 'team' && <AdminTeam />}
             {activeTab === 'truecaller' && <AdminTruecaller />}
+            {activeTab === 'login-security' && <AdminLoginSecurity />}
             {activeTab === 'visitors' && <AdminVisitors />}
             {activeTab === 'analytics' && <AdminAnalytics />}
             {activeTab === 'notifications' && <AdminNotifications />}
