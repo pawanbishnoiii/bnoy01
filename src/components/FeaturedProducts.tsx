@@ -131,7 +131,7 @@ export default function FeaturedProducts({ limit, showFilters = true }: Featured
             <motion.div key={category} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               {displayed.map((project, i) => (
-                <ProjectCard key={project.id} project={project} index={i} onPreview={setPreviewUrl} onBuy={handleBuy} />
+                <ProjectCard key={project.id} project={project as any} index={i} onPreview={setPreviewUrl} onBuy={handleBuy} />
               ))}
             </motion.div>
           </AnimatePresence>
