@@ -26,6 +26,8 @@ import AdminCategories from '@/components/admin/AdminCategories';
 import AdminGoogle from '@/components/admin/AdminGoogle';
 import AdminNotifications from '@/components/admin/AdminNotifications';
 import AdminVisitors from '@/components/admin/AdminVisitors';
+import AdminTeam from '@/components/admin/AdminTeam';
+import AdminTruecaller from '@/components/admin/AdminTruecaller';
 import { TECH_SUGGESTIONS, techIcon } from '@/lib/techIcons';
 
 const sidebarItems = [
@@ -36,6 +38,8 @@ const sidebarItems = [
   { id: 'categories', label: 'Categories', icon: Tags },
   { id: 'orders', label: 'Orders', icon: ShoppingBag },
   { id: 'users', label: 'Users', icon: Users2 },
+  { id: 'team', label: 'Creative Team', icon: Users2 },
+  { id: 'truecaller', label: 'Truecaller', icon: Smartphone },
   { id: 'visitors', label: 'Visitors', icon: Globe2 },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   { id: 'notifications', label: 'Notifications', icon: Bell },
@@ -72,7 +76,7 @@ export default function AdminPanel() {
     <div className="min-h-screen bg-background">
       <Navbar /><AuthModal />
       <div className="flex pt-20">
-        <aside className="hidden md:flex w-64 flex-col warm-bg border-r border-border min-h-[calc(100vh-5rem)] p-4 fixed left-0 top-20">
+        <aside className="hidden md:flex w-64 flex-col warm-bg border-r border-border h-[calc(100vh-5rem)] overflow-y-auto p-4 fixed left-0 top-20">
           <nav className="space-y-1">
             {sidebarItems.map((item) => (
               <button
@@ -91,12 +95,12 @@ export default function AdminPanel() {
           </nav>
         </aside>
 
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-border flex justify-around p-2">
-          {sidebarItems.slice(0, 5).map((item) => (
-            <button key={item.id} onClick={() => setActiveTab(item.id)} className={`flex flex-col items-center gap-1 p-2 rounded-lg text-xs ${activeTab === item.id ? 'text-fire' : 'text-muted-foreground'}`}>
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border flex overflow-x-auto p-2">
+          {sidebarItems.map((item) => (
+            <Button variant="ghost" key={item.id} onClick={() => setActiveTab(item.id)} className={`h-auto shrink-0 flex flex-col items-center gap-1 p-2 rounded-lg text-xs ${activeTab === item.id ? 'text-primary' : 'text-muted-foreground'}`}>
               <item.icon className="h-4 w-4" />
               {item.label}
-            </button>
+            </Button>
           ))}
         </div>
 
@@ -109,6 +113,8 @@ export default function AdminPanel() {
             {activeTab === 'categories' && <AdminCategories />}
             {activeTab === 'orders' && <AdminOrders />}
             {activeTab === 'users' && <AdminUsers />}
+            {activeTab === 'team' && <AdminTeam />}
+            {activeTab === 'truecaller' && <AdminTruecaller />}
             {activeTab === 'visitors' && <AdminVisitors />}
             {activeTab === 'analytics' && <AdminAnalytics />}
             {activeTab === 'notifications' && <AdminNotifications />}

@@ -52,6 +52,7 @@ export default function Navbar() {
     { label: 'Home', href: '/' },
     { label: 'Marketplace', href: '/marketplace' },
     { label: 'Apps', href: '/apps' },
+    { label: 'Windows', href: '/windows' },
     { label: 'How it works', href: '/#how' },
     { label: 'FAQ', href: '/#faq' },
   ];
@@ -69,13 +70,13 @@ export default function Navbar() {
           </span>
         </Link>
 
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden lg:flex items-center gap-5">
           {links.map((l) => (
             <Link key={l.label} to={l.href} className="text-sm font-medium text-muted-foreground hover:text-fire transition-colors">{l.label}</Link>
           ))}
         </div>
 
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden lg:flex items-center gap-2">
           <AnimatePresence>
             {searchOpen && (
               <motion.input
@@ -120,13 +121,13 @@ export default function Navbar() {
           )}
         </div>
 
-        <button className="md:hidden text-ink" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu">
+        <Button variant="ghost" size="icon" className="lg:hidden text-foreground" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu">
           {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+        </Button>
       </div>
 
       {mobileOpen && (
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="md:hidden bg-white border-t border-border">
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="lg:hidden bg-background border-t border-border">
           <div className="container mx-auto px-4 py-4 flex flex-col gap-2">
             <input
               value={searchQuery}

@@ -86,7 +86,7 @@ function AppForm({ editingId, onDone }: { editingId: string | null; onDone: () =
   const [form, setForm] = useState<any>({
     name: '', description: '', version: '1.0.0', platform: 'android', price: 0,
     icon_url: '', screenshots_urls: [] as string[], apk_url: '', file_size: '',
-    changelog: '', is_latest: true, status: 'draft',
+    changelog: '', is_latest: true, status: 'draft', architecture: 'x64', system_requirements: '',
   });
 
   const { data: existing } = useQuery({
@@ -102,6 +102,7 @@ function AppForm({ editingId, onDone }: { editingId: string | null; onDone: () =
       icon_url: existing.icon_url || '', screenshots_urls: existing.screenshots_urls || [],
       apk_url: existing.apk_url || '', file_size: existing.file_size || '',
       changelog: existing.changelog || '', is_latest: !!existing.is_latest, status: existing.status || 'draft',
+      architecture: existing.architecture || 'x64', system_requirements: existing.system_requirements || '',
     });
   }, [existing]);
 
@@ -152,7 +153,7 @@ function AppForm({ editingId, onDone }: { editingId: string | null; onDone: () =
     try {
       const payload = { ...form, price: Number(form.price) || 0 };
       const { error } = isEdit
-        ? await supabase.from('apps').update(payload).eq('id', editingId!)
+        ? await supabase.from('apps').update(payload).eq('id', editingId || appId)
         : await supabase.from('apps').insert({ id: appId, ...payload });
       if (error) throw error;
       toast({ title: isEdit ? 'App updated!' : 'App uploaded!' });
@@ -186,6 +187,11 @@ function AppForm({ editingId, onDone }: { editingId: string | null; onDone: () =
             </div>
           </div>
         </div>
+
+        {form.platform === 'windows' && <div className="grid sm:grid-cols-2 gap-4 border-y border-border py-5">
+          <div className="space-y-2"><Label htmlFor="app-architecture">Architecture</Label><Select value={form.architecture} onValueChange={architecture => setForm({ ...form, architecture })}><SelectTrigger id="app-architecture"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="x64">x64</SelectItem><SelectItem value="ARM64">ARM64</SelectItem><SelectItem value="x86">x86</SelectItem></SelectContent></Select></div>
+          <div className="space-y-2"><Label htmlFor="app-requirements">System requirements</Label><Textarea id="app-requirements" value={form.system_requirements} onChange={e => setForm({ ...form, system_requirements: e.target.value })} placeholder="Windows version, RAM, storage" /></div>
+        </div>}
 
         <div className="space-y-2 relative">
           <Label>Short Description (max 200)</Label>
@@ -235,7 +241,7 @@ function AppForm({ editingId, onDone }: { editingId: string | null; onDone: () =
         <div className="space-y-2">
           <Label>App File (.apk / .exe / .dmg / .deb / .AppImage / .ipa) — max 500MB</Label>
           <label className="block border-2 border-dashed border-border rounded-xl p-4 text-center cursor-pointer hover:border-fire/40">
-            <input type="file" accept=".apk,.exe,.dmg,.deb,.AppImage,.ipa" className="hidden" onChange={(e) => e.target.files?.[0] && uploadApk(e.target.files[0])} />
+            <input type="file" accept=".apk,.exe,.msi,.dmg,.deb,.AppImage,.ipa" className="hidden" onChange={(e) => e.target.files?.[0] && uploadApk(e.target.files[0])} />
             <p className="text-sm text-muted-foreground">{form.apk_url ? `✅ Uploaded (${form.file_size})` : '📦 Click to upload app binary (.apk / .exe / .dmg…)'}</p>
             {apkProgress > 0 && (
               <div className="mt-3 space-y-1">

@@ -21,6 +21,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as WindowsRouteImport } from './routes/windows'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as ProjectIdRouteImport } from './routes/project.$id'
 import { Route as ApiPublicAiChatRouteImport } from './routes/api/public/ai-chat'
@@ -87,6 +88,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WindowsRoute = WindowsRouteImport.update({
+  id: '/windows',
+  path: '/windows',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PSlugRoute = PSlugRouteImport.update({
   id: '/p/$slug',
   path: '/p/$slug',
@@ -127,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/robots.txt': typeof RobotsDottxtRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/windows': typeof WindowsRoute
   '/p/$slug': typeof PSlugRoute
   '/project/$id': typeof ProjectIdRoute
   '/api/public/ai-chat': typeof ApiPublicAiChatRoute
@@ -146,6 +153,7 @@ export interface FileRoutesByTo {
   '/robots.txt': typeof RobotsDottxtRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/windows': typeof WindowsRoute
   '/p/$slug': typeof PSlugRoute
   '/project/$id': typeof ProjectIdRoute
   '/api/public/ai-chat': typeof ApiPublicAiChatRoute
@@ -166,6 +174,7 @@ export interface FileRoutesById {
   '/robots.txt': typeof RobotsDottxtRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/windows': typeof WindowsRoute
   '/p/$slug': typeof PSlugRoute
   '/project/$id': typeof ProjectIdRoute
   '/api/public/ai-chat': typeof ApiPublicAiChatRoute
@@ -187,6 +196,7 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/signup'
     | '/sitemap.xml'
+    | '/windows'
     | '/p/$slug'
     | '/project/$id'
     | '/api/public/ai-chat'
@@ -206,6 +216,7 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/signup'
     | '/sitemap.xml'
+    | '/windows'
     | '/p/$slug'
     | '/project/$id'
     | '/api/public/ai-chat'
@@ -225,6 +236,7 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/signup'
     | '/sitemap.xml'
+    | '/windows'
     | '/p/$slug'
     | '/project/$id'
     | '/api/public/ai-chat'
@@ -245,6 +257,7 @@ export interface RootRouteChildren {
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SignupRoute: typeof SignupRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  WindowsRoute: typeof WindowsRoute
   PSlugRoute: typeof PSlugRoute
   ProjectIdRoute: typeof ProjectIdRoute
   ApiPublicAiChatRoute: typeof ApiPublicAiChatRoute
@@ -338,6 +351,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/windows': {
+      id: '/windows'
+      path: '/windows'
+      fullPath: '/windows'
+      preLoaderRoute: typeof WindowsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/p/$slug': {
       id: '/p/$slug'
       path: '/p/$slug'
@@ -389,6 +409,7 @@ const rootRouteChildren: RootRouteChildren = {
   RobotsDottxtRoute: RobotsDottxtRoute,
   SignupRoute: SignupRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  WindowsRoute: WindowsRoute,
   PSlugRoute: PSlugRoute,
   ProjectIdRoute: ProjectIdRoute,
   ApiPublicAiChatRoute: ApiPublicAiChatRoute,
