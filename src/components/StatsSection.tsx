@@ -1,4 +1,5 @@
-import CountUp from 'react-countup';
+import CountUpMod from 'react-countup';
+const CountUp = ((CountUpMod as any).default ?? CountUpMod) as typeof CountUpMod;
 import { useInView } from 'react-intersection-observer';
 import { motion } from 'framer-motion';
 
