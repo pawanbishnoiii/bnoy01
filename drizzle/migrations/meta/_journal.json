@@ -15,6 +15,13 @@
       "when": 1791361962411,
       "tag": "0001_site_tracking_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791365880785,
+      "tag": "0002_team_truecaller_windows_settings",
+      "breakpoints": true
     }
   ]
 }

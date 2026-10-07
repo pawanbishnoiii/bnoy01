@@ -17,6 +17,7 @@ export type Database = {
       apps: {
         Row: {
           apk_url: string | null
+          architecture: string
           changelog: string | null
           created_at: string | null
           description: string | null
@@ -30,10 +31,12 @@ export type Database = {
           price: number | null
           screenshots_urls: string[] | null
           status: string | null
+          system_requirements: string
           version: string | null
         }
         Insert: {
           apk_url?: string | null
+          architecture?: string
           changelog?: string | null
           created_at?: string | null
           description?: string | null
@@ -47,10 +50,12 @@ export type Database = {
           price?: number | null
           screenshots_urls?: string[] | null
           status?: string | null
+          system_requirements?: string
           version?: string | null
         }
         Update: {
           apk_url?: string | null
+          architecture?: string
           changelog?: string | null
           created_at?: string | null
           description?: string | null
@@ -64,6 +69,7 @@ export type Database = {
           price?: number | null
           screenshots_urls?: string[] | null
           status?: string | null
+          system_requirements?: string
           version?: string | null
         }
         Relationships: []
@@ -692,6 +698,72 @@ export type Database = {
           support_email?: string | null
           updated_at?: string
           whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          created_at: string
+          expertise: string
+          github_url: string
+          id: string
+          image_url: string
+          instagram_url: string
+          linkedin_url: string
+          name: string
+          published: boolean
+          sort_order: number
+          website_url: string
+          x_url: string
+        }
+        Insert: {
+          created_at?: string
+          expertise?: string
+          github_url?: string
+          id?: string
+          image_url?: string
+          instagram_url?: string
+          linkedin_url?: string
+          name?: string
+          published?: boolean
+          sort_order?: number
+          website_url?: string
+          x_url?: string
+        }
+        Update: {
+          created_at?: string
+          expertise?: string
+          github_url?: string
+          id?: string
+          image_url?: string
+          instagram_url?: string
+          linkedin_url?: string
+          name?: string
+          published?: boolean
+          sort_order?: number
+          website_url?: string
+          x_url?: string
+        }
+        Relationships: []
+      }
+      truecaller_settings: {
+        Row: {
+          app_domain: string
+          callback_url: string
+          id: boolean
+          updated_at: string
+        }
+        Insert: {
+          app_domain?: string
+          callback_url?: string
+          id?: boolean
+          updated_at?: string
+        }
+        Update: {
+          app_domain?: string
+          callback_url?: string
+          id?: boolean
+          updated_at?: string
         }
         Relationships: []
       }
