@@ -138,9 +138,7 @@ export default function HeroSection() {
             <p className="bnoy-hero-fade mt-6 text-lg text-muted-foreground max-w-xl">{tagline}</p>
 
             <div className="bnoy-hero-fade mt-8 flex flex-wrap items-center gap-3">
-              <Link to="/marketplace">
-                <ArrowCTA label="Browse Projects" />
-              </Link>
+              <ArrowCTA label="Browse Projects" href="/marketplace" />
               {isAdmin ? (
                 <Link to="/admin"><Button size="lg" variant="outline" className="border-border">Admin Panel</Button></Link>
               ) : (
