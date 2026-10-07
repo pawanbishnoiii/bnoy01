@@ -39,10 +39,11 @@ export default function AdminGoogle() {
   const [googleOn, setGoogleOn] = useState(true);
 
   useEffect(() => {
-    setGsc(localStorage.getItem(KEYS.gsc) || '');
-    setGa(localStorage.getItem(KEYS.ga) || '');
-    setGtm(localStorage.getItem(KEYS.gtm) || '');
-  }, []);
+    if (!site) return;
+    setGsc((site as any).google_site_verification || '');
+    setGa((site as any).ga_measurement_id || '');
+    setGtm((site as any).gtm_id || '');
+  }, [site]);
 
   useEffect(() => {
     if (!site) return;
@@ -58,12 +59,20 @@ export default function AdminGoogle() {
     setGoogleOn((auth as any).google_login_enabled !== false);
   }, [auth]);
 
-  const saveTracking = () => {
-    localStorage.setItem(KEYS.gsc, gsc.trim());
-    localStorage.setItem(KEYS.ga, ga.trim());
-    localStorage.setItem(KEYS.gtm, gtm.trim());
-    injectGoogle();
-    toast.success('Google tracking saved', { description: 'Tracking is live across all pages.' });
+  const saveTracking = async () => {
+    const payload = {
+      google_site_verification: extractGsc(gsc) || null,
+      ga_measurement_id: ga.trim() || null,
+      gtm_id: gtm.trim() || null,
+    };
+    const id = (site as any)?.id;
+    const { error } = id
+      ? await supabase.from('site_settings').update(payload).eq('id', id)
+      : await supabase.from('site_settings').insert(payload as any);
+    if (error) return toast.error('Could not save', { description: error.message });
+    qc.invalidateQueries({ queryKey: ['site-settings'] });
+    injectGoogle(payload.ga_measurement_id, payload.gtm_id);
+    toast.success('Google settings saved', { description: 'Verification tag is now in every page for Google to see.' });
   };
 
   const saveVerifyFile = async () => {
@@ -211,22 +220,12 @@ function extractGsc(raw: string) {
 }
 
 /** Injects GSC meta + GA4 + GTM into <head> from localStorage. Called on app boot + after save. */
-export function injectGoogle() {
+export function injectGoogle(gaId?: string | null, gtmId?: string | null) {
   if (typeof document === 'undefined') return;
-  const gsc = extractGsc(localStorage.getItem(KEYS.gsc) || '');
-  const ga = (localStorage.getItem(KEYS.ga) || '').trim();
-  const gtm = (localStorage.getItem(KEYS.gtm) || '').trim();
-
+  const ga = (gaId || '').trim();
+  const gtm = (gtmId || '').trim();
   document.querySelectorAll('[data-bnoy-google]').forEach((n) => n.remove());
-
-  if (gsc) {
-    const m = document.createElement('meta');
-    m.name = 'google-site-verification';
-    m.content = gsc;
-    m.setAttribute('data-bnoy-google', '1');
-    document.head.appendChild(m);
-  }
-  if (ga) {
+  if (ga && /^[A-Z0-9-]+$/i.test(ga)) {
     const s = document.createElement('script');
     s.src = `https://www.googletagmanager.com/gtag/js?id=${ga}`;
     s.async = true;
@@ -237,7 +236,7 @@ export function injectGoogle() {
     inline.text = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ga}');`;
     document.head.appendChild(inline);
   }
-  if (gtm) {
+  if (gtm && /^[A-Z0-9-]+$/i.test(gtm)) {
     const inline = document.createElement('script');
     inline.setAttribute('data-bnoy-google', '1');
     inline.text = `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtm}');`;
