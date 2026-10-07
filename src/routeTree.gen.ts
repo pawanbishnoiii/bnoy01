@@ -10,33 +10,246 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FileRouteImport } from './routes/$file'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AppsRouteImport } from './routes/apps'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as RefundRouteImport } from './routes/refund'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as PSlugRouteImport } from './routes/p.$slug'
+import { Route as ProjectIdRouteImport } from './routes/project.$id'
+import { Route as ApiPublicAiChatRouteImport } from './routes/api/public/ai-chat'
+import { Route as ApiPublicSendNotificationRouteImport } from './routes/api/public/send-notification'
+import { Route as ApiPublicTrackRouteImport } from './routes/api/public/track'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FileRoute = FileRouteImport.update({
+  id: '/$file',
+  path: '/$file',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppsRoute = AppsRouteImport.update({
+  id: '/apps',
+  path: '/apps',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceRoute = MarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RefundRoute = RefundRouteImport.update({
+  id: '/refund',
+  path: '/refund',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PSlugRoute = PSlugRouteImport.update({
+  id: '/p/$slug',
+  path: '/p/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectIdRoute = ProjectIdRouteImport.update({
+  id: '/project/$id',
+  path: '/project/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAiChatRoute = ApiPublicAiChatRouteImport.update({
+  id: '/api/public/ai-chat',
+  path: '/api/public/ai-chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSendNotificationRoute =
+  ApiPublicSendNotificationRouteImport.update({
+    id: '/api/public/send-notification',
+    path: '/api/public/send-notification',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTrackRoute = ApiPublicTrackRouteImport.update({
+  id: '/api/public/track',
+  path: '/api/public/track',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$file': typeof FileRoute
+  '/admin': typeof AdminRoute
+  '/apps': typeof AppsRoute
+  '/dashboard': typeof DashboardRoute
+  '/login': typeof LoginRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/refund': typeof RefundRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/p/$slug': typeof PSlugRoute
+  '/project/$id': typeof ProjectIdRoute
+  '/api/public/ai-chat': typeof ApiPublicAiChatRoute
+  '/api/public/send-notification': typeof ApiPublicSendNotificationRoute
+  '/api/public/track': typeof ApiPublicTrackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$file': typeof FileRoute
+  '/admin': typeof AdminRoute
+  '/apps': typeof AppsRoute
+  '/dashboard': typeof DashboardRoute
+  '/login': typeof LoginRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/refund': typeof RefundRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/p/$slug': typeof PSlugRoute
+  '/project/$id': typeof ProjectIdRoute
+  '/api/public/ai-chat': typeof ApiPublicAiChatRoute
+  '/api/public/send-notification': typeof ApiPublicSendNotificationRoute
+  '/api/public/track': typeof ApiPublicTrackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/$file': typeof FileRoute
+  '/admin': typeof AdminRoute
+  '/apps': typeof AppsRoute
+  '/dashboard': typeof DashboardRoute
+  '/login': typeof LoginRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/refund': typeof RefundRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/p/$slug': typeof PSlugRoute
+  '/project/$id': typeof ProjectIdRoute
+  '/api/public/ai-chat': typeof ApiPublicAiChatRoute
+  '/api/public/send-notification': typeof ApiPublicSendNotificationRoute
+  '/api/public/track': typeof ApiPublicTrackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/$file'
+    | '/admin'
+    | '/apps'
+    | '/dashboard'
+    | '/login'
+    | '/marketplace'
+    | '/refund'
+    | '/reset-password'
+    | '/robots.txt'
+    | '/signup'
+    | '/sitemap.xml'
+    | '/p/$slug'
+    | '/project/$id'
+    | '/api/public/ai-chat'
+    | '/api/public/send-notification'
+    | '/api/public/track'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/$file'
+    | '/admin'
+    | '/apps'
+    | '/dashboard'
+    | '/login'
+    | '/marketplace'
+    | '/refund'
+    | '/reset-password'
+    | '/robots.txt'
+    | '/signup'
+    | '/sitemap.xml'
+    | '/p/$slug'
+    | '/project/$id'
+    | '/api/public/ai-chat'
+    | '/api/public/send-notification'
+    | '/api/public/track'
+  id:
+    | '__root__'
+    | '/'
+    | '/$file'
+    | '/admin'
+    | '/apps'
+    | '/dashboard'
+    | '/login'
+    | '/marketplace'
+    | '/refund'
+    | '/reset-password'
+    | '/robots.txt'
+    | '/signup'
+    | '/sitemap.xml'
+    | '/p/$slug'
+    | '/project/$id'
+    | '/api/public/ai-chat'
+    | '/api/public/send-notification'
+    | '/api/public/track'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  FileRoute: typeof FileRoute
+  AdminRoute: typeof AdminRoute
+  AppsRoute: typeof AppsRoute
+  DashboardRoute: typeof DashboardRoute
+  LoginRoute: typeof LoginRoute
+  MarketplaceRoute: typeof MarketplaceRoute
+  RefundRoute: typeof RefundRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
+  SignupRoute: typeof SignupRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  PSlugRoute: typeof PSlugRoute
+  ProjectIdRoute: typeof ProjectIdRoute
+  ApiPublicAiChatRoute: typeof ApiPublicAiChatRoute
+  ApiPublicSendNotificationRoute: typeof ApiPublicSendNotificationRoute
+  ApiPublicTrackRoute: typeof ApiPublicTrackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +261,139 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/$file': {
+      id: '/$file'
+      path: '/$file'
+      fullPath: '/$file'
+      preLoaderRoute: typeof FileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/apps': {
+      id: '/apps'
+      path: '/apps'
+      fullPath: '/apps'
+      preLoaderRoute: typeof AppsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace': {
+      id: '/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof MarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/refund': {
+      id: '/refund'
+      path: '/refund'
+      fullPath: '/refund'
+      preLoaderRoute: typeof RefundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/p/$slug': {
+      id: '/p/$slug'
+      path: '/p/$slug'
+      fullPath: '/p/$slug'
+      preLoaderRoute: typeof PSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/project/$id': {
+      id: '/project/$id'
+      path: '/project/$id'
+      fullPath: '/project/$id'
+      preLoaderRoute: typeof ProjectIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/ai-chat': {
+      id: '/api/public/ai-chat'
+      path: '/api/public/ai-chat'
+      fullPath: '/api/public/ai-chat'
+      preLoaderRoute: typeof ApiPublicAiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/send-notification': {
+      id: '/api/public/send-notification'
+      path: '/api/public/send-notification'
+      fullPath: '/api/public/send-notification'
+      preLoaderRoute: typeof ApiPublicSendNotificationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/track': {
+      id: '/api/public/track'
+      path: '/api/public/track'
+      fullPath: '/api/public/track'
+      preLoaderRoute: typeof ApiPublicTrackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  FileRoute: FileRoute,
+  AdminRoute: AdminRoute,
+  AppsRoute: AppsRoute,
+  DashboardRoute: DashboardRoute,
+  LoginRoute: LoginRoute,
+  MarketplaceRoute: MarketplaceRoute,
+  RefundRoute: RefundRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
+  SignupRoute: SignupRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  PSlugRoute: PSlugRoute,
+  ProjectIdRoute: ProjectIdRoute,
+  ApiPublicAiChatRoute: ApiPublicAiChatRoute,
+  ApiPublicSendNotificationRoute: ApiPublicSendNotificationRoute,
+  ApiPublicTrackRoute: ApiPublicTrackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
