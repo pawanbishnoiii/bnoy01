@@ -1,12 +1,19 @@
 # Requested upgrades
-- [ ] Slightly reduce signup card and verify fit.
-- [ ] Add dynamic Creative Team Showcase and admin editing.
-- [ ] Add admin-managed Truecaller callback URL and app domain.
-- [ ] Improve project version selection.
-- [ ] Add Windows software marketplace and publishing metadata.
-- [ ] Upgrade marketplace layout and verify main pages and admin saves.
-- [ ] Grant approved admin account access and verify saves.
-- [ ] Add editable Truecaller app key and verified profile fields.
-- [ ] Implement verified phone/email matching and account linking without automatic unverified merges.
-- [ ] Route source purchases through checkout with server-verified pricing and payment.
-- [ ] Add login location/security logs and admin monitoring.
+- [x] Implement faster single-flight Truecaller polling, recovery and clear loading/error states.
+- [x] Reuse the /login card in the popup and add uploaded loading/success videos with browser-compatible alternatives.
+- [x] Add modern admin/project presentation, formatting editor, preview and screenshot ordering.
+- [x] Generate and use transparent creator illustration.
+- [x] Verify public pages, editor formatting/preview, invalid callback attempt and authenticated admin access.
+- [x] Reduce signup card; desktop fit verified.
+- [x] Preserve existing dynamic Creative Team Showcase and admin editing modules.
+- [x] Preserve admin-managed Truecaller callback URL, app domain and enable switch.
+- [x] Preserve existing project version selection and release fallback.
+- [x] Verify Windows marketplace page and preserve installer publishing metadata.
+- [x] Verify marketplace page and authenticated catalog insertion.
+- [x] Verify existing admin access and restore 24 projects plus 5 apps with original publication states, excluding copied credentials.
+- [x] Preserve editable Truecaller app key and server-managed verified profile fields.
+- [x] Preserve verified phone matching and explicit account-conflict handling without unverified email merges.
+- [x] Keep source purchases routed through the existing server-priced demo checkout.
+- [ ] Verify live Truecaller approval and success redirect — requires registered domain deployment and real Android Truecaller approval; cannot simulate identity proof.
+- [ ] Verify imported media/source downloads — backup contains URLs, not original storage files; inaccessible files require source storage access.
+- [x] Preserve existing login auditing and admin Login Security monitoring.

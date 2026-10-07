@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Navigate, useNavigate } from '@/lib/router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Package, PlusCircle, ShoppingBag, Users2, BarChart3,
-  Pencil, Trash2, IndianRupee, TrendingUp, Eye, Settings2, Smartphone, Tags, Search, Globe2, Bell, Lock as LockIcon
+  Pencil, Trash2, IndianRupee, TrendingUp, Eye, Settings2, Smartphone, Tags, Search, Globe2, Bell, ArrowLeft, ArrowRight, X, Lock as LockIcon
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
@@ -31,6 +31,8 @@ import AdminTruecaller from '@/components/admin/AdminTruecaller';
 import AdminLoginSecurity from '@/components/admin/AdminLoginSecurity';
 import AiListingGenerator from '@/components/admin/AiListingGenerator';
 import { TECH_SUGGESTIONS, techIcon } from '@/lib/techIcons';
+
+const DescriptionEditor = lazy(() => import('@/components/admin/DescriptionEditor'));
 
 const sidebarItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -80,20 +82,21 @@ export default function AdminPanel() {
       <Navbar /><AuthModal />
       <div className="flex pt-20">
         <aside className="hidden md:flex w-64 flex-col warm-bg border-r border-border h-[calc(100vh-5rem)] overflow-y-auto p-4 fixed left-0 top-20">
+          <div className="px-4 py-4 mb-4 border-b border-border"><p className="font-display text-lg font-bold">Studio workspace</p><p className="text-xs text-muted-foreground mt-1">Bnoy Studios</p></div>
           <nav className="space-y-1">
             {sidebarItems.map((item) => (
-              <button
+              <Button variant="ghost"
                 key={item.id}
                 onClick={() => { setActiveTab(item.id); if (item.id !== 'add') setEditingId(null); }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all ${
+                className={`w-full h-11 justify-start flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all ${
                   activeTab === item.id
-                    ? 'gradient-fire-strong text-white font-semibold shadow-card'
+                    ? 'bg-primary/10 text-primary font-semibold'
                     : 'text-muted-foreground hover:text-ink hover:bg-white'
                 }`}
               >
                 <item.icon className="h-4 w-4" />
                 {item.label}
-              </button>
+              </Button>
             ))}
           </nav>
         </aside>
@@ -153,12 +156,12 @@ function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-2xl font-bold">Dashboard Overview</h1>
+      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-5"><div><p className="text-xs text-muted-foreground mb-2">STUDIO / OVERVIEW</p><h1 className="font-display text-3xl font-bold">Dashboard Overview</h1></div><Badge variant="outline">{projects?.filter((p: any) => p.status === 'draft').length || 0} drafts</Badge></div>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((c) => (
-          <div key={c.label} className="bg-white rounded-xl border border-border shadow-card p-5">
-            <div className={`inline-flex w-10 h-10 rounded-lg bg-gradient-to-br ${c.color} items-center justify-center mb-3`}>
-              <c.icon className="h-5 w-5 text-primary-foreground" />
+          <div key={c.label} className="bg-card rounded-lg border border-border p-5">
+            <div className="inline-flex w-10 h-10 rounded-lg bg-primary/10 text-primary items-center justify-center mb-3">
+              <c.icon className="h-5 w-5" />
             </div>
             <p className="text-sm text-muted-foreground">{c.label}</p>
             <p className="text-2xl font-display font-bold">{c.value}</p>
@@ -378,7 +381,7 @@ function AdminAddProject({ editingId, onDone }: { editingId: string | null; onDo
     setSlugStatus('checking');
     const handle = setTimeout(async () => {
       const q = supabase.from('projects').select('id').eq('slug', previewSlug);
-      const { data } = isEdit ? await q.neq('id', editingId!).maybeSingle() : await q.maybeSingle();
+      const { data } = isEdit && editingId ? await q.neq('id', editingId).maybeSingle() : await q.maybeSingle();
       setSlugStatus(data ? 'taken' : 'ok');
     }, 350);
     return () => clearTimeout(handle);
@@ -488,7 +491,10 @@ function AdminAddProject({ editingId, onDone }: { editingId: string | null; onDo
     setLoading(true);
     try {
       let parsedChangelog: any = [];
-      try { parsedChangelog = form.changelog ? JSON.parse(form.changelog) : []; } catch { parsedChangelog = []; }
+      try { parsedChangelog = form.changelog ? JSON.parse(form.changelog) : []; } catch { throw new Error('Changelog must be valid JSON. Fix it before saving.'); }
+      if (!Array.isArray(parsedChangelog)) throw new Error('Changelog must be an array of releases.');
+      if (form.short_desc.length > 160) throw new Error('Short description must be 160 characters or fewer.');
+      if (form.price < 0 || form.discount_price < 0) throw new Error('Prices cannot be negative.');
       const slugAuto = slugify(form.slug || form.title);
       if (slugAuto && (slugStatus === 'taken' || slugStatus === 'invalid')) {
         throw new Error(slugStatus === 'taken' ? 'That slug is already in use — pick a different one.' : 'Slug must be at least 3 characters and only contain lowercase letters, numbers, hyphens.');
@@ -509,7 +515,7 @@ function AdminAddProject({ editingId, onDone }: { editingId: string | null; onDo
         preview_watermark: form.preview_watermark || null,
       };
       const { error } = isEdit
-        ? await supabase.from('projects').update(payload).eq('id', editingId!)
+        ? await supabase.from('projects').update(payload).eq('id', editingId || '')
         : await supabase.from('projects').insert(payload);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['admin-projects'] });
@@ -526,7 +532,7 @@ function AdminAddProject({ editingId, onDone }: { editingId: string | null; onDo
   return (
     <div className="space-y-6 max-w-3xl">
       <h1 className="font-display text-2xl font-bold">{isEdit ? 'Edit Project' : 'Add New Project'}</h1>
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-border shadow-card p-6 space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid md:grid-cols-2 gap-4">
           <div className="space-y-2"><Label>Title *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required className="bg-warm-bg border-border" /></div>
           <div className="space-y-2">
@@ -553,7 +559,7 @@ function AdminAddProject({ editingId, onDone }: { editingId: string | null; onDo
           <span className={`absolute right-2 bottom-2 text-xs ${shortLen > 160 ? 'text-destructive' : 'text-muted-foreground'}`}>{shortLen}/160</span>
         </div>
 
-        <div className="space-y-2"><Label>Full Description (Markdown / HTML)</Label><Textarea value={form.full_desc} onChange={(e) => setForm({ ...form, full_desc: e.target.value })} className="bg-warm-bg border-border" rows={6} /></div>
+        <div className="space-y-2"><Label>Full Description</Label><Suspense fallback={<p className="text-muted-foreground">Loading editor…</p>}><DescriptionEditor value={form.full_desc} onChange={(value) => setForm((f: any) => ({ ...f, full_desc: value }))} /></Suspense></div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div className="space-y-2">
@@ -718,7 +724,11 @@ function AdminAddProject({ editingId, onDone }: { editingId: string | null; onDo
               {form.screenshots.map((s: string, i: number) => (
                 <div key={s} className="relative">
                   <img src={s} alt="" className="w-20 h-20 object-cover rounded border border-border" />
-                  <button type="button" onClick={() => setForm({ ...form, screenshots: form.screenshots.filter((_: any, idx: number) => idx !== i) })} className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-white text-xs">×</button>
+                  <div className="flex gap-1 mt-1">
+                    <Button type="button" variant="outline" size="icon" className="h-6 w-6" aria-label={`Move screenshot ${i + 1} left`} disabled={i === 0} onClick={() => setForm((f: any) => { const screenshots = [...f.screenshots]; [screenshots[i - 1], screenshots[i]] = [screenshots[i], screenshots[i - 1]]; return { ...f, screenshots }; })}><ArrowLeft className="h-3 w-3" /></Button>
+                    <Button type="button" variant="outline" size="icon" className="h-6 w-6" aria-label={`Move screenshot ${i + 1} right`} disabled={i === form.screenshots.length - 1} onClick={() => setForm((f: any) => { const screenshots = [...f.screenshots]; [screenshots[i], screenshots[i + 1]] = [screenshots[i + 1], screenshots[i]]; return { ...f, screenshots }; })}><ArrowRight className="h-3 w-3" /></Button>
+                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive" aria-label={`Remove screenshot ${i + 1}`} onClick={() => setForm({ ...form, screenshots: form.screenshots.filter((_: any, idx: number) => idx !== i) })}><X className="h-3 w-3" /></Button>
+                  </div>
                 </div>
               ))}
             </div>
