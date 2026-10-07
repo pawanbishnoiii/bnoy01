@@ -53,8 +53,7 @@ export default function Signup() {
 
   const oauth = async (provider: 'google' | 'apple') => {
     setLoading(true);
-    void provider;
-    const r = await signInWithGoogle();
+    const r = await signInWithGoogle(provider);
     if (r.error) {
       toast({ title: 'Sign-in failed', description: r.error, variant: 'destructive' });
       setLoading(false);

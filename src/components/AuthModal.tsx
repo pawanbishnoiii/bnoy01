@@ -46,8 +46,7 @@ export default function AuthModal() {
 
   const oauth = async (provider: 'google' | 'apple') => {
     setLoading(true);
-    void provider;
-    const result = await signInWithGoogle();
+    const result = await signInWithGoogle(provider);
     if (result.error) {
       toast({ title: 'Sign-in failed', description: result.error, variant: 'destructive' });
       setLoading(false);

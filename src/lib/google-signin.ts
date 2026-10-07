@@ -15,17 +15,17 @@ async function getMode(): Promise<string> {
   return (data?.google_auth_mode as string) || "auto";
 }
 
-export async function signInWithGoogle(): Promise<{ error?: string }> {
+export async function signInWithGoogle(provider: "google" | "apple" = "google"): Promise<{ error?: string }> {
   const origin = window.location.origin;
   const mode = await getMode().catch(() => "auto");
   const useBroker = mode === "lovable" || (mode !== "custom" && brokerAvailable(window.location.hostname));
   if (useBroker) {
-    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: origin });
+    const r = await lovable.auth.signInWithOAuth(provider, { redirect_uri: origin });
     if (r.error) return { error: r.error.message ?? String(r.error) };
     return {};
   }
   const { error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
+    provider,
     options: { redirectTo: `${origin}/`, queryParams: { prompt: "select_account" } },
   });
   return error ? { error: error.message } : {};
