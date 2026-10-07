@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FileRouteImport } from './routes/$file'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppsRouteImport } from './routes/apps'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -28,6 +29,11 @@ import { Route as ApiPublicTrackRouteImport } from './routes/api/public/track'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FileRoute = FileRouteImport.update({
+  id: '/$file',
+  path: '/$file',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -104,6 +110,7 @@ const ApiPublicTrackRoute = ApiPublicTrackRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$file': typeof FileRoute
   '/admin': typeof AdminRoute
   '/apps': typeof AppsRoute
   '/dashboard': typeof DashboardRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$file': typeof FileRoute
   '/admin': typeof AdminRoute
   '/apps': typeof AppsRoute
   '/dashboard': typeof DashboardRoute
@@ -139,6 +147,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/$file': typeof FileRoute
   '/admin': typeof AdminRoute
   '/apps': typeof AppsRoute
   '/dashboard': typeof DashboardRoute
@@ -158,6 +167,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$file'
     | '/admin'
     | '/apps'
     | '/dashboard'
@@ -175,6 +185,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$file'
     | '/admin'
     | '/apps'
     | '/dashboard'
@@ -192,6 +203,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/$file'
     | '/admin'
     | '/apps'
     | '/dashboard'
@@ -210,6 +222,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  FileRoute: typeof FileRoute
   AdminRoute: typeof AdminRoute
   AppsRoute: typeof AppsRoute
   DashboardRoute: typeof DashboardRoute
@@ -233,6 +246,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$file': {
+      id: '/$file'
+      path: '/$file'
+      fullPath: '/$file'
+      preLoaderRoute: typeof FileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -338,6 +358,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  FileRoute: FileRoute,
   AdminRoute: AdminRoute,
   AppsRoute: AppsRoute,
   DashboardRoute: DashboardRoute,

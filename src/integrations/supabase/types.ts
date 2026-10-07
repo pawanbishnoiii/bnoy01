@@ -594,12 +594,14 @@ export type Database = {
           brand_name: string | null
           brand_tagline: string | null
           elevenlabs_agent_id: string | null
+          ga_measurement_id: string | null
           google_auth_mode: string
           google_client_id: string | null
           google_redirect_uri: string | null
           google_site_verification: string | null
           google_verify_file_content: string | null
           google_verify_file_name: string | null
+          gtm_id: string | null
           hero_badge: string | null
           hero_bg_url: string | null
           hero_lottie_url: string | null
@@ -628,12 +630,14 @@ export type Database = {
           brand_name?: string | null
           brand_tagline?: string | null
           elevenlabs_agent_id?: string | null
+          ga_measurement_id?: string | null
           google_auth_mode?: string
           google_client_id?: string | null
           google_redirect_uri?: string | null
           google_site_verification?: string | null
           google_verify_file_content?: string | null
           google_verify_file_name?: string | null
+          gtm_id?: string | null
           hero_badge?: string | null
           hero_bg_url?: string | null
           hero_lottie_url?: string | null
@@ -662,12 +666,14 @@ export type Database = {
           brand_name?: string | null
           brand_tagline?: string | null
           elevenlabs_agent_id?: string | null
+          ga_measurement_id?: string | null
           google_auth_mode?: string
           google_client_id?: string | null
           google_redirect_uri?: string | null
           google_site_verification?: string | null
           google_verify_file_content?: string | null
           google_verify_file_name?: string | null
+          gtm_id?: string | null
           hero_badge?: string | null
           hero_bg_url?: string | null
           hero_lottie_url?: string | null
