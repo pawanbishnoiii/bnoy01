@@ -39,7 +39,7 @@ export default function AdminTeam() {
       else { refresh(); setForm(null); toast({ title: 'Team member saved' }); }
     }}>
       <div className="grid sm:grid-cols-2 gap-4">
-        {(['name', 'expertise', 'image_url', 'website_url', 'linkedin_url', 'instagram_url', 'github_url', 'x_url'] as const).map(key => <div key={key} className="space-y-2"><Label htmlFor={`team-${key}`}>{key.replace(/_/g, ' ')}</Label><Input id={`team-${key}`} type={key.endsWith('url') ? 'url' : 'text'} required={key === 'name' || key === 'expertise'} value={form[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} /></div>)}
+        {(['name', 'expertise', 'image_url', 'website_url', 'linkedin_url', 'instagram_url', 'github_url', 'x_url'] as const).map(key => <div key={key} className="space-y-2"><Label htmlFor={`team-${key}`}>{key.replace(/_/g, ' ')}</Label><Input id={`team-${key}`} type={key.endsWith('url') && key !== 'image_url' ? 'url' : 'text'} required={key === 'name' || key === 'expertise'} value={form[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} /></div>)}
         <div className="space-y-2"><Label htmlFor="team-order">Display order</Label><Input id="team-order" type="number" value={form.sort_order} onChange={e => setForm({ ...form, sort_order: Number(e.target.value) })} /></div>
         <div className="flex items-center gap-3"><Switch id="team-published" checked={form.published} onCheckedChange={published => setForm({ ...form, published })} /><Label htmlFor="team-published">Published</Label></div>
       </div>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from '@/lib/router';
+import { Link, useSearchParams, useNavigate } from '@/lib/router';
 import { motion } from 'framer-motion';
 import { SlidersHorizontal, Code2, Monitor, Smartphone, X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -24,6 +24,7 @@ type Price = 'all' | 'free' | 'paid';
 type Sort = 'newest' | 'price-asc' | 'price-desc' | 'popular';
 
 export default function Marketplace() {
+  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const [searchInput, setSearchInput] = useState(params.get('q') || '');
   const search = useDebouncedValue(searchInput, 300);
@@ -94,17 +95,7 @@ export default function Marketplace() {
     return Array.from(set);
   }, [projects]);
 
-  const handleBuy = async (project: any) => {
-    if (!user) {
-      setShowAuthModal(true, project.price === 0 ? 'Sign in to download.' : `Sign in to buy "${project.title}".`);
-      return;
-    }
-    if (project.price === 0) {
-      const { error } = await supabase.from('purchases').insert({ user_id: user.id, project_id: project.id, amount: 0 });
-      if (error && !error.message.includes('duplicate')) toast({ title: 'Error', description: error.message, variant: 'destructive' });
-      else toast({ title: 'Project unlocked!' });
-    }
-  };
+  const handleBuy = async (project: any) => { navigate(`/checkout/${project.id}`); };
 
   const allCats = ['All', ...(categories || [])];
   const activeFilters = [
