@@ -22,6 +22,7 @@ import { motion } from 'framer-motion';
 import MagnifiedBento from '@/components/ui/magnified-bento';
 import FolderInteraction from '@/components/ui/folder-interaction';
 import { ContainerTextFlip } from '@/components/ui/container-text-flip';
+import Team01 from '@/components/ui/team-01';
 
 export default function Index() {
   useGSAPAnimations();
@@ -82,6 +83,7 @@ export default function Index() {
       </section>
 
       <HowItWorks />
+      <Team01 />
       <TestimonialsSection />
       <FAQSection />
       <SocialProofTicker />

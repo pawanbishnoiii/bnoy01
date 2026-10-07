@@ -13,6 +13,8 @@ import Navbar from '@/components/Navbar';
 import AuthModal from '@/components/AuthModal';
 import Footer from '@/components/Footer';
 import BackToTop from '@/components/BackToTop';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const platformMeta: Record<string, { color: string; icon: any; label: string }> = {
   android: { color: 'bg-green-100 text-green-700 border-green-200', icon: Smartphone, label: 'Android' },
@@ -24,17 +26,19 @@ const platformMeta: Record<string, { color: string; icon: any; label: string }> 
 
 const tabs = ['all', 'android', 'ios', 'windows', 'mac', 'linux'];
 
-export default function AppsPage() {
-  const [filter, setFilter] = useState<string>('all');
+export default function AppsPage({ platform }: { platform?: string }) {
+  const [filter, setFilter] = useState<string>(platform || 'all');
+  const [search, setSearch] = useState('');
   const { user, setShowAuthModal } = useAuthStore();
   const { openPayment } = useRazorpay();
   const { toast } = useToast();
   const qc = useQueryClient();
 
-  const { data: apps = [], isLoading } = useQuery({
+  const { data: apps = [], isLoading, error: appsError, refetch: retryApps } = useQuery({
     queryKey: ['apps'],
     queryFn: async () => {
-      const { data } = await supabase.from('apps').select('*').eq('status', 'published').order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('apps').select('*').eq('status', 'published').order('created_at', { ascending: false });
+      if (error) throw error;
       return data || [];
     },
   });
@@ -50,7 +54,7 @@ export default function AppsPage() {
   });
 
   const ownedIds = new Set(purchases.map((p: any) => p.project_id));
-  const filtered = filter === 'all' ? apps : apps.filter((a: any) => a.platform === filter);
+  const filtered = apps.filter(a => (!platform || a.platform === platform) && (filter === 'all' || a.platform === filter) && `${a.name} ${a.description || ''}`.toLowerCase().includes(search.toLowerCase()));
 
   const downloadApp = async (app: any) => {
     try {
@@ -106,33 +110,34 @@ export default function AppsPage() {
         <div className="relative text-center mb-12 overflow-hidden py-12">
           <div className="absolute -z-10 inset-0 bg-gradient-to-br from-orange-100/60 via-transparent to-red-100/40 blur-3xl" />
           <h1 className="font-display text-4xl md:text-5xl font-extrabold text-ink">
-            Mobile & Desktop <span className="gradient-text">Apps</span>
+            {platform === 'windows' ? 'Windows Software' : 'Mobile & Desktop Apps'}
           </h1>
           <p className="text-muted-foreground mt-3 max-w-xl mx-auto">
-            Download our companion apps for the best experience.
+            {platform === 'windows' ? 'Windows releases, installers and system requirements.' : 'Explore the latest mobile and desktop releases.'}
           </p>
         </div>
 
         {/* Platform tabs */}
-        <div className="flex flex-wrap justify-center gap-2 mb-10">
+        {!platform && <div className="flex flex-wrap justify-center gap-2 mb-6">
           {tabs.map((t) => (
-            <button
+            <Button variant={filter === t ? 'default' : 'outline'}
               key={t}
               onClick={() => setFilter(t)}
-              className={`relative px-5 py-2 rounded-full text-sm font-semibold capitalize transition-all ${
-                filter === t ? 'bg-fire text-white shadow-card' : 'bg-white border border-border text-muted-foreground hover:border-fire/40'
-              }`}
+              className="capitalize"
             >
               {t === 'all' ? 'All Apps' : platformMeta[t]?.label || t}
-            </button>
+            </Button>
           ))}
-        </div>
+        </div>}
+        <Input aria-label="Search software" placeholder="Search software…" value={search} onChange={e => setSearch(e.target.value)} className="max-w-lg mx-auto mb-8" />
+        {appsError && <div role="alert" className="text-center py-8"><p className="text-destructive">Software could not load.</p><Button variant="outline" onClick={() => retryApps()}>Retry</Button></div>}
+        {isLoading && <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">{[1,2,3].map(i => <Skeleton key={i} className="h-72 rounded-lg" />)}</div>}
 
         {/* Empty state */}
-        {!isLoading && filtered.length === 0 && (
+        {!isLoading && !appsError && filtered.length === 0 && (
           <div className="text-center py-20">
             <div className="text-7xl mb-4">📱</div>
-            <h3 className="font-display text-xl font-bold text-ink">No apps yet</h3>
+            <h3 className="font-display text-xl font-bold text-ink">{search ? 'No matching software' : platform === 'windows' ? 'No Windows releases yet' : 'No apps yet'}</h3>
             <p className="text-muted-foreground mt-2">Check back soon — admin will upload apps shortly.</p>
           </div>
         )}
@@ -146,7 +151,7 @@ export default function AppsPage() {
               <motion.div
                 key={app.id}
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-xl hover:border-orange-200 transition-all duration-300 hover:-translate-y-1 flex flex-col"
+                className="bg-card rounded-lg p-6 border border-border shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 flex flex-col"
               >
                 <div className="flex items-start gap-4 mb-3">
                   {app.icon_url ? (
@@ -168,6 +173,7 @@ export default function AppsPage() {
                 </div>
 
                 <p className="text-sm text-gray-600 line-clamp-3 mb-3">{app.description}</p>
+                {app.platform === 'windows' && <div className="mb-4 text-xs text-muted-foreground space-y-2"><Badge variant="outline">{app.architecture || 'x64'}</Badge>{app.system_requirements && <p className="whitespace-pre-line">{app.system_requirements}</p>}</div>}
 
                 {app.screenshots_urls && app.screenshots_urls.length > 0 && (
                   <div className="flex gap-2 overflow-x-auto pb-2 mb-3">
