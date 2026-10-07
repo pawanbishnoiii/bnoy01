@@ -4,6 +4,8 @@ import Screen from "@/screens/Signup";
 export const Route = createFileRoute("/signup")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Create account — Bnoy Studios" },
       { name: "description", content: "Sign up for Bnoy Studios to buy and download projects." },
       { property: "og:title", content: "Create account — Bnoy Studios" },
