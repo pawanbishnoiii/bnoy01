@@ -23,6 +23,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as WindowsRouteImport } from './routes/windows'
 import { Route as AuthTrueSdkRouteImport } from './routes/auth.true-sdk'
+import { Route as CheckoutIdRouteImport } from './routes/checkout.$id'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as ProjectIdRouteImport } from './routes/project.$id'
 import { Route as ApiPublicAiChatRouteImport } from './routes/api/public/ai-chat'
@@ -100,6 +101,11 @@ const AuthTrueSdkRoute = AuthTrueSdkRouteImport.update({
   path: '/auth/true-sdk',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CheckoutIdRoute = CheckoutIdRouteImport.update({
+  id: '/checkout/$id',
+  path: '/checkout/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PSlugRoute = PSlugRouteImport.update({
   id: '/p/$slug',
   path: '/p/$slug',
@@ -147,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/windows': typeof WindowsRoute
   '/auth/true-sdk': typeof AuthTrueSdkRoute
+  '/checkout/$id': typeof CheckoutIdRoute
   '/p/$slug': typeof PSlugRoute
   '/project/$id': typeof ProjectIdRoute
   '/api/public/ai-chat': typeof ApiPublicAiChatRoute
@@ -169,6 +176,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/windows': typeof WindowsRoute
   '/auth/true-sdk': typeof AuthTrueSdkRoute
+  '/checkout/$id': typeof CheckoutIdRoute
   '/p/$slug': typeof PSlugRoute
   '/project/$id': typeof ProjectIdRoute
   '/api/public/ai-chat': typeof ApiPublicAiChatRoute
@@ -192,6 +200,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/windows': typeof WindowsRoute
   '/auth/true-sdk': typeof AuthTrueSdkRoute
+  '/checkout/$id': typeof CheckoutIdRoute
   '/p/$slug': typeof PSlugRoute
   '/project/$id': typeof ProjectIdRoute
   '/api/public/ai-chat': typeof ApiPublicAiChatRoute
@@ -216,6 +225,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/windows'
     | '/auth/true-sdk'
+    | '/checkout/$id'
     | '/p/$slug'
     | '/project/$id'
     | '/api/public/ai-chat'
@@ -238,6 +248,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/windows'
     | '/auth/true-sdk'
+    | '/checkout/$id'
     | '/p/$slug'
     | '/project/$id'
     | '/api/public/ai-chat'
@@ -260,6 +271,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/windows'
     | '/auth/true-sdk'
+    | '/checkout/$id'
     | '/p/$slug'
     | '/project/$id'
     | '/api/public/ai-chat'
@@ -283,6 +295,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   WindowsRoute: typeof WindowsRoute
   AuthTrueSdkRoute: typeof AuthTrueSdkRoute
+  CheckoutIdRoute: typeof CheckoutIdRoute
   PSlugRoute: typeof PSlugRoute
   ProjectIdRoute: typeof ProjectIdRoute
   ApiPublicAiChatRoute: typeof ApiPublicAiChatRoute
@@ -391,6 +404,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthTrueSdkRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/checkout/$id': {
+      id: '/checkout/$id'
+      path: '/checkout/$id'
+      fullPath: '/checkout/$id'
+      preLoaderRoute: typeof CheckoutIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/p/$slug': {
       id: '/p/$slug'
       path: '/p/$slug'
@@ -451,6 +471,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   WindowsRoute: WindowsRoute,
   AuthTrueSdkRoute: AuthTrueSdkRoute,
+  CheckoutIdRoute: CheckoutIdRoute,
   PSlugRoute: PSlugRoute,
   ProjectIdRoute: ProjectIdRoute,
   ApiPublicAiChatRoute: ApiPublicAiChatRoute,
