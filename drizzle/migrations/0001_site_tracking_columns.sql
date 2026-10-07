@@ -1,2 +1,0 @@
-ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS ga_measurement_id text, ADD COLUMN IF NOT EXISTS gtm_id text;
-UPDATE public.site_settings SET google_site_verification = 'ZNbovb89bIAQnOIjhHKuweyasCEBbIZQLZ39p5qYQFE' WHERE google_site_verification IS NULL;
