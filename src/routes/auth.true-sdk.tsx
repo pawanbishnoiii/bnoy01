@@ -23,9 +23,9 @@ function TruecallerStatus() {
   const [waiting, setWaiting] = useState(true);
   const navigate = useNavigate();
   useEffect(() => {
-    let cancelled = false; let timer: ReturnType<typeof setTimeout>;
+    let cancelled = false; let timer: ReturnType<typeof setTimeout> | undefined;
     const raw = sessionStorage.getItem('bnoy_truecaller');
-    if (!raw) { setWaiting(false); setMessage('No verification request found. Please start again.'); return; }
+    if (!raw) { setWaiting(false); setMessage('No active verification found. Redirecting you to sign in…'); timer = setTimeout(() => navigate({ to: '/login' }), 2500); return () => clearTimeout(timer); }
     let proof: { requestId: string; proof: string };
     try { proof = JSON.parse(raw); } catch { setWaiting(false); setMessage('Invalid verification request. Please retry.'); return; }
     let count = 0;

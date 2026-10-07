@@ -16,7 +16,14 @@ export const prepareCheckout = createServerFn({ method: 'POST' }).middleware([re
     return { owned: true, amount: 0, title: project.title };
   }
   const keyId = process.env['RAZORPAY_KEY_ID']; const secret = process.env['RAZORPAY_KEY_SECRET'];
-  if (!keyId || !secret) throw new Error('Payments are not configured yet. No charge was made.');
+  if (!keyId || !secret) {
+    // Demo payment mode until Razorpay keys are configured.
+    const demoId = `demo_${crypto.randomUUID().replace(/-/g, '').slice(0, 20)}`;
+    await db.from('checkout_orders').insert({ user_id: context.userId, project_id: project.id, amount, provider_order_id: demoId, status: 'completed' });
+    const { error: demoError } = await db.from('purchases').insert({ user_id: context.userId, project_id: project.id, amount, razorpay_payment_id: demoId, status: 'completed' });
+    if (demoError && demoError.code !== '23505') throw new Error('Demo payment could not finish.');
+    return { owned: true, demo: true, amount, title: project.title };
+  }
   const result = await fetch('https://api.razorpay.com/v1/orders', { method: 'POST', headers: { Authorization: `Basic ${btoa(`${keyId}:${secret}`)}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: amount * 100, currency: 'INR', receipt: crypto.randomUUID() }), signal: AbortSignal.timeout(10000) });
   if (!result.ok) throw new Error('Payment service unavailable. No charge was made.');
   const provider = await result.json() as { id: string };
