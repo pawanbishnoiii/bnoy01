@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { signInWithGoogle } from '@/lib/google-signin';
+import TruecallerButton from '@/components/TruecallerButton';
 
 /**
  * Premium Crextio-inspired auth screen. Mirrors the reference layout:
@@ -147,6 +148,7 @@ export default function Signup() {
                   <GoogleGlyph /> Google
                 </button>
               </div>
+              <TruecallerButton />
             </form>
           </div>
 

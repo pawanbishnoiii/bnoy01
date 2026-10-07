@@ -13,3 +13,7 @@
 - Store Truecaller registered URLs in an admin-only singleton; configuration alone must never imply verified Truecaller authentication.
 - Reuse the apps catalog for the Windows route with platform-scoped results; installer architecture and requirements belong to app records.
 - Resolve project releases from `project_versions` with the legacy changelog as fallback so existing products remain compatible.
+- Truecaller callbacks accept only allowlisted HTTPS profile endpoints and server-fetched proof; browser polling requires an expiring secret and never trusts callback profile fields directly.
+- Normalize phone identities with libphonenumber-js and protect verified identity fields from browser writes; Truecaller email is not proof of email ownership.
+- Source purchases use server-priced checkout orders and verified Razorpay signatures/capture; browser purchase inserts stay disabled.
+- Login auditing is deduplicated by validated auth session ID and uses server-observed IP with HTTPS geolocation.

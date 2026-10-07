@@ -5,3 +5,8 @@
 - [ ] Improve project version selection.
 - [ ] Add Windows software marketplace and publishing metadata.
 - [ ] Upgrade marketplace layout and verify main pages and admin saves.
+- [ ] Grant approved admin account access and verify saves.
+- [ ] Add editable Truecaller app key and verified profile fields.
+- [ ] Implement verified phone/email matching and account linking without automatic unverified merges.
+- [ ] Route source purchases through checkout with server-verified pricing and payment.
+- [ ] Add login location/security logs and admin monitoring.

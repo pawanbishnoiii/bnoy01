@@ -5,7 +5,7 @@ import { prefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/store/authStore';
-import { Link } from '@/lib/router';
+import { Link, useNavigate } from '@/lib/router';
 
 interface ProjectCardProps {
   project: {
@@ -19,17 +19,12 @@ interface ProjectCardProps {
 }
 
 export default function ProjectCard({ project, onPreview, onBuy, index = 0 }: ProjectCardProps) {
+  const navigate = useNavigate();
   const { user, setShowAuthModal } = useAuthStore();
   const isFree = project.price === 0;
   const views = project.views_count ?? 0;
 
-  const handleBuy = () => {
-    if (!user) {
-      setShowAuthModal(true, isFree ? 'Sign in to download this free project.' : `Sign in to buy "${project.title}".`);
-      return;
-    }
-    onBuy?.(project);
-  };
+  const handleBuy = () => { navigate(`/checkout/${project.id}`); };
 
   const reduced = prefersReducedMotion();
   // Cap stagger delay so off-screen rows never wait minutes to appear; cards above the fold animate fast.

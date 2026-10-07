@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from '@/lib/router';
+import { useParams, Link, useNavigate } from '@/lib/router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -38,6 +38,7 @@ interface ChangelogEntry { version: string; date?: string; notes: string; }
 
 export default function ProjectDetail() {
   const params = useParams();
+  const navigate = useNavigate();
   const idOrSlug = params.id || params.slug;
   const isUuid = !!idOrSlug && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
   const { user, isAdmin, setShowAuthModal } = useAuthStore();
@@ -174,25 +175,8 @@ export default function ProjectDetail() {
   const swipe = useSwipe({ onSwipeLeft: galleryNext, onSwipeRight: galleryPrev });
 
   const handleBuy = async () => {
-    if (!user) { setShowAuthModal(true, isFree ? 'Sign in to download this free project.' : `Sign in to buy "${project?.title}".`); return; }
-    if (isFree) {
-      const { error } = await supabase.from('purchases').insert({ user_id: user.id, project_id: project!.id, amount: 0 });
-      if (error && !error.message.includes('duplicate')) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
-      await refetchPurchase();
-      celebrateCart('Unlocked! 🚀', 'Download it from your dashboard anytime.');
-      return;
-    }
-    openPayment({
-      amount: project!.price, name: project!.title, description: `Purchase: ${project!.title}`,
-      prefill: { email: user.email || '', name: user.user_metadata?.name || '' },
-      onSuccess: async (paymentId) => {
-        const { error } = await supabase.from('purchases').insert({ user_id: user.id, project_id: project!.id, amount: project!.price, razorpay_payment_id: paymentId });
-        if (error) { toast({ title: 'Could not save purchase', description: error.message, variant: 'destructive' }); return; }
-        await refetchPurchase();
-        celebratePurchase('Payment successful! 🎉', `${project!.title} is ready to download.`);
-      },
-      onFailure: () => toast({ title: 'Payment cancelled or failed', variant: 'destructive' }),
-    });
+    if (!project) return;
+    navigate(`/checkout/${project.id}`);
   };
 
   const handleDownload = async () => {
@@ -570,7 +554,7 @@ export default function ProjectDetail() {
                 )}
                 {!user ? (
                   <Button className="w-full gradient-fire-strong text-white hover:opacity-95 glow-fire"
-                    onClick={() => setShowAuthModal(true, isFree ? 'Sign in to download this free project.' : `Sign in to buy "${project.title}".`)}>
+                    onClick={handleBuy}>
                     <Lock className="h-4 w-4 mr-2" /> Sign in to {isFree ? 'download' : 'buy'}
                   </Button>
                 ) : purchased ? (
@@ -646,7 +630,7 @@ export default function ProjectDetail() {
               )}
               {!user ? (
                 <Button className="gradient-fire-strong text-white rounded-full px-5 min-h-11"
-                  onClick={() => setShowAuthModal(true, isFree ? 'Sign in to download.' : `Sign in to buy "${project.title}".`)}>
+                  onClick={handleBuy}>
                   <Lock className="h-4 w-4 mr-1.5" /> Sign in
                 </Button>
               ) : purchased ? (

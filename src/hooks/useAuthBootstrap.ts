@@ -1,6 +1,9 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
+import { syncVerifiedIdentity } from '@/lib/truecaller.functions';
+import { recordLogin } from '@/lib/login-log.functions';
+import { toast } from 'sonner';
 
 /**
  * Sets up the global auth listener. Call once in App.
@@ -14,6 +17,7 @@ export function useAuthBootstrap() {
 
   useEffect(() => {
     let cancelled = false;
+    const log = () => recordLogin({ data: { screen: `${window.screen.width}x${window.screen.height}` } }).then(r => { if (r.suspicious) toast.warning(`New login from ${[r.city, r.country].filter(Boolean).join(', ')} — Was this you?`); }).catch(() => undefined);
 
     const fetchRole = async (userId: string | undefined) => {
       if (!userId) { setIsAdmin(false); return; }
@@ -35,6 +39,8 @@ export function useAuthBootstrap() {
       setSession(session);
       setUser(session?.user ?? null);
       setTimeout(() => fetchRole(session?.user?.id), 0);
+      if (session && ['SIGNED_IN', 'USER_UPDATED'].includes(event)) setTimeout(() => { syncVerifiedIdentity().catch(() => undefined); }, 0);
+      if (session && event === 'SIGNED_IN') setTimeout(log, 0);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -42,6 +48,7 @@ export function useAuthBootstrap() {
       setSession(session);
       setUser(session?.user ?? null);
       fetchRole(session?.user?.id).finally(() => setAuthReady(true));
+      if (session) setTimeout(log, 0);
     });
 
     return () => { cancelled = true; subscription.unsubscribe(); };

@@ -1,3 +1,4 @@
+import { useNavigate } from '@/lib/router';
 import { useState, useRef, useMemo } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
@@ -18,6 +19,7 @@ interface FeaturedProductsProps {
 }
 
 export default function FeaturedProducts({ limit, showFilters = true }: FeaturedProductsProps) {
+  const navigate = useNavigate();
   const [category, setCategory] = useState('All');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const ref = useRef(null);
@@ -62,24 +64,7 @@ export default function FeaturedProducts({ limit, showFilters = true }: Featured
 
   const displayed = limit ? filtered?.slice(0, limit) : filtered;
 
-  const handleBuy = async (project: any) => {
-    if (!user) {
-      setShowAuthModal(true, project.price === 0
-        ? 'Sign in to download this free project.'
-        : `Sign in to buy "${project.title}".`);
-      return;
-    }
-    if (project.price === 0) {
-      const { error } = await supabase.from('purchases').insert({ user_id: user.id, project_id: project.id, amount: 0 });
-      if (error && !error.message.includes('duplicate')) {
-        toast({ title: 'Error', description: error.message, variant: 'destructive' });
-        return;
-      }
-      celebrate('Project unlocked!', 'Open your dashboard to download the source code.');
-      return;
-    }
-    toast({ title: 'Payment gateway coming soon', description: 'Razorpay integration will activate once API keys are configured.' });
-  };
+  const handleBuy = async (project: any) => { navigate(`/checkout/${project.id}`); };
 
   return (
     <section ref={ref} className="py-20 bg-white">

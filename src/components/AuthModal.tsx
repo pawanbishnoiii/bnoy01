@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/integrations/supabase/client';
 import { signInWithGoogle } from '@/lib/google-signin';
+import TruecallerButton from '@/components/TruecallerButton';
 
 export default function AuthModal() {
   const { showAuthModal, setShowAuthModal, authIntent } = useAuthStore();
@@ -76,6 +77,7 @@ export default function AuthModal() {
             </Button>
           </div>
 
+          <TruecallerButton />
           <div className="flex items-center gap-3 my-4">
             <div className="h-px flex-1 bg-border" />
             <span className="text-xs text-muted-foreground">or continue with email</span>

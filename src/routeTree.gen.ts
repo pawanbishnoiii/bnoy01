@@ -23,11 +23,13 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as WindowsRouteImport } from './routes/windows'
 import { Route as AuthTrueSdkRouteImport } from './routes/auth.true-sdk'
+import { Route as CheckoutIdRouteImport } from './routes/checkout.$id'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as ProjectIdRouteImport } from './routes/project.$id'
 import { Route as ApiPublicAiChatRouteImport } from './routes/api/public/ai-chat'
 import { Route as ApiPublicSendNotificationRouteImport } from './routes/api/public/send-notification'
 import { Route as ApiPublicTrackRouteImport } from './routes/api/public/track'
+import { Route as ApiPublicTruecallerRouteImport } from './routes/api/public/truecaller'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -99,6 +101,11 @@ const AuthTrueSdkRoute = AuthTrueSdkRouteImport.update({
   path: '/auth/true-sdk',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CheckoutIdRoute = CheckoutIdRouteImport.update({
+  id: '/checkout/$id',
+  path: '/checkout/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PSlugRoute = PSlugRouteImport.update({
   id: '/p/$slug',
   path: '/p/$slug',
@@ -125,6 +132,11 @@ const ApiPublicTrackRoute = ApiPublicTrackRouteImport.update({
   path: '/api/public/track',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTruecallerRoute = ApiPublicTruecallerRouteImport.update({
+  id: '/api/public/truecaller',
+  path: '/api/public/truecaller',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -141,11 +153,13 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/windows': typeof WindowsRoute
   '/auth/true-sdk': typeof AuthTrueSdkRoute
+  '/checkout/$id': typeof CheckoutIdRoute
   '/p/$slug': typeof PSlugRoute
   '/project/$id': typeof ProjectIdRoute
   '/api/public/ai-chat': typeof ApiPublicAiChatRoute
   '/api/public/send-notification': typeof ApiPublicSendNotificationRoute
   '/api/public/track': typeof ApiPublicTrackRoute
+  '/api/public/truecaller': typeof ApiPublicTruecallerRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -162,11 +176,13 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/windows': typeof WindowsRoute
   '/auth/true-sdk': typeof AuthTrueSdkRoute
+  '/checkout/$id': typeof CheckoutIdRoute
   '/p/$slug': typeof PSlugRoute
   '/project/$id': typeof ProjectIdRoute
   '/api/public/ai-chat': typeof ApiPublicAiChatRoute
   '/api/public/send-notification': typeof ApiPublicSendNotificationRoute
   '/api/public/track': typeof ApiPublicTrackRoute
+  '/api/public/truecaller': typeof ApiPublicTruecallerRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -184,11 +200,13 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/windows': typeof WindowsRoute
   '/auth/true-sdk': typeof AuthTrueSdkRoute
+  '/checkout/$id': typeof CheckoutIdRoute
   '/p/$slug': typeof PSlugRoute
   '/project/$id': typeof ProjectIdRoute
   '/api/public/ai-chat': typeof ApiPublicAiChatRoute
   '/api/public/send-notification': typeof ApiPublicSendNotificationRoute
   '/api/public/track': typeof ApiPublicTrackRoute
+  '/api/public/truecaller': typeof ApiPublicTruecallerRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -207,11 +225,13 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/windows'
     | '/auth/true-sdk'
+    | '/checkout/$id'
     | '/p/$slug'
     | '/project/$id'
     | '/api/public/ai-chat'
     | '/api/public/send-notification'
     | '/api/public/track'
+    | '/api/public/truecaller'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -228,11 +248,13 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/windows'
     | '/auth/true-sdk'
+    | '/checkout/$id'
     | '/p/$slug'
     | '/project/$id'
     | '/api/public/ai-chat'
     | '/api/public/send-notification'
     | '/api/public/track'
+    | '/api/public/truecaller'
   id:
     | '__root__'
     | '/'
@@ -249,11 +271,13 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/windows'
     | '/auth/true-sdk'
+    | '/checkout/$id'
     | '/p/$slug'
     | '/project/$id'
     | '/api/public/ai-chat'
     | '/api/public/send-notification'
     | '/api/public/track'
+    | '/api/public/truecaller'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -271,11 +295,13 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   WindowsRoute: typeof WindowsRoute
   AuthTrueSdkRoute: typeof AuthTrueSdkRoute
+  CheckoutIdRoute: typeof CheckoutIdRoute
   PSlugRoute: typeof PSlugRoute
   ProjectIdRoute: typeof ProjectIdRoute
   ApiPublicAiChatRoute: typeof ApiPublicAiChatRoute
   ApiPublicSendNotificationRoute: typeof ApiPublicSendNotificationRoute
   ApiPublicTrackRoute: typeof ApiPublicTrackRoute
+  ApiPublicTruecallerRoute: typeof ApiPublicTruecallerRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -378,6 +404,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthTrueSdkRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/checkout/$id': {
+      id: '/checkout/$id'
+      path: '/checkout/$id'
+      fullPath: '/checkout/$id'
+      preLoaderRoute: typeof CheckoutIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/p/$slug': {
       id: '/p/$slug'
       path: '/p/$slug'
@@ -413,6 +446,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTrackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/truecaller': {
+      id: '/api/public/truecaller'
+      path: '/api/public/truecaller'
+      fullPath: '/api/public/truecaller'
+      preLoaderRoute: typeof ApiPublicTruecallerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -431,11 +471,13 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   WindowsRoute: WindowsRoute,
   AuthTrueSdkRoute: AuthTrueSdkRoute,
+  CheckoutIdRoute: CheckoutIdRoute,
   PSlugRoute: PSlugRoute,
   ProjectIdRoute: ProjectIdRoute,
   ApiPublicAiChatRoute: ApiPublicAiChatRoute,
   ApiPublicSendNotificationRoute: ApiPublicSendNotificationRoute,
   ApiPublicTrackRoute: ApiPublicTrackRoute,
+  ApiPublicTruecallerRoute: ApiPublicTruecallerRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
