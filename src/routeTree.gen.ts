@@ -28,6 +28,7 @@ import { Route as ProjectIdRouteImport } from './routes/project.$id'
 import { Route as ApiPublicAiChatRouteImport } from './routes/api/public/ai-chat'
 import { Route as ApiPublicSendNotificationRouteImport } from './routes/api/public/send-notification'
 import { Route as ApiPublicTrackRouteImport } from './routes/api/public/track'
+import { Route as ApiPublicTruecallerRouteImport } from './routes/api/public/truecaller'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -125,6 +126,11 @@ const ApiPublicTrackRoute = ApiPublicTrackRouteImport.update({
   path: '/api/public/track',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTruecallerRoute = ApiPublicTruecallerRouteImport.update({
+  id: '/api/public/truecaller',
+  path: '/api/public/truecaller',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -146,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/api/public/ai-chat': typeof ApiPublicAiChatRoute
   '/api/public/send-notification': typeof ApiPublicSendNotificationRoute
   '/api/public/track': typeof ApiPublicTrackRoute
+  '/api/public/truecaller': typeof ApiPublicTruecallerRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -167,6 +174,7 @@ export interface FileRoutesByTo {
   '/api/public/ai-chat': typeof ApiPublicAiChatRoute
   '/api/public/send-notification': typeof ApiPublicSendNotificationRoute
   '/api/public/track': typeof ApiPublicTrackRoute
+  '/api/public/truecaller': typeof ApiPublicTruecallerRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -189,6 +197,7 @@ export interface FileRoutesById {
   '/api/public/ai-chat': typeof ApiPublicAiChatRoute
   '/api/public/send-notification': typeof ApiPublicSendNotificationRoute
   '/api/public/track': typeof ApiPublicTrackRoute
+  '/api/public/truecaller': typeof ApiPublicTruecallerRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -212,6 +221,7 @@ export interface FileRouteTypes {
     | '/api/public/ai-chat'
     | '/api/public/send-notification'
     | '/api/public/track'
+    | '/api/public/truecaller'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -233,6 +243,7 @@ export interface FileRouteTypes {
     | '/api/public/ai-chat'
     | '/api/public/send-notification'
     | '/api/public/track'
+    | '/api/public/truecaller'
   id:
     | '__root__'
     | '/'
@@ -254,6 +265,7 @@ export interface FileRouteTypes {
     | '/api/public/ai-chat'
     | '/api/public/send-notification'
     | '/api/public/track'
+    | '/api/public/truecaller'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -276,6 +288,7 @@ export interface RootRouteChildren {
   ApiPublicAiChatRoute: typeof ApiPublicAiChatRoute
   ApiPublicSendNotificationRoute: typeof ApiPublicSendNotificationRoute
   ApiPublicTrackRoute: typeof ApiPublicTrackRoute
+  ApiPublicTruecallerRoute: typeof ApiPublicTruecallerRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -413,6 +426,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTrackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/truecaller': {
+      id: '/api/public/truecaller'
+      path: '/api/public/truecaller'
+      fullPath: '/api/public/truecaller'
+      preLoaderRoute: typeof ApiPublicTruecallerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -436,6 +456,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAiChatRoute: ApiPublicAiChatRoute,
   ApiPublicSendNotificationRoute: ApiPublicSendNotificationRoute,
   ApiPublicTrackRoute: ApiPublicTrackRoute,
+  ApiPublicTruecallerRoute: ApiPublicTruecallerRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

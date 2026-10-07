@@ -1,6 +1,5 @@
 import { createServerFn } from '@tanstack/react-start';
 import { getRequest } from '@tanstack/react-start/server';
-import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { normalizePhone } from '@/lib/identity';
@@ -52,6 +51,8 @@ export const finishTruecaller = createServerFn({ method: 'POST' }).inputValidato
     const { data: authUser, error: userError } = await db.auth.admin.getUserById(userId);
     if (userError || !authUser.user) throw new Error('Account unavailable.');
     const actualEmail = authUser.user.email && !authUser.user.email.endsWith('@phone.bnoy.invalid') && authUser.user.email_confirmed_at ? authUser.user.email.toLowerCase() : null;
+    const { error: phoneError } = await db.auth.admin.updateUserById(userId, { phone, phone_confirm: true });
+    if (phoneError) throw new Error('This verified phone is already linked to another account.');
     const fields = { id: userId, phone, country_code: countryCode, phone_verified: true, first_name: String(p.name?.first || '').slice(0,100), last_name: String(p.name?.last || '').slice(0,100), name: [p.name?.first, p.name?.last].filter(Boolean).join(' ').slice(0,200), avatar_url: typeof p.avatarUrl === 'string' && p.avatarUrl.startsWith('https://') ? p.avatarUrl : null, gender: typeof p.gender === 'string' ? p.gender : null, city: p.addresses?.[0]?.city || null, company: p.companyName || null, job_title: p.jobTitle || null, verified_name: Array.isArray(p.badges) && p.badges.includes('verified'), email: actualEmail, email_verified: !!actualEmail };
     const { error } = await db.from('profiles').upsert(fields);
     if (error) throw new Error('Could not link verified profile.');

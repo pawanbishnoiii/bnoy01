@@ -18,6 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import AIHelper from '@/components/AIHelper';
+import IdentitySettings from '@/components/IdentitySettings';
 
 const NAME_MAX = 60;
 
@@ -216,6 +217,7 @@ export default function Dashboard() {
         </motion.section>
 
         <Tabs value={tab} onValueChange={(v) => setSearchParams({ tab: v })} className="space-y-6">
+          <IdentitySettings />
           <TabsList className="bg-warm-bg border border-border flex flex-nowrap h-auto gap-1 p-1 rounded-xl w-full justify-start overflow-x-auto">
             <TabsTrigger value="purchases" className="data-[state=active]:gradient-fire-strong data-[state=active]:text-white"><Download className="h-4 w-4 mr-2" />Purchases</TabsTrigger>
             <TabsTrigger value="payments" className="data-[state=active]:gradient-fire-strong data-[state=active]:text-white"><CreditCard className="h-4 w-4 mr-2" />Payments</TabsTrigger>

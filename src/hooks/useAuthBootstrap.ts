@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
+import { syncVerifiedIdentity } from '@/lib/truecaller.functions';
 
 /**
  * Sets up the global auth listener. Call once in App.
@@ -35,6 +36,7 @@ export function useAuthBootstrap() {
       setSession(session);
       setUser(session?.user ?? null);
       setTimeout(() => fetchRole(session?.user?.id), 0);
+      if (session && ['SIGNED_IN', 'USER_UPDATED'].includes(event)) setTimeout(() => { syncVerifiedIdentity().catch(() => undefined); }, 0);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
