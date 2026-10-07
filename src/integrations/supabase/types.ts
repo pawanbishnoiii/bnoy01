@@ -155,6 +155,51 @@ export type Database = {
         }
         Relationships: []
       }
+      checkout_orders: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          project_id: string
+          provider_order_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          project_id: string
+          provider_order_id?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          project_id?: string
+          provider_order_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkout_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkout_orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           audience: string
@@ -250,24 +295,60 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          city: string | null
+          company: string | null
+          country_code: string | null
           created_at: string
           email: string | null
+          email_verified: boolean
+          first_name: string | null
+          gender: string | null
           id: string
+          job_title: string | null
+          last_name: string | null
           name: string | null
+          phone: string | null
+          phone_verified: boolean
+          truecaller_last_seen: string | null
+          verified_name: boolean
         }
         Insert: {
           avatar_url?: string | null
+          city?: string | null
+          company?: string | null
+          country_code?: string | null
           created_at?: string
           email?: string | null
+          email_verified?: boolean
+          first_name?: string | null
+          gender?: string | null
           id: string
+          job_title?: string | null
+          last_name?: string | null
           name?: string | null
+          phone?: string | null
+          phone_verified?: boolean
+          truecaller_last_seen?: string | null
+          verified_name?: boolean
         }
         Update: {
           avatar_url?: string | null
+          city?: string | null
+          company?: string | null
+          country_code?: string | null
           created_at?: string
           email?: string | null
+          email_verified?: boolean
+          first_name?: string | null
+          gender?: string | null
           id?: string
+          job_title?: string | null
+          last_name?: string | null
           name?: string | null
+          phone?: string | null
+          phone_verified?: boolean
+          truecaller_last_seen?: string | null
+          verified_name?: boolean
         }
         Relationships: []
       }
@@ -746,26 +827,133 @@ export type Database = {
         }
         Relationships: []
       }
+      truecaller_requests: {
+        Row: {
+          created_at: string
+          error: string | null
+          expires_at: string
+          id: string
+          proof_hash: string
+          status: string
+          user_id: string | null
+          verified_profile: Json | null
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          expires_at?: string
+          id?: string
+          proof_hash: string
+          status?: string
+          user_id?: string | null
+          verified_profile?: Json | null
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          expires_at?: string
+          id?: string
+          proof_hash?: string
+          status?: string
+          user_id?: string | null
+          verified_profile?: Json | null
+        }
+        Relationships: []
+      }
       truecaller_settings: {
         Row: {
           app_domain: string
+          app_key: string
           callback_url: string
+          enabled: boolean
           id: boolean
           updated_at: string
         }
         Insert: {
           app_domain?: string
+          app_key?: string
           callback_url?: string
+          enabled?: boolean
           id?: boolean
           updated_at?: string
         }
         Update: {
           app_domain?: string
+          app_key?: string
           callback_url?: string
+          enabled?: boolean
           id?: boolean
           updated_at?: string
         }
         Relationships: []
+      }
+      user_login_logs: {
+        Row: {
+          browser: string | null
+          city: string | null
+          country: string | null
+          device_name: string | null
+          device_type: string | null
+          id: string
+          ip_address: string | null
+          is_suspicious: boolean
+          isp: string | null
+          login_at: string
+          login_method: string
+          os: string | null
+          screen_size: string | null
+          session_key: string
+          state: string | null
+          timezone: string | null
+          user_id: string
+        }
+        Insert: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          device_name?: string | null
+          device_type?: string | null
+          id?: string
+          ip_address?: string | null
+          is_suspicious?: boolean
+          isp?: string | null
+          login_at?: string
+          login_method: string
+          os?: string | null
+          screen_size?: string | null
+          session_key: string
+          state?: string | null
+          timezone?: string | null
+          user_id: string
+        }
+        Update: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          device_name?: string | null
+          device_type?: string | null
+          id?: string
+          ip_address?: string | null
+          is_suspicious?: boolean
+          isp?: string | null
+          login_at?: string
+          login_method?: string
+          os?: string | null
+          screen_size?: string | null
+          session_key?: string
+          state?: string | null
+          timezone?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_login_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
