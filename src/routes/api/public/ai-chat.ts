@@ -18,19 +18,52 @@ export const Route = createFileRoute("/api/public/ai-chat")({
           .slice(-20)
           .map((m) => ({ role: m.role, content: m.content.slice(0, 4000) }));
         const system = (body.systemPrompt && String(body.systemPrompt).slice(0, 4000).trim()) || DEFAULT_PROMPT;
-        const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
           method: "POST",
-          headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+          headers: { "Lovable-API-Key": key, Authorization: `Bearer ${key}`, "Content-Type": "application/json", "X-Lovable-AIG-SDK": "fetch" },
           body: JSON.stringify({
-            model: "google/gemini-3-flash-preview",
+            model: "openai/gpt-6-astra",
             stream: true,
-            messages: [{ role: "system", content: system }, ...messages],
+            store: false,
+            reasoning: { effort: "low" },
+            instructions: system,
+            input: messages.map((m) => ({ role: m.role, content: m.content })),
           }),
         });
         if (!res.ok || !res.body) {
           return Response.json({ error: await res.text() }, { status: res.status });
         }
-        return new Response(res.body, { headers: { "Content-Type": "text/event-stream" } });
+        // Re-emit Responses deltas in the chat-completions SSE shape the chat widget reads.
+        const enc = new TextEncoder();
+        const dec = new TextDecoder();
+        const reader = res.body.getReader();
+        const stream = new ReadableStream({
+          async start(controller) {
+            let buf = "";
+            try {
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buf += dec.decode(value, { stream: true });
+                const lines = buf.split("\n");
+                buf = lines.pop() || "";
+                for (const line of lines) {
+                  if (!line.startsWith("data: ")) continue;
+                  try {
+                    const ev = JSON.parse(line.slice(6));
+                    if (ev.type === "response.output_text.delta" && ev.delta) {
+                      controller.enqueue(enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: ev.delta } }] })}\n\n`));
+                    }
+                  } catch { /* ignore partial */ }
+                }
+              }
+            } finally {
+              controller.enqueue(enc.encode("data: [DONE]\n\n"));
+              controller.close();
+            }
+          },
+        });
+        return new Response(stream, { headers: { "Content-Type": "text/event-stream" } });
       },
     },
   },
