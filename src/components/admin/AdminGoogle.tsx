@@ -181,22 +181,27 @@ export default function AdminGoogle() {
           <div className="space-y-1 min-w-0">
             <Label className="text-xs uppercase tracking-widest font-bold">Mode</Label>
             <select value={mode} onChange={(e) => setMode(e.target.value)} className="h-10 w-full rounded-md border border-border bg-white px-3 text-sm">
-              <option value="lovable">Managed (default)</option>
-              <option value="custom">Custom OAuth client</option>
+              <option value="auto">Auto — managed on Lovable, direct on Vercel/others</option>
+              <option value="lovable">Managed only (Lovable hosting / custom domain)</option>
+              <option value="custom">Direct with my own Google client (works everywhere)</option>
             </select>
           </div>
           <div className="space-y-1 min-w-0">
-            <Label className="text-xs uppercase tracking-widest font-bold">Callback URL</Label>
+            <Label className="text-xs uppercase tracking-widest font-bold">Return URL after login</Label>
             <Input value={callback} onChange={(e) => setCallback(e.target.value)} placeholder={`${window.location.origin}/`} />
           </div>
         </div>
-        {mode === 'custom' && (
-          <div className="space-y-1">
-            <Label className="text-xs uppercase tracking-widest font-bold">Google Client ID</Label>
-            <Input value={clientId} onChange={(e) => setClientId(e.target.value)} placeholder="xxxx.apps.googleusercontent.com" />
-            <p className="text-xs text-muted-foreground">The client secret is stored securely on the backend — never in the browser.</p>
-          </div>
-        )}
+        <div className="space-y-1">
+          <Label className="text-xs uppercase tracking-widest font-bold">Google Client ID (for your own records)</Label>
+          <Input value={clientId} onChange={(e) => setClientId(e.target.value)} placeholder="xxxx.apps.googleusercontent.com" />
+        </div>
+        <div className="rounded-xl bg-muted/60 p-3 text-xs space-y-1.5 text-muted-foreground">
+          <p className="font-semibold text-foreground">Using Google login on Vercel or another host</p>
+          <p>1. In Google Cloud Console create an OAuth client (Web). Add this as an authorised redirect URI:</p>
+          <code className="block break-all rounded bg-background px-2 py-1 text-foreground">{`${import.meta.env.VITE_SUPABASE_URL}/auth/v1/callback`}</code>
+          <p>2. Put that Client ID and Secret in Lovable Cloud → Users → Auth settings → Google ("use your own credentials"). The secret is never stored in the browser.</p>
+          <p>3. Add your Vercel address (e.g. https://your-site.vercel.app) to the allowed redirect URLs in the same settings.</p>
+        </div>
         <Button onClick={saveAuth} disabled={saving} className="gradient-iris text-white">
           {saving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />} Save Google login
         </Button>
