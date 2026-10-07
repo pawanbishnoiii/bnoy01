@@ -29,6 +29,7 @@ import AdminVisitors from '@/components/admin/AdminVisitors';
 import AdminTeam from '@/components/admin/AdminTeam';
 import AdminTruecaller from '@/components/admin/AdminTruecaller';
 import AdminLoginSecurity from '@/components/admin/AdminLoginSecurity';
+import AiListingGenerator from '@/components/admin/AiListingGenerator';
 import { TECH_SUGGESTIONS, techIcon } from '@/lib/techIcons';
 
 const sidebarItems = [
@@ -543,6 +544,8 @@ function AdminAddProject({ editingId, onDone }: { editingId: string | null; onDo
             )}
           </div>
         </div>
+
+        <AiListingGenerator defaultName={form.title} onApply={(r) => setForm((f: any) => ({ ...f, short_desc: r.short_desc, full_desc: r.full_desc, tech_stack: Array.from(new Set([...(f.tech_stack || []), ...r.tags])) }))} />
 
         <div className="space-y-2 relative">
           <Label>Short Description *</Label>
