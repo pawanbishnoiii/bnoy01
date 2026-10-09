@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/authStore';
 import { syncVerifiedIdentity } from '@/lib/truecaller.functions';
 import { recordLogin } from '@/lib/login-log.functions';
 import { toast } from 'sonner';
+import { sendWelcomeIfNeeded } from '@/lib/booking.functions';
 
 /**
  * Sets up the global auth listener. Call once in App.
@@ -40,7 +41,7 @@ export function useAuthBootstrap() {
       setUser(session?.user ?? null);
       setTimeout(() => fetchRole(session?.user?.id), 0);
       if (session && ['SIGNED_IN', 'USER_UPDATED'].includes(event)) setTimeout(() => { syncVerifiedIdentity().catch(() => undefined); }, 0);
-      if (session && event === 'SIGNED_IN') setTimeout(log, 0);
+      if (session && event === 'SIGNED_IN') setTimeout(() => { log(); sendWelcomeIfNeeded().catch(() => undefined); }, 0);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
