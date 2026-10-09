@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import FullscreenButton from './FullscreenButton';
 import { supabase } from '@/integrations/supabase/client';
+import bnoyLogo from '@/assets/bnoy-logo.png';
 
 type Item = { id: string; label: string; icon: ElementType };
 const groups = [
@@ -26,7 +27,7 @@ export default function WorkspaceShell({ items, active, onSelect, children }: { 
     <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-3 border-b border-border bg-background px-4 sm:px-6">
       <div className="flex min-w-0 items-center gap-3">
         <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open workspace menu" onClick={() => setMobileOpen(true)}><Menu className="h-5 w-5" /></Button>
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Layers3 className="h-5 w-5" /></span>
+        <img src={bnoyLogo} alt="" width={36} height={36} className="h-9 w-9 shrink-0 rounded-lg object-contain" />
         <div className="min-w-0"><p className="truncate font-display font-bold">Bnoy Studios</p><p className="text-xs text-muted-foreground">Studio workspace</p></div>
         <span className="hidden border-l border-border pl-4 text-sm text-muted-foreground sm:block">{selected?.label}</span>
       </div>

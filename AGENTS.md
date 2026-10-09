@@ -23,3 +23,4 @@
 - Send app emails through the personal Gmail SMTP sender (server-only, SMTP_USER/SMTP_PASS secrets), logging every send to email_logs; worker-mailer on the published runtime, nodemailer in dev, because the Worker has no plain SMTP client.
 - Keep admin navigation in WorkspaceShell, separate from the public Navbar, so admin tools have a distraction-free shell without changing public navigation.
 - Render the homepage visible before hydration and scope GSAP cleanup to its own context so slow scripts and route transitions cannot blank the page or kill sibling animations.
+- Keep booking validation in a browser-safe shared module; persist requests before email, use the selected contact channel, and send admin confirmations only for a stored booking so client and server rules stay consistent.
