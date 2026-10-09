@@ -26,6 +26,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as WindowsRouteImport } from './routes/windows'
+import { Route as AppIdRouteImport } from './routes/app.$id'
 import { Route as AuthTrueSdkRouteImport } from './routes/auth.true-sdk'
 import { Route as CheckoutIdRouteImport } from './routes/checkout.$id'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
@@ -120,6 +121,11 @@ const WindowsRoute = WindowsRouteImport.update({
   path: '/windows',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppIdRoute = AppIdRouteImport.update({
+  id: '/app/$id',
+  path: '/app/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthTrueSdkRoute = AuthTrueSdkRouteImport.update({
   id: '/auth/true-sdk',
   path: '/auth/true-sdk',
@@ -180,6 +186,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/windows': typeof WindowsRoute
+  '/app/$id': typeof AppIdRoute
   '/auth/true-sdk': typeof AuthTrueSdkRoute
   '/checkout/$id': typeof CheckoutIdRoute
   '/p/$slug': typeof PSlugRoute
@@ -207,6 +214,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/windows': typeof WindowsRoute
+  '/app/$id': typeof AppIdRoute
   '/auth/true-sdk': typeof AuthTrueSdkRoute
   '/checkout/$id': typeof CheckoutIdRoute
   '/p/$slug': typeof PSlugRoute
@@ -235,6 +243,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/windows': typeof WindowsRoute
+  '/app/$id': typeof AppIdRoute
   '/auth/true-sdk': typeof AuthTrueSdkRoute
   '/checkout/$id': typeof CheckoutIdRoute
   '/p/$slug': typeof PSlugRoute
@@ -264,6 +273,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/terms'
     | '/windows'
+    | '/app/$id'
     | '/auth/true-sdk'
     | '/checkout/$id'
     | '/p/$slug'
@@ -291,6 +301,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/terms'
     | '/windows'
+    | '/app/$id'
     | '/auth/true-sdk'
     | '/checkout/$id'
     | '/p/$slug'
@@ -318,6 +329,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/terms'
     | '/windows'
+    | '/app/$id'
     | '/auth/true-sdk'
     | '/checkout/$id'
     | '/p/$slug'
@@ -346,6 +358,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   WindowsRoute: typeof WindowsRoute
+  AppIdRoute: typeof AppIdRoute
   AuthTrueSdkRoute: typeof AuthTrueSdkRoute
   CheckoutIdRoute: typeof CheckoutIdRoute
   PSlugRoute: typeof PSlugRoute
@@ -477,6 +490,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WindowsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/$id': {
+      id: '/app/$id'
+      path: '/app/$id'
+      fullPath: '/app/$id'
+      preLoaderRoute: typeof AppIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/true-sdk': {
       id: '/auth/true-sdk'
       path: '/auth/true-sdk'
@@ -554,6 +574,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   WindowsRoute: WindowsRoute,
+  AppIdRoute: AppIdRoute,
   AuthTrueSdkRoute: AuthTrueSdkRoute,
   CheckoutIdRoute: CheckoutIdRoute,
   PSlugRoute: PSlugRoute,
