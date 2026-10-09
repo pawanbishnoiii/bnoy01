@@ -16,9 +16,9 @@ export default function TruecallerButton({ link = false, disabled = false, onBus
   const locked = useRef(false);
   const [error, setError] = useState('');
   useEffect(() => setSupported(/Android/i.test(navigator.userAgent)), []);
-  if (!supported) return null;
   return <div className="space-y-2"><Button type="button" variant="outline" disabled={busy || disabled} aria-busy={busy} className="truecaller-button w-full h-12 rounded-full" onClick={async () => {
     if (locked.current) return;
+    if (!supported) { setError('Truecaller sign-in works on Android phones with the Truecaller app. On this device, please use Google or email.'); return; }
     locked.current = true; setBusy(true); setError(''); onBusyChange?.(true);
     try {
       const attempt = await start();

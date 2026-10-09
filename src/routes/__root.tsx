@@ -70,7 +70,9 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  loader: () => getHeadSettings(),
+  loader: async () => {
+    try { return await getHeadSettings(); } catch { return null; }
+  },
   staleTime: 5 * 60_000,
   head: ({ loaderData }) => {
     const meta: Record<string, string>[] = [
