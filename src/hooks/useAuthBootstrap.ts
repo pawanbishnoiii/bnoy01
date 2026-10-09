@@ -29,6 +29,7 @@ export function useAuthBootstrap() {
         .eq('role', 'admin')
         .maybeSingle();
       if (!cancelled) setIsAdmin(!!data);
+      return !!data;
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -39,7 +40,14 @@ export function useAuthBootstrap() {
       }
       setSession(session);
       setUser(session?.user ?? null);
-      setTimeout(() => fetchRole(session?.user?.id), 0);
+      setTimeout(() => {
+        fetchRole(session?.user?.id).then(admin => {
+          // Admins land on the dashboard right after signing in.
+          if (admin && event === 'SIGNED_IN' && ['/', '/login', '/signup', '/dashboard', '/onboarding'].includes(window.location.pathname)) {
+            window.location.replace('/admin');
+          }
+        });
+      }, 0);
       if (session && ['SIGNED_IN', 'USER_UPDATED'].includes(event)) setTimeout(() => { syncVerifiedIdentity().catch(() => undefined); }, 0);
       if (session && event === 'SIGNED_IN') setTimeout(() => { log(); sendWelcomeIfNeeded().catch(() => undefined); }, 0);
     });

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -17,6 +17,7 @@ export default function AdminUsersPro() {
   const [q, setQ] = useState('');
   const [prov, setProv] = useState('all');
   const [open, setOpen] = useState<P | null>(null);
+  const qc = useQueryClient();
   const { data: profiles = [] } = useQuery({ queryKey: ['admin-profiles'], queryFn: async () => (await supabase.from('profiles').select('*').order('created_at', { ascending: false })).data || [] });
   const { data: logs = [] } = useQuery({ queryKey: ['admin-login-logs-all'], queryFn: async () => (await supabase.from('user_login_logs').select('*').order('login_at', { ascending: false }).limit(1000)).data || [] });
   const { data: roles = [] } = useQuery({ queryKey: ['admin-roles'], queryFn: async () => (await supabase.from('user_roles').select('user_id,role')).data || [] });
@@ -83,6 +84,24 @@ export default function AdminUsersPro() {
                 <div key={k as string} className="rounded-xl bg-muted/60 p-3"><dt className="text-xs text-muted-foreground">{k}</dt><dd className="font-semibold break-words">{v || '—'}</dd></div>
               ))}
             </dl>
+            <div className="mt-6 rounded-2xl border border-border p-4 space-y-3 text-sm">
+              <div className="flex flex-wrap gap-2">
+                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${open.onboarded ? 'bg-primary/10 text-primary' : 'bg-muted'}`}>{open.onboarded ? 'Onboarded' : 'Onboarding pending'}</span>
+                {open.age && <span className="rounded-full bg-muted px-2 py-0.5 text-xs">Age {open.age}</span>}
+                {(open.preferences || []).map((x: string) => <span key={x} className="rounded-full bg-muted px-2 py-0.5 text-xs capitalize">{x}</span>)}
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span>Role: <b>{open.admin ? 'Admin' : 'User'}</b></span>
+                <Button size="sm" variant={open.admin ? 'destructive' : 'default'} onClick={async () => {
+                  if (!confirm(open.admin ? 'Remove admin access?' : 'Give admin access?')) return;
+                  const r = open.admin
+                    ? await supabase.from('user_roles').delete().eq('user_id', open.id).eq('role', 'admin')
+                    : await supabase.from('user_roles').insert({ user_id: open.id, role: 'admin' });
+                  if (r.error) return alert(r.error.message);
+                  setOpen({ ...open, admin: !open.admin }); qc.invalidateQueries({ queryKey: ['admin-roles'] });
+                }}>{open.admin ? 'Make user' : 'Make admin'}</Button>
+              </div>
+            </div>
             <h3 className="font-display font-bold mt-6 mb-2">Login history</h3>
             <div className="space-y-2">
               {logs.filter((l: P) => l.user_id === open.id).slice(0, 20).map((l: P) => (
