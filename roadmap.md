@@ -2,7 +2,7 @@
 
 # Comprehensive upgrade requested Oct 9
 - [ ] Diagnose preview first; verify visible pages, not only response codes.
-- [x] Update SMTP_USER and SMTP_PASS through secure secret form.
+- [ ] Confirm SMTP_USER and rotated SMTP_PASS through secure secret form; prior save status is unverified.
 - [x] Produce complete phased upgrade plan before implementation.
 - [ ] Upgrade distraction-free admin shell, sidebar, fullscreen and all admin modules; add Media Cloud menu.
 - [ ] Upgrade Editor Studio with type-first creation, guided sections and desktop Enter navigation.
@@ -44,6 +44,12 @@
 - [x] Admin auto-redirect to /admin after login.
 
 # Oct 9 batch
+## Latest verified progress
+- Latest automatic preview build succeeded; booking/recommendation/routing tests passed (16/16).
+- Admin shell, type-first creation, Media Cloud preview/error handling, security/visitor filters, mobile hero/team, booking wizard and product metadata implemented; full end-to-end verification remains open.
+- Added GSAP Flip catalog transitions, MorphSVG booking marks and ScrollTo step navigation with reduced-motion handling.
+- Real booking submission, SMTP delivery, cancelled-slot availability, branded video, full admin-page redesign and external search verification remain pending.
+
 - [x] Phone/Truecaller users add or change email with a 6-digit code; placeholder email replaced; welcome email sent.
 - [x] Modern email design with logo + generated welcome banner.
 - [x] /call: phone or WhatsApp required, optional age/gender/address/PIN/company, clay illustrations, scroll motion; admin sees new fields.
