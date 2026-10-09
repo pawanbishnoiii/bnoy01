@@ -33,6 +33,7 @@ import AdminUsersPro from '@/components/admin/AdminUsersPro';
 import EditorStudio from '@/components/admin/EditorStudio';
 import AdminTruecaller from '@/components/admin/AdminTruecaller';
 import AdminLoginSecurity from '@/components/admin/AdminLoginSecurity';
+import AdminAiDeploy from '@/components/admin/AdminAiDeploy';
 import AiListingGenerator from '@/components/admin/AiListingGenerator';
 import SystemStatusBlock from '@/components/ui/system-status-block';
 import { TECH_SUGGESTIONS, techIcon } from '@/lib/techIcons';
@@ -56,6 +57,7 @@ const sidebarItems = [
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'google', label: 'Google', icon: Search },
+  { id: 'ai-deploy', label: 'AI & Deploy', icon: Sparkles },
   { id: 'settings', label: 'Site Settings', icon: Settings2 },
 ];
 
@@ -138,6 +140,7 @@ export default function AdminPanel() {
             {activeTab === 'analytics' && <AdminAnalytics />}
             {activeTab === 'notifications' && <AdminNotifications />}
             {activeTab === 'google' && <AdminGoogle />}
+            {activeTab === 'ai-deploy' && <AdminAiDeploy />}
             {activeTab === 'settings' && <AdminSettings />}
           </motion.div>
         </main>

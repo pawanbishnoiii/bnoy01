@@ -17,7 +17,14 @@ export const Route = createFileRoute("/api/public/ai-chat")({
           .filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
           .slice(-20)
           .map((m) => ({ role: m.role, content: m.content.slice(0, 4000) }));
-        const system = (body.systemPrompt && String(body.systemPrompt).slice(0, 4000).trim()) || DEFAULT_PROMPT;
+        // Prompt comes from admin-managed settings, never from the browser.
+        let system = DEFAULT_PROMPT;
+        try {
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          const { data: st } = await supabaseAdmin.from("site_settings").select("ai_system_prompt,ai_section_enabled").limit(1).maybeSingle();
+          if (st && st.ai_section_enabled === false) return Response.json({ error: "AI assistant is turned off" }, { status: 403 });
+          if (st?.ai_system_prompt?.trim()) system = st.ai_system_prompt.trim().slice(0, 4000);
+        } catch { /* default prompt */ }
         const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
           method: "POST",
           headers: { "Lovable-API-Key": key, Authorization: `Bearer ${key}`, "Content-Type": "application/json", "X-Lovable-AIG-SDK": "fetch" },

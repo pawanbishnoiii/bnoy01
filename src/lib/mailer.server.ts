@@ -10,18 +10,22 @@ export async function getTheme(): Promise<Theme> {
   return (data as Theme) ?? { accent_color: '#f97316', logo_url: null, footer_text: 'Bnoy Studios', from_name: 'Bnoy Studios', signup_enabled: true, booking_enabled: true, product_enabled: true };
 }
 
-export function renderEmail(theme: Theme, o: { title: string; intro: string; rows?: [string, string][]; cta?: { label: string; url: string } }) {
+const DEFAULT_LOGO = 'https://bnoy01.lovable.app/__l5e/assets-v1/75fb4eff-d6f7-4625-931f-5a79f014a80c/bnoy-logo.png';
+export function renderEmail(theme: Theme, o: { title: string; intro: string; rows?: [string, string][]; cta?: { label: string; url: string }; banner?: string; code?: string }) {
   const a = theme.accent_color;
-  const logo = theme.logo_url ? `<img src="${esc(theme.logo_url)}" alt="${esc(theme.from_name)}" height="40" style="height:40px;display:block;margin:0 auto 12px">` : '';
-  const rows = (o.rows || []).map(([k, v]) => `<tr><td style="padding:8px 0;color:#6b7280;font-size:13px;width:40%">${esc(k)}</td><td style="padding:8px 0;color:#111827;font-size:14px;font-weight:600">${esc(v)}</td></tr>`).join('');
-  return `<!doctype html><html><body style="margin:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;padding:24px 12px"><tr><td align="center">
-<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;border:1px solid #f1f1f1;border-radius:20px;overflow:hidden">
-<tr><td style="background:linear-gradient(135deg,${a},#111827);padding:32px 24px;text-align:center">${logo}<div style="color:#fff;font-size:22px;font-weight:800">${esc(o.title)}</div></td></tr>
-<tr><td style="padding:28px 28px 8px;color:#374151;font-size:15px;line-height:1.6">${esc(o.intro)}</td></tr>
-${rows ? `<tr><td style="padding:0 28px"><table width="100%" style="border-top:1px solid #eee;border-bottom:1px solid #eee;margin:12px 0">${rows}</table></td></tr>` : ''}
-${o.cta ? `<tr><td align="center" style="padding:20px 28px"><a href="${esc(o.cta.url)}" style="background:${a};color:#fff;text-decoration:none;padding:13px 28px;border-radius:999px;font-weight:700;display:inline-block">${esc(o.cta.label)}</a></td></tr>` : ''}
-<tr><td style="padding:20px 28px 28px;color:#9ca3af;font-size:12px;text-align:center">${esc(theme.footer_text)}</td></tr>
+  const logoUrl = theme.logo_url || DEFAULT_LOGO;
+  const rows = (o.rows || []).map(([k, v]) => `<tr><td style="padding:12px 16px;background:#fafaf9;border-radius:12px;color:#57534e;font-size:13px;width:42%">${esc(k)}</td><td style="padding:12px 16px;color:#1c1917;font-size:14px;font-weight:600">${esc(v)}</td></tr><tr><td colspan="2" style="height:6px"></td></tr>`).join('');
+  return `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#f5f5f4;font-family:'Segoe UI',Helvetica,Arial,sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f4;padding:32px 12px"><tr><td align="center">
+<table width="580" cellpadding="0" cellspacing="0" style="max-width:580px;width:100%;background:#ffffff;border-radius:28px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.08)">
+<tr><td style="padding:24px 28px 8px"><table width="100%"><tr><td><img src="${esc(logoUrl)}" alt="${esc(theme.from_name)}" height="36" style="height:36px;display:block;border-radius:10px"></td><td align="right" style="color:#a8a29e;font-size:12px;letter-spacing:.12em;text-transform:uppercase">${esc(theme.from_name)}</td></tr></table></td></tr>
+${o.banner ? `<tr><td style="padding:12px 20px 0"><img src="${esc(o.banner)}" alt="" width="540" style="width:100%;display:block;border-radius:20px"></td></tr>` : `<tr><td style="padding:12px 20px 0"><div style="height:8px;border-radius:99px;background:linear-gradient(90deg,${a},#fbbf24)"></div></td></tr>`}
+<tr><td style="padding:28px 32px 4px;color:#1c1917;font-size:28px;font-weight:800;letter-spacing:-.02em">${esc(o.title)}</td></tr>
+<tr><td style="padding:8px 32px 8px;color:#57534e;font-size:15px;line-height:1.7">${esc(o.intro)}</td></tr>
+${o.code ? `<tr><td align="center" style="padding:16px 32px"><div style="display:inline-block;padding:16px 28px;border-radius:18px;background:#fff7ed;border:2px dashed ${a};font-size:34px;font-weight:800;letter-spacing:.4em;color:#1c1917">${esc(o.code)}</div></td></tr>` : ''}
+${rows ? `<tr><td style="padding:12px 32px"><table width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr>` : ''}
+${o.cta ? `<tr><td style="padding:20px 32px 8px"><a href="${esc(o.cta.url)}" style="background:${a};color:#fff;text-decoration:none;padding:15px 30px;border-radius:999px;font-weight:700;display:inline-block;font-size:15px">${esc(o.cta.label)} &rarr;</a></td></tr>` : ''}
+<tr><td style="padding:28px 32px 32px;color:#a8a29e;font-size:12px;border-top:1px solid #f5f5f4">${esc(theme.footer_text)}</td></tr>
 </table></td></tr></table></body></html>`;
 }
 

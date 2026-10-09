@@ -133,46 +133,67 @@ export type Database = {
       }
       bookings: {
         Row: {
+          address: string | null
+          age: number | null
           booking_date: string
           booking_time: string
           budget: string | null
+          company: string | null
           created_at: string
           details: string | null
           email: string
+          gender: string | null
           id: string
           name: string
           phone: string | null
+          pincode: string | null
+          preferred_contact: string | null
           project_type: string
           status: string
           user_id: string | null
+          whatsapp: string | null
         }
         Insert: {
+          address?: string | null
+          age?: number | null
           booking_date: string
           booking_time: string
           budget?: string | null
+          company?: string | null
           created_at?: string
           details?: string | null
           email: string
+          gender?: string | null
           id?: string
           name: string
           phone?: string | null
+          pincode?: string | null
+          preferred_contact?: string | null
           project_type?: string
           status?: string
           user_id?: string | null
+          whatsapp?: string | null
         }
         Update: {
+          address?: string | null
+          age?: number | null
           booking_date?: string
           booking_time?: string
           budget?: string | null
+          company?: string | null
           created_at?: string
           details?: string | null
           email?: string
+          gender?: string | null
           id?: string
           name?: string
           phone?: string | null
+          pincode?: string | null
+          preferred_contact?: string | null
           project_type?: string
           status?: string
           user_id?: string | null
+          whatsapp?: string | null
         }
         Relationships: []
       }
@@ -272,6 +293,36 @@ export type Database = {
           subject?: string
           template?: string
           to_email?: string
+        }
+        Relationships: []
+      }
+      email_otps: {
+        Row: {
+          attempts: number
+          code_hash: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          user_id?: string
         }
         Relationships: []
       }

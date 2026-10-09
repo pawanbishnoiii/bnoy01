@@ -8,6 +8,13 @@
       "when": 1791518975339,
       "tag": "0000_onboarding_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791522980562,
+      "tag": "0001_email_otp_and_booking_fields",
+      "breakpoints": true
     }
   ]
 }

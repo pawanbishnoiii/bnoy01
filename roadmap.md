@@ -25,3 +25,16 @@
 - [x] Team section dynamic data swap (current photos kept).
 - [x] Email theme + logo test send.
 - [x] Admin auto-redirect to /admin after login.
+
+# Oct 9 batch
+- [x] Phone/Truecaller users add or change email with a 6-digit code; placeholder email replaced; welcome email sent.
+- [x] Modern email design with logo + generated welcome banner.
+- [x] /call: phone or WhatsApp required, optional age/gender/address/PIN/company, clay illustrations, scroll motion; admin sees new fields.
+- [x] Desktop hero background animation removed; uploaded 404 animation on Not Found page.
+- [x] Phone sign-in: Truecaller/Google first, email last.
+- [x] Admin AI & Deploy: AI on/off + system prompt (server-enforced), password-protected deploy values with copy.
+- [ ] Editor Studio 4-tab project editor (versions / info+SEO / media / publish+pricing) with AI tech-stack fetch.
+- [ ] Login Security + Visitors upgrade.
+- [ ] Admin media cloud (Drive-like).
+- [ ] Link Google identity to Truecaller account (fetch email from Google).
+- [ ] Phone hero second redesign.
