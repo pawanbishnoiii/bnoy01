@@ -71,6 +71,8 @@ export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState('dashboard');
   useEffect(() => { const t = new URLSearchParams(window.location.search).get('tab'); if (t && sidebarItems.some(i => i.id === t)) setActiveTab(t); }, []);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [creationType, setCreationType] = useState('website');
+  const [appCreation, setAppCreation] = useState<string | undefined>();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -95,10 +97,10 @@ export default function AdminPanel() {
           <motion.div key={activeTab + (editingId || '')} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             {activeTab === 'dashboard' && <AdminDashboard />}
             {activeTab === 'projects' && <AdminProjects onEdit={goAdd} onAdd={() => goAdd(null)} />}
-            {activeTab === 'add' && <AdminAddProject editingId={editingId} onDone={() => { setEditingId(null); setActiveTab('projects'); }} />}
-            {activeTab === 'apps' && <AdminApps />}
+            {activeTab === 'add' && <AdminAddProject key={editingId || creationType} initialType={creationType} editingId={editingId} onDone={() => { setEditingId(null); setActiveTab('projects'); }} />}
+            {activeTab === 'apps' && <AdminApps initialPlatform={appCreation} />}
             {activeTab === 'media-cloud' && <AdminMediaCloud />}
-            {activeTab === 'editor' && <EditorStudio onGo={(t) => { setEditingId(null); setActiveTab(t); }} onEdit={goAdd} />}
+            {activeTab === 'editor' && <EditorStudio onCreate={(type) => { setEditingId(null); if (type === 'app' || type === 'windows') { setAppCreation(type === 'app' ? 'android' : 'windows'); setActiveTab('apps'); } else { setCreationType(type); setActiveTab('add'); } }} onGo={(t) => { setEditingId(null); setActiveTab(t); }} onEdit={goAdd} />}
             {activeTab === 'categories' && <AdminCategories />}
             {activeTab === 'orders' && <AdminOrders />}
             {activeTab === 'users' && <AdminUsersPro />}
@@ -302,7 +304,7 @@ type ShotItem = {
   xhr?: XMLHttpRequest;
 };
 
-function AdminAddProject({ editingId, onDone }: { editingId: string | null; onDone: () => void }) {
+function AdminAddProject({ editingId, onDone, initialType = 'website' }: { editingId: string | null; onDone: () => void; initialType?: string }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const isEdit = !!editingId;
@@ -321,7 +323,7 @@ function AdminAddProject({ editingId, onDone }: { editingId: string | null; onDo
     changelog: '[]', views_count: 0,
     lov_email: '', project_url: '', external_url_enabled: false,
     demo_admin_email: '', demo_admin_password: '', preview_watermark: '',
-    project_type: 'website', seo_title: '', seo_description: '', seo_keywords: [] as string[], og_image_url: '', noindex: false,
+    project_type: initialType, seo_title: '', seo_description: '', seo_keywords: [] as string[], og_image_url: '', noindex: false,
   });
   const [sec, setSec] = useState<'versions' | 'info' | 'media' | 'publish'>('info');
   const [aiBusy, setAiBusy] = useState('');
@@ -530,7 +532,7 @@ function AdminAddProject({ editingId, onDone }: { editingId: string | null; onDo
   return (
     <div className="space-y-6 max-w-3xl">
       <h1 className="font-display text-2xl font-bold">{isEdit ? 'Edit Project' : 'Add New Project'}</h1>
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key !== 'Enter' || e.nativeEvent.isComposing || !(e.target instanceof HTMLInputElement) || ['file', 'checkbox', 'radio'].includes(e.target.type)) return; e.preventDefault(); if (!e.target.reportValidity()) return; const sections = ['info', 'versions', 'media', 'publish'] as const; const next = sections[sections.indexOf(sec) + 1]; if (next) setSec(next); }} className="space-y-6">
         <div className="sticky top-20 z-10 -mx-1 flex gap-1 overflow-x-auto rounded-2xl border border-border bg-background/90 p-1 backdrop-blur">
           {([['versions','1 · Versions'],['info','2 · Info'],['media','3 · Media'],['publish','4 · Publish & SEO']] as const).map(([k,l]) => <button type="button" key={k} onClick={() => setSec(k)} className={`flex-1 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition ${sec === k ? 'bg-primary text-primary-foreground shadow' : 'text-muted-foreground hover:text-foreground'}`}>{l}</button>)}
         </div>

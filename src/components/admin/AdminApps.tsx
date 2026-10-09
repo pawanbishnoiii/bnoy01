@@ -13,8 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 
 const PLATFORMS = ['android', 'ios', 'windows', 'mac', 'linux'];
 
-export default function AdminApps() {
-  const [view, setView] = useState<'list' | 'form'>('list');
+export default function AdminApps({ initialPlatform }: { initialPlatform?: string }) {
+  const [view, setView] = useState<'list' | 'form'>(initialPlatform ? 'form' : 'list');
   const [editingId, setEditingId] = useState<string | null>(null);
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -30,7 +30,7 @@ export default function AdminApps() {
   });
 
   if (view === 'form') {
-    return <AppForm editingId={editingId} onDone={() => { setView('list'); setEditingId(null); qc.invalidateQueries({ queryKey: ['admin-apps'] }); }} />;
+    return <AppForm initialPlatform={initialPlatform} editingId={editingId} onDone={() => { setView('list'); setEditingId(null); qc.invalidateQueries({ queryKey: ['admin-apps'] }); }} />;
   }
 
   return (
@@ -75,7 +75,7 @@ export default function AdminApps() {
   );
 }
 
-function AppForm({ editingId, onDone }: { editingId: string | null; onDone: () => void }) {
+function AppForm({ editingId, onDone, initialPlatform = 'android' }: { editingId: string | null; onDone: () => void; initialPlatform?: string }) {
   const { toast } = useToast();
   const isEdit = !!editingId;
   const [appId] = useState(editingId || crypto.randomUUID());
@@ -84,7 +84,7 @@ function AppForm({ editingId, onDone }: { editingId: string | null; onDone: () =
   const [apkProgress, setApkProgress] = useState(0);
 
   const [form, setForm] = useState<any>({
-    name: '', description: '', version: '1.0.0', platform: 'android', price: 0,
+    name: '', description: '', version: '1.0.0', platform: initialPlatform, price: 0,
     icon_url: '', screenshots_urls: [] as string[], apk_url: '', file_size: '',
     changelog: '', is_latest: true, status: 'draft', architecture: 'x64', system_requirements: '',
   });
