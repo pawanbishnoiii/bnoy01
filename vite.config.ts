@@ -12,4 +12,12 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    build: {
+      rolldownOptions: {
+        // Server-only mail libs (SMTP needs Node/worker sockets); they never run in the browser.
+        external: ["nodemailer", "worker-mailer"],
+      },
+    },
+  },
 });
