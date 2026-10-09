@@ -127,8 +127,9 @@ export function CinematicFooter() {
   ].filter((x) => x.url);
 
   const navCols = [
-    { title: 'Explore', links: [['Marketplace', '/marketplace'], ['Apps', '/apps'], ['Free Templates', '/marketplace?price=free'], ['Pricing', '/#pricing']] as const },
-    { title: 'Studio', links: [['How it works', '/#how'], ['FAQ', '/#faq'], ['Refund Policy', '/refund'], ['Contact', `mailto:${s?.support_email || 'hello@bnoy.studio'}`]] as const },
+    { title: 'Explore', links: [['Marketplace', '/marketplace'], ['Apps', '/apps'], ['Windows software', '/windows'], ['Free Templates', '/marketplace?price=free']] as const },
+    { title: 'Studio', links: [['Book a call', '/call'], ['How it works', '/#how'], ['Team', '/#team'], ['FAQ', '/#faq'], ['Contact', `mailto:${s?.support_email || 'bnoy.studios@gmail.com'}`]] as const },
+    { title: 'Policies', links: [['Refund Policy', '/refund'], ['Privacy notice', '/privacy'], ['Terms & conditions', '/terms']] as const },
   ];
 
   const bnoyLogo = (s as any)?.logo_url || bnoyLogoFallback;
@@ -168,7 +169,7 @@ export function CinematicFooter() {
                 Browse Marketplace
                 <ArrowUpRight className="ml-2 h-4 w-4 transition-transform group-hover:rotate-45" />
               </Magnetic>
-              <Magnetic as="a" href={`mailto:${s?.support_email || 'hello@bnoy.studio'}`}
+              <Magnetic as="a" href={`mailto:${s?.support_email || 'bnoy.studios@gmail.com'}`}
                 className="items-center gap-2 rounded-full border border-white/15 px-6 py-3 text-sm font-semibold text-white/90 hover:bg-white/5 backdrop-blur">
                 Get in touch
               </Magnetic>
@@ -176,7 +177,7 @@ export function CinematicFooter() {
           </div>
 
           {/* Link grid */}
-          <div ref={linksRef} className="lg:col-span-5 grid grid-cols-2 gap-10">
+          <div ref={linksRef} className="lg:col-span-5 grid grid-cols-2 sm:grid-cols-3 gap-6">
             {navCols.map((col) => (
               <div key={col.title}>
                 <h4 className="text-xs font-bold tracking-[0.25em] uppercase text-white/40 mb-4">{col.title}</h4>

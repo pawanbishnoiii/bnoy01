@@ -26,6 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import SafeDescription from '@/components/SafeDescription';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { rankRecommendations } from '@/lib/recommendations';
 
 function toEmbed(url: string): string {
   if (!url) return url;
@@ -115,8 +116,10 @@ export default function ProjectDetail() {
   const { data: related } = useQuery({
     queryKey: ['related', project?.id],
     queryFn: async () => {
-      const { data } = await supabase.from('projects').select('*').eq('status', 'published').neq('id', project!.id).limit(8);
-      return data || [];
+      if (!project) return [];
+      const { data, error } = await supabase.from('projects').select('*').eq('status', 'published').neq('id', project.id).order('created_at',{ ascending:false }).limit(200);
+      if (error) throw error;
+      return rankRecommendations(project, data || [], 8);
     },
     enabled: !!project,
   });
