@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 export default function FullscreenButton() {
   const [isFull, setIsFull] = useState(false);
@@ -13,7 +14,7 @@ export default function FullscreenButton() {
     try {
       if (document.fullscreenElement) await document.exitFullscreen();
       else await document.documentElement.requestFullscreen();
-    } catch { /* browser blocked */ }
+    catch { toast.info('Full screen is unavailable in this browser window.'); }
   };
   return (
     <Button variant="outline" size="sm" onClick={toggle} className="w-full gap-2" aria-label="Toggle full screen">
