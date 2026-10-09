@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Package, PlusCircle, ShoppingBag, Users2, BarChart3,
-  Pencil, Trash2, IndianRupee, TrendingUp, Eye, Settings2, Smartphone, Tags, Search, Globe2, Bell, ArrowLeft, ArrowRight, X, Lock as LockIcon
+  Pencil, Trash2, IndianRupee, TrendingUp, Eye, Settings2, Smartphone, Tags, Search, Globe2, Bell, ArrowLeft, ArrowRight, X, Lock as LockIcon,
   Sparkles,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
