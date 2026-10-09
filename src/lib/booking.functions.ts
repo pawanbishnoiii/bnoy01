@@ -1,53 +1,43 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
+import { bookingSchema, SLOTS, validateBookingTime } from './booking-validation';
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
-export const SLOTS = ['10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+export { SLOTS } from './booking-validation';
 
 export const getTakenSlots = createServerFn({ method: 'GET' })
   .inputValidator((d) => z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }).parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-    const { data: rows } = await supabaseAdmin.from('bookings').select('booking_time').eq('booking_date', data.date).neq('status', 'cancelled');
+    const { data: rows, error } = await supabaseAdmin.from('bookings').select('booking_time').eq('booking_date', data.date);
+    if (error) throw new Error('Available times could not load. Please retry.');
     return (rows || []).map((r) => r.booking_time);
   });
 
-const bookingSchema = z.object({
-  name: z.string().trim().min(2).max(80),
-  email: z.string().trim().email().max(160),
-  phone: z.string().trim().max(20).optional().default(''),
-  whatsapp: z.string().trim().max(20).optional().default(''),
-  age: z.number().int().min(10).max(110).optional(),
-  gender: z.string().max(30).optional().default(''),
-  address: z.string().trim().max(300).optional().default(''),
-  pincode: z.string().trim().max(12).optional().default(''),
-  company: z.string().trim().max(120).optional().default(''),
-  preferred_contact: z.enum(['call', 'whatsapp', 'email']).optional().default('call'),
-  project_type: z.enum(['web', 'app', 'automation', 'software', 'windows', 'other']),
-  budget: z.string().max(40).optional().default(''),
-  details: z.string().trim().max(2000).optional().default(''),
-  booking_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  booking_time: z.enum(SLOTS as [string, ...string[]]),
-});
-
 export const createBooking = createServerFn({ method: 'POST' })
-  .inputValidator((d) => bookingSchema.refine((v) => /\d{7,}/.test((v.phone || '') + (v.whatsapp || '')), { message: 'Phone or WhatsApp number is required.' }).parse(d))
+  .inputValidator((d) => bookingSchema.parse(d))
   .handler(async ({ data }) => {
-    const today = new Date().toISOString().slice(0, 10);
-    if (data.booking_date < today) throw new Error('Please pick a future date.');
+    validateBookingTime(data.booking_date, data.booking_time);
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-    const { data: row, error } = await supabaseAdmin.from('bookings').insert({ ...data, email: data.email.toLowerCase() }).select('id').single();
+    const email = data.email.toLowerCase();
+    const { count, error: limitError } = await supabaseAdmin.from('bookings').select('id', { count: 'exact', head: true }).eq('email', email).gte('created_at', new Date(Date.now() - 3600000).toISOString());
+    if (limitError) throw new Error('Booking is temporarily unavailable. Please retry.');
+    if ((count ?? 0) >= 3) throw new Error('Too many booking requests. Please try again in an hour.');
+    const { data: row, error } = await supabaseAdmin.from('bookings').insert({ ...data, email, company: data.customer_type === 'company' ? data.company : '', phone: data.preferred_contact === 'call' ? parsePhoneNumberFromString(data.phone, 'IN')?.number : '', whatsapp: data.preferred_contact === 'whatsapp' ? parsePhoneNumberFromString(data.whatsapp, 'IN')?.number : '' }).select('id').single();
     if (error) throw new Error(error.code === '23505' ? 'That time was just booked. Please pick another slot.' : 'Booking could not be saved.');
+    let emailed = false;
+    try {
     const { getTheme, renderEmail, sendMail } = await import('./mailer.server');
     const theme = await getTheme();
-    let emailed = false;
     if (theme.booking_enabled) {
       const rows: [string, string][] = [['Date', data.booking_date], ['Time', `${data.booking_time} IST`], ['Project', data.project_type], ['Budget', data.budget || '—']];
-      const r = await sendMail(data.email, 'Your call with Bnoy Studios is booked', renderEmail(theme, { title: 'Your call is booked!', intro: `Hi ${data.name}, thanks for sharing your idea. We will call you at the time below and plan how to turn it into real software.`, rows }), 'booking');
+      const r = await sendMail(email, 'Welcome — your Bnoy Studios booking request', renderEmail(theme, { title: 'Thanks for your booking request', intro: `Hi ${data.name}, welcome to Bnoy Studios. Your request is saved. Our team will review it and confirm your appointment by email. Your preferred contact channel is ${data.preferred_contact}.`, rows }), 'booking-welcome');
       emailed = r.sent;
       const admin = process.env['SMTP_USER'];
       if (admin) await sendMail(admin, `New booking: ${data.name} (${data.booking_date} ${data.booking_time})`, renderEmail(theme, { title: 'New call booking', intro: data.details || 'No details given.', rows: [...rows, ['Name', data.name], ['Email', data.email], ['Phone', data.phone || '—'], ['WhatsApp', data.whatsapp || '—'], ['Age', data.age ? String(data.age) : '—'], ['Gender', data.gender || '—'], ['Address', [data.address, data.pincode].filter(Boolean).join(' ') || '—'], ['Company', data.company || '—'], ['Prefers', data.preferred_contact]] }), 'booking-admin');
     }
+    } catch { /* The booking remains saved even if the email service is unavailable. */ }
     return { id: row.id, emailed };
   });
 
@@ -55,6 +45,25 @@ async function assertAdmin(ctx: { supabase: any; userId: string }) {
   const { data } = await ctx.supabase.rpc('has_role', { _user_id: ctx.userId, _role: 'admin' });
   if (!data) throw new Error('Forbidden');
 }
+
+export const confirmBooking = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { data: booking, error } = await context.supabase.from('bookings').select('*').eq('id', data.id).single();
+    if (error || !booking) throw new Error('Booking not found.');
+    if (booking.status === 'cancelled' || booking.status === 'done') throw new Error('This booking cannot be confirmed.');
+    if (booking.confirmation_sent_at) return { sent: true, alreadySent: true };
+    const { getTheme, renderEmail, sendMail } = await import('./mailer.server');
+    const theme = await getTheme();
+    const result = await sendMail(booking.email, 'Your Bnoy Studios appointment is confirmed', renderEmail(theme, { title: 'Your appointment is confirmed', intro: `Hi ${booking.name}, we have confirmed your appointment. We will reach you through ${booking.preferred_contact || 'your chosen contact channel'}.`, rows: [['Date', booking.booking_date], ['Time', `${booking.booking_time} IST`], ['Project', booking.project_type]] }), 'booking-confirmation');
+    if (result.sent) {
+      const { error: updateError } = await context.supabase.from('bookings').update({ status: 'confirmed', confirmation_sent_at: new Date().toISOString() }).eq('id', booking.id);
+      if (updateError) throw new Error('Email sent, but booking status could not update. Refresh before retrying.');
+    }
+    return { ...result, alreadySent: false };
+  });
 
 export const sendTestEmail = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])

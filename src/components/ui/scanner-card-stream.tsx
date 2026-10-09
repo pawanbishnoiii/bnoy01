@@ -55,6 +55,10 @@ export const ScannerCardStream = ({
     return () => mq.removeEventListener?.('change', update);
   }, []);
   const [isPaused, setIsPaused] = useState(false);
+  const pausedRef = useRef(false);
+  const reducedRef = useRef(false);
+  useEffect(() => { pausedRef.current = isPaused; }, [isPaused]);
+  useEffect(() => { reducedRef.current = prefersReducedMotion; }, [prefersReducedMotion]);
 
   const cards = useMemo(() => {
     const total = cardImages.length * repeat;
@@ -90,7 +94,11 @@ export const ScannerCardStream = ({
     const ctx2d = scannerCanvas.getContext('2d');
     if (!ctx2d) return;
 
+    if (!cards.length) return;
+    originalAscii.current.clear();
     cards.forEach((c) => originalAscii.current.set(c.id, c.ascii));
+    stateRef.current.lastTime = performance.now();
+    const intervals = new Set<ReturnType<typeof setInterval>>();
     let raf = 0;
     const ctx = ctx2d;
     const setSize = () => {
@@ -126,10 +134,12 @@ export const ScannerCardStream = ({
         el.textContent = generateCode(Math.floor(280 / 7), Math.floor(180 / 13), n + id + 10);
         if (++n >= 8) {
           clearInterval(it);
+          intervals.delete(it);
           el.textContent = original;
           delete el.dataset.scrambling;
         }
       }, 35);
+      intervals.add(it);
     };
 
     const updateEffects = () => {
@@ -147,7 +157,7 @@ export const ScannerCardStream = ({
         const sR = scannerX + w / 2;
         if (r.left < sR && r.right > sL) {
           scanning = true;
-          if (scanEffect === 'scramble' && wrap.dataset.scanned !== 'true') runScramble(pre, idx);
+          if (!reducedRef.current && scanEffect === 'scramble' && wrap.dataset.scanned !== 'true') runScramble(pre, idx);
           wrap.dataset.scanned = 'true';
           const iL = Math.max(sL - r.left, 0);
           const iR = Math.min(sR - r.left, r.width);
@@ -190,22 +200,28 @@ export const ScannerCardStream = ({
     window.addEventListener('touchend', onUp);
 
     const animate = (t: number) => {
-      const dt = (t - stateRef.current.lastTime) / 1000;
+      const dt = Math.min((t - stateRef.current.lastTime) / 1000, 0.05);
       stateRef.current.lastTime = t;
-      if (!isPaused && !prefersReducedMotion && !stateRef.current.isDragging) {
+      if (!pausedRef.current && !reducedRef.current && !stateRef.current.isDragging) {
         if (stateRef.current.velocity > initialSpeed) stateRef.current.velocity *= friction;
         else stateRef.current.velocity = initialSpeed;
         stateRef.current.position += stateRef.current.velocity * stateRef.current.direction * dt;
       }
       const lineWidth = (CARD_WIDTH + cardGap) * cards.length;
       const cw = container.offsetWidth;
-      if (stateRef.current.position < -lineWidth) stateRef.current.position = cw;
-      else if (stateRef.current.position > cw) stateRef.current.position = -lineWidth;
+      const cycle = (CARD_WIDTH + cardGap) * cardImages.length;
+      if (repeat > 1 && cycle > 0) {
+        if (stateRef.current.position <= -cycle) stateRef.current.position += cycle;
+        else if (stateRef.current.position > 0) stateRef.current.position -= cycle;
+      } else {
+        if (stateRef.current.position < -lineWidth) stateRef.current.position = cw;
+        else if (stateRef.current.position > cw) stateRef.current.position = -lineWidth;
+      }
       cardLine.style.transform = `translate3d(${stateRef.current.position}px,0,0)`;
       updateEffects();
 
       ctx.clearRect(0, 0, scannerCanvas.width, scannerCanvas.height);
-      const target = scannerState.current.isScanning ? scanMax : baseMax;
+      const target = reducedRef.current ? 0 : scannerState.current.isScanning ? scanMax : baseMax;
       curMax += (target - curMax) * 0.05;
       while (particles.length < curMax) particles.push(createP());
       while (particles.length > curMax) particles.pop();
@@ -222,6 +238,8 @@ export const ScannerCardStream = ({
 
     return () => {
       cancelAnimationFrame(raf);
+      intervals.forEach(clearInterval);
+      cardLine.querySelectorAll<HTMLElement>('pre').forEach(el => { delete el.dataset.scrambling; });
       window.removeEventListener('resize', setSize);
       cardLine.removeEventListener('mousedown', onDown);
       window.removeEventListener('mousemove', onMove);
@@ -230,7 +248,7 @@ export const ScannerCardStream = ({
       window.removeEventListener('touchmove', onMove);
       window.removeEventListener('touchend', onUp);
     };
-  }, [cards, cardGap, friction, scanEffect, initialSpeed, height, isPaused]);
+  }, [cards, cardImages.length, repeat, cardGap, friction, scanEffect, initialSpeed, height]);
 
   return (
     <div

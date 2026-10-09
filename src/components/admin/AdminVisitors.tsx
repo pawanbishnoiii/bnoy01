@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type Session = {
   id: string; visitor_id: string; user_id: string | null; ip: string | null;
@@ -35,10 +36,11 @@ export default function AdminVisitors() {
   const [range, setRange] = useState<1 | 7 | 30 | 90>(7);
   const [q, setQ] = useState('');
   const [onlyGuests, setOnlyGuests] = useState(false);
+  const [device, setDevice] = useState('all');
   const [open, setOpen] = useState<Session | null>(null);
 
   const since = useMemo(() => new Date(Date.now() - range * 86400_000).toISOString(), [range]);
-  const { data: rows = [], isLoading } = useQuery({
+  const { data: rows = [], isLoading, error } = useQuery({
     queryKey: ['admin-visitors', range],
     queryFn: async () => {
       const { data, error } = await supabase.from('visitor_sessions').select('*').gte('last_seen', since).order('last_seen', { ascending: false }).limit(1000);
@@ -54,7 +56,7 @@ export default function AdminVisitors() {
   const { data: pages = [] } = useQuery({
     queryKey: ['admin-visitor-pages', open?.id],
     enabled: !!open,
-    queryFn: async () => (await supabase.from('page_views').select('*').eq('session_id', open!.id).order('created_at')).data ?? [],
+    queryFn: async () => { if (!open) return []; return (await supabase.from('page_views').select('*').eq('session_id', open.id).order('created_at')).data ?? []; },
   });
   const nameOf = (id: string | null) => {
     const p = profiles.find((x: any) => x.id === id) as any;
@@ -63,8 +65,9 @@ export default function AdminVisitors() {
 
   const filtered = rows.filter((r) => {
     if (onlyGuests && r.user_id) return false;
+    if (device !== 'all' && r.device_type !== device) return false;
     if (!q) return true;
-    const hay = [r.ip, r.city, r.region, r.country, r.device_name, r.os, r.browser, r.isp, nameOf(r.user_id)].join(' ').toLowerCase();
+    const hay = [r.ip, r.city, r.region, r.country, r.device_name, r.os, r.browser, r.isp, r.referrer, r.landing_page, r.last_page, nameOf(r.user_id)].join(' ').toLowerCase();
     return hay.includes(q.toLowerCase());
   });
 
@@ -89,6 +92,7 @@ export default function AdminVisitors() {
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
     a.download = `visitors-${range}d.csv`;
     a.click();
+    URL.revokeObjectURL(a.href);
   };
 
   return (
@@ -112,7 +116,7 @@ export default function AdminVisitors() {
         <Stat icon={<Clock className="h-4 w-4" />} label="Avg time / visit" value={fmtDur(avgTime)} />
         <Stat icon={<Eye className="h-4 w-4" />} label="Avg pages / visit" value={avgPages} />
         <Stat icon={<Users className="h-4 w-4" />} label="Guests (not signed in)" value={guests} />
-        <Stat icon={<span className="h-2 w-2 rounded-full bg-primary animate-pulse inline-block" />} label="Active now" value={liveNow} />
+        <Stat icon={<span className="h-2 w-2 rounded-full bg-primary inline-block" />} label="Seen in last 5 min" value={liveNow} />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-4">
@@ -131,6 +135,7 @@ export default function AdminVisitors() {
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search IP, city, device, browser, user…" className="pl-9" />
           </div>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={onlyGuests} onChange={(e) => setOnlyGuests(e.target.checked)} /> Guests only</label>
+          <Select value={device} onValueChange={setDevice}><SelectTrigger className="w-36" aria-label="Visitor device"><SelectValue /></SelectTrigger><SelectContent>{['all','desktop','mobile','tablet','bot'].map(d => <SelectItem key={d} value={d}>{d === 'all' ? 'All devices' : d}</SelectItem>)}</SelectContent></Select>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -139,7 +144,8 @@ export default function AdminVisitors() {
             </thead>
             <tbody>
               {isLoading && <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Loading…</td></tr>}
-              {!isLoading && filtered.length === 0 && <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">No visits yet in this period.</td></tr>}
+              {error && <tr><td colSpan={7} className="p-6 text-center text-destructive">Visitor records could not load.</td></tr>}
+              {!isLoading && !error && filtered.length === 0 && <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">No visits match these filters.</td></tr>}
               {filtered.map((r) => (
                 <tr key={r.id} onClick={() => setOpen(r)} className="border-t border-border hover:bg-muted/40 cursor-pointer">
                   <td className="p-3">{r.user_id ? <span className="font-medium">{nameOf(r.user_id) || 'Member'}</span> : <Badge variant="secondary">Guest</Badge>}</td>

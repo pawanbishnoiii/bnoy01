@@ -20,8 +20,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-import Navbar from '@/components/Navbar';
-import AuthModal from '@/components/AuthModal';
+import WorkspaceShell from '@/components/admin/WorkspaceShell';
+import AdminMediaCloud from '@/components/admin/AdminMediaCloud';
 import AdminApps from '@/components/admin/AdminApps';
 import AdminCategories from '@/components/admin/AdminCategories';
 import AdminGoogle from '@/components/admin/AdminGoogle';
@@ -47,6 +47,7 @@ const sidebarItems = [
   { id: 'projects', label: 'Projects', icon: Package },
   { id: 'add', label: 'Add Project', icon: PlusCircle },
   { id: 'editor', label: 'Editor Studio', icon: Sparkles },
+  { id: 'media-cloud', label: 'Media Cloud', icon: Package },
   { id: 'apps', label: 'Apps', icon: Smartphone },
   { id: 'categories', label: 'Categories', icon: Tags },
   { id: 'orders', label: 'Orders', icon: ShoppingBag },
@@ -65,13 +66,13 @@ const sidebarItems = [
 
 const COLORS = ['#FF5722', '#FFC107', '#E64A19', '#FFD54F', '#FF8A65'];
 
-import FullscreenButton from '@/components/admin/FullscreenButton';
-
 export default function AdminPanel() {
   const { user, isAdmin, authReady } = useAuthStore();
   const [activeTab, setActiveTab] = useState('dashboard');
-  useEffect(() => { const t = new URLSearchParams(window.location.search).get('tab'); if (t) setActiveTab(t); }, []);
+  useEffect(() => { const t = new URLSearchParams(window.location.search).get('tab'); if (t && sidebarItems.some(i => i.id === t)) setActiveTab(t); }, []);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [creationType, setCreationType] = useState('website');
+  const [appCreation, setAppCreation] = useState<string | undefined>();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -92,45 +93,14 @@ export default function AdminPanel() {
   const goAdd = (id: string | null = null) => { setEditingId(id); setActiveTab('add'); };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar /><AuthModal />
-      <div className="flex pt-20">
-        <aside className="hidden md:flex w-64 flex-col warm-bg border-r border-border h-[calc(100vh-5rem)] overflow-y-auto p-4 fixed left-0 top-20">
-          <div className="px-4 py-4 mb-4 border-b border-border space-y-3"><div><p className="font-display text-lg font-bold">Studio workspace</p><p className="text-xs text-muted-foreground mt-1">Bnoy Studios</p></div><FullscreenButton /></div>
-          <nav className="space-y-1">
-            {sidebarItems.map((item) => (
-              <Button variant="ghost"
-                key={item.id}
-                onClick={() => { setActiveTab(item.id); if (item.id !== 'add') setEditingId(null); }}
-                className={`w-full h-11 justify-start flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all ${
-                  activeTab === item.id
-                    ? 'bg-primary/10 text-primary font-semibold'
-                    : 'text-muted-foreground hover:text-ink hover:bg-white'
-                }`}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </Button>
-            ))}
-          </nav>
-        </aside>
-
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border flex overflow-x-auto p-2">
-          {sidebarItems.map((item) => (
-            <Button variant="ghost" key={item.id} onClick={() => setActiveTab(item.id)} className={`h-auto shrink-0 flex flex-col items-center gap-1 p-2 rounded-lg text-xs ${activeTab === item.id ? 'text-primary' : 'text-muted-foreground'}`}>
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </Button>
-          ))}
-        </div>
-
-        <main className="flex-1 md:ml-64 p-6 pb-24 md:pb-6">
+    <WorkspaceShell items={sidebarItems} active={activeTab} onSelect={(id) => { setActiveTab(id); setEditingId(null); const url = new URL(window.location.href); url.searchParams.set('tab', id); window.history.replaceState(null, '', url); }}>
           <motion.div key={activeTab + (editingId || '')} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             {activeTab === 'dashboard' && <AdminDashboard />}
             {activeTab === 'projects' && <AdminProjects onEdit={goAdd} onAdd={() => goAdd(null)} />}
-            {activeTab === 'add' && <AdminAddProject editingId={editingId} onDone={() => { setEditingId(null); setActiveTab('projects'); }} />}
-            {activeTab === 'apps' && <AdminApps />}
-            {activeTab === 'editor' && <EditorStudio onGo={(t) => { setEditingId(null); setActiveTab(t); }} onEdit={goAdd} />}
+            {activeTab === 'add' && <AdminAddProject key={editingId || creationType} initialType={creationType} editingId={editingId} onDone={() => { setEditingId(null); setActiveTab('projects'); }} />}
+            {activeTab === 'apps' && <AdminApps initialPlatform={appCreation} />}
+            {activeTab === 'media-cloud' && <AdminMediaCloud />}
+            {activeTab === 'editor' && <EditorStudio onCreate={(type) => { setEditingId(null); if (type === 'app' || type === 'windows') { setAppCreation(type === 'app' ? 'android' : 'windows'); setActiveTab('apps'); } else { setCreationType(type); setActiveTab('add'); } }} onGo={(t) => { setEditingId(null); setActiveTab(t); }} onEdit={goAdd} />}
             {activeTab === 'categories' && <AdminCategories />}
             {activeTab === 'orders' && <AdminOrders />}
             {activeTab === 'users' && <AdminUsersPro />}
@@ -145,9 +115,7 @@ export default function AdminPanel() {
             {activeTab === 'ai-deploy' && <AdminAiDeploy />}
             {activeTab === 'settings' && <AdminSettings />}
           </motion.div>
-        </main>
-      </div>
-    </div>
+    </WorkspaceShell>
   );
 }
 
@@ -336,7 +304,7 @@ type ShotItem = {
   xhr?: XMLHttpRequest;
 };
 
-function AdminAddProject({ editingId, onDone }: { editingId: string | null; onDone: () => void }) {
+function AdminAddProject({ editingId, onDone, initialType = 'website' }: { editingId: string | null; onDone: () => void; initialType?: string }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const isEdit = !!editingId;
@@ -355,7 +323,7 @@ function AdminAddProject({ editingId, onDone }: { editingId: string | null; onDo
     changelog: '[]', views_count: 0,
     lov_email: '', project_url: '', external_url_enabled: false,
     demo_admin_email: '', demo_admin_password: '', preview_watermark: '',
-    project_type: 'website', seo_title: '', seo_description: '', seo_keywords: [] as string[], og_image_url: '', noindex: false,
+    project_type: initialType, seo_title: '', seo_description: '', seo_keywords: [] as string[], og_image_url: '', noindex: false,
   });
   const [sec, setSec] = useState<'versions' | 'info' | 'media' | 'publish'>('info');
   const [aiBusy, setAiBusy] = useState('');
@@ -564,7 +532,7 @@ function AdminAddProject({ editingId, onDone }: { editingId: string | null; onDo
   return (
     <div className="space-y-6 max-w-3xl">
       <h1 className="font-display text-2xl font-bold">{isEdit ? 'Edit Project' : 'Add New Project'}</h1>
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key !== 'Enter' || e.nativeEvent.isComposing || !(e.target instanceof HTMLInputElement) || ['file', 'checkbox', 'radio'].includes(e.target.type)) return; e.preventDefault(); if (!e.target.reportValidity()) return; const sections = ['info', 'versions', 'media', 'publish'] as const; const next = sections[sections.indexOf(sec) + 1]; if (next) setSec(next); }} className="space-y-6">
         <div className="sticky top-20 z-10 -mx-1 flex gap-1 overflow-x-auto rounded-2xl border border-border bg-background/90 p-1 backdrop-blur">
           {([['versions','1 · Versions'],['info','2 · Info'],['media','3 · Media'],['publish','4 · Publish & SEO']] as const).map(([k,l]) => <button type="button" key={k} onClick={() => setSec(k)} className={`flex-1 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition ${sec === k ? 'bg-primary text-primary-foreground shadow' : 'text-muted-foreground hover:text-foreground'}`}>{l}</button>)}
         </div>

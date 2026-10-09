@@ -5,11 +5,16 @@ import { Globe, Smartphone, Monitor, GitBranch, Sparkles, Search, Plus, Clock, S
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import webImage from '@/assets/studio-web.png';
+import appImage from '@/assets/studio-app.png';
+import windowsImage from '@/assets/studio-windows.png';
+import automationImage from '@/assets/studio-automation.png';
 
 type Kind = 'all' | 'web' | 'android' | 'windows';
 type Release = { id: string; kind: Exclude<Kind, 'all'>; title: string; version: string; date: string; latest: boolean; meta?: string; projectId?: string };
 
-export default function EditorStudio({ onGo, onEdit }: { onGo: (tab: string) => void; onEdit: (id: string) => void }) {
+export default function EditorStudio({ onGo, onEdit, onCreate }: { onGo: (tab: string) => void; onEdit: (id: string) => void; onCreate: (type: string) => void }) {
   const [kind, setKind] = useState<Kind>('all');
   const [q, setQ] = useState('');
   const { data: versions, isLoading: l1 } = useQuery({ queryKey: ['studio-versions'], queryFn: async () => (await supabase.from('project_versions').select('id,project_id,version,released_at,is_latest,projects(title)').order('released_at', { ascending: false }).limit(60)).data || [] });
@@ -25,10 +30,10 @@ export default function EditorStudio({ onGo, onEdit }: { onGo: (tab: string) => 
   const count = (k: Release['kind']) => releases.filter(r => r.kind === k).length;
 
   const modes = [
-    { tab: 'add', icon: Globe, title: 'Web project', desc: 'New website or source-code product', stat: `${projectCount} projects`, grad: 'from-primary/20 to-primary/5' },
-    { tab: 'apps', icon: Smartphone, title: 'Mobile app', desc: 'Upload an Android APK release', stat: `${count('android')} releases`, grad: 'from-accent/40 to-accent/5' },
-    { tab: 'apps', icon: Monitor, title: 'Windows software', desc: 'Installer, architecture, requirements', stat: `${count('windows')} releases`, grad: 'from-secondary to-secondary/20' },
-    { tab: 'projects', icon: GitBranch, title: 'Edit & versions', desc: 'Update projects and ship new versions', stat: `${count('web')} versions`, grad: 'from-muted to-muted/20' },
+    { type: 'website', image: webImage, icon: Globe, title: 'Web project', stat: `${projectCount} projects` },
+    { type: 'app', image: appImage, icon: Smartphone, title: 'Mobile app', stat: `${count('android')} releases` },
+    { type: 'windows', image: windowsImage, icon: Monitor, title: 'Windows software', stat: `${count('windows')} releases` },
+    { type: 'automation', image: automationImage, icon: GitBranch, title: 'Automation', stat: 'New workflow' },
   ];
   const icon = { web: Globe, android: Smartphone, windows: Monitor };
   const loading = l1 || l2;
@@ -37,18 +42,17 @@ export default function EditorStudio({ onGo, onEdit }: { onGo: (tab: string) => 
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div><h1 className="font-display text-2xl font-bold flex items-center gap-2"><Sparkles className="h-6 w-6 text-primary" />Editor Studio</h1><p className="text-sm text-muted-foreground">Create, edit and version every product from one place.</p></div>
-        <button onClick={() => onGo('add')} className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-card hover:opacity-90"><Plus className="h-4 w-4" />Add new project</button>
+        <Button variant="outline" onClick={() => onGo('projects')}><GitBranch className="mr-2 h-4 w-4" />Manage projects</Button>
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {modes.map((m, i) => (
-          <motion.button key={m.title} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }} whileHover={{ y: -4 }}
-            onClick={() => onGo(m.tab)} className={`group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br ${m.grad} p-5 text-left`}>
-            <div className="absolute -right-6 -bottom-6 opacity-10 group-hover:opacity-20 transition-opacity"><m.icon className="h-28 w-28" /></div>
-            <span className="inline-flex rounded-xl bg-card p-2.5 shadow-card"><m.icon className="h-6 w-6 text-primary" /></span>
-            <p className="font-display font-bold mt-3">{m.title}</p><p className="text-xs text-muted-foreground mt-1">{m.desc}</p>
-            <p className="mt-3 text-xs font-semibold text-primary">{m.stat} →</p>
-          </motion.button>
+          <motion.div key={m.title} initial={false} whileHover={{ y: -4 }} className="overflow-hidden rounded-lg border border-border bg-card p-5">
+            <img src={m.image} alt="" loading="lazy" width={384} height={512} className="mx-auto h-36 w-full object-contain" />
+            <p className="mt-3 flex items-center gap-2 font-display font-bold"><m.icon className="h-4 w-4 text-primary" />{m.title}</p>
+            <p className="mt-2 text-xs text-muted-foreground">{m.stat}</p>
+            <Button className="mt-4 w-full" variant="outline" aria-label={`Create ${m.title.toLowerCase()}`} onClick={() => onCreate(m.type)}><Plus className="mr-2 h-4 w-4" />Create</Button>
+          </motion.div>
         ))}
       </div>
 
