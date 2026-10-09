@@ -3,7 +3,7 @@
 # Comprehensive upgrade requested Oct 9
 - [ ] Diagnose preview first; verify visible pages, not only response codes.
 - [x] Update SMTP_USER and SMTP_PASS through secure secret form.
-- [ ] Produce complete phased upgrade plan before implementation.
+- [x] Produce complete phased upgrade plan before implementation.
 - [ ] Upgrade distraction-free admin shell, sidebar, fullscreen and all admin modules; add Media Cloud menu.
 - [ ] Upgrade Editor Studio with type-first creation, guided sections and desktop Enter navigation.
 - [ ] Upgrade Login Security and Visitors with useful filters, summaries and accurate states.
