@@ -27,6 +27,7 @@ import AdminGoogle from '@/components/admin/AdminGoogle';
 import AdminNotifications from '@/components/admin/AdminNotifications';
 import AdminVisitors from '@/components/admin/AdminVisitors';
 import AdminTeam from '@/components/admin/AdminTeam';
+import AdminEmails from '@/components/admin/AdminEmails';
 import AdminTruecaller from '@/components/admin/AdminTruecaller';
 import AdminLoginSecurity from '@/components/admin/AdminLoginSecurity';
 import AiListingGenerator from '@/components/admin/AiListingGenerator';
@@ -43,6 +44,7 @@ const sidebarItems = [
   { id: 'categories', label: 'Categories', icon: Tags },
   { id: 'orders', label: 'Orders', icon: ShoppingBag },
   { id: 'users', label: 'Users', icon: Users2 },
+  { id: 'emails', label: 'Emails & Bookings', icon: Bell },
   { id: 'team', label: 'Creative Team', icon: Users2 },
   { id: 'truecaller', label: 'Truecaller', icon: Smartphone },
   { id: 'login-security', label: 'Login Security', icon: LockIcon },
@@ -122,6 +124,7 @@ export default function AdminPanel() {
             {activeTab === 'categories' && <AdminCategories />}
             {activeTab === 'orders' && <AdminOrders />}
             {activeTab === 'users' && <AdminUsers />}
+            {activeTab === 'emails' && <AdminEmails />}
             {activeTab === 'team' && <AdminTeam />}
             {activeTab === 'truecaller' && <AdminTruecaller />}
             {activeTab === 'login-security' && <AdminLoginSecurity />}

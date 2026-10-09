@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as FileRouteImport } from './routes/$file'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppsRouteImport } from './routes/apps'
+import { Route as CallRouteImport } from './routes/call'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
@@ -50,6 +51,11 @@ const AdminRoute = AdminRouteImport.update({
 const AppsRoute = AppsRouteImport.update({
   id: '/apps',
   path: '/apps',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CallRoute = CallRouteImport.update({
+  id: '/call',
+  path: '/call',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -149,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/$file': typeof FileRoute
   '/admin': typeof AdminRoute
   '/apps': typeof AppsRoute
+  '/call': typeof CallRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/marketplace': typeof MarketplaceRoute
@@ -173,6 +180,7 @@ export interface FileRoutesByTo {
   '/$file': typeof FileRoute
   '/admin': typeof AdminRoute
   '/apps': typeof AppsRoute
+  '/call': typeof CallRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/marketplace': typeof MarketplaceRoute
@@ -198,6 +206,7 @@ export interface FileRoutesById {
   '/$file': typeof FileRoute
   '/admin': typeof AdminRoute
   '/apps': typeof AppsRoute
+  '/call': typeof CallRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/marketplace': typeof MarketplaceRoute
@@ -224,6 +233,7 @@ export interface FileRouteTypes {
     | '/$file'
     | '/admin'
     | '/apps'
+    | '/call'
     | '/dashboard'
     | '/login'
     | '/marketplace'
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/$file'
     | '/admin'
     | '/apps'
+    | '/call'
     | '/dashboard'
     | '/login'
     | '/marketplace'
@@ -272,6 +283,7 @@ export interface FileRouteTypes {
     | '/$file'
     | '/admin'
     | '/apps'
+    | '/call'
     | '/dashboard'
     | '/login'
     | '/marketplace'
@@ -297,6 +309,7 @@ export interface RootRouteChildren {
   FileRoute: typeof FileRoute
   AdminRoute: typeof AdminRoute
   AppsRoute: typeof AppsRoute
+  CallRoute: typeof CallRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
   MarketplaceRoute: typeof MarketplaceRoute
@@ -345,6 +358,13 @@ declare module '@tanstack/react-router' {
       path: '/apps'
       fullPath: '/apps'
       preLoaderRoute: typeof AppsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/call': {
+      id: '/call'
+      path: '/call'
+      fullPath: '/call'
+      preLoaderRoute: typeof CallRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -481,6 +501,7 @@ const rootRouteChildren: RootRouteChildren = {
   FileRoute: FileRoute,
   AdminRoute: AdminRoute,
   AppsRoute: AppsRoute,
+  CallRoute: CallRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
   MarketplaceRoute: MarketplaceRoute,

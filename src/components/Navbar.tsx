@@ -58,6 +58,7 @@ export default function Navbar() {
     { label: 'Marketplace', href: '/marketplace' },
     { label: 'Apps', href: '/apps' },
     { label: 'Windows', href: '/windows' },
+    { label: 'Book a call', href: '/call' },
     { label: 'How it works', href: '/#how' },
     { label: 'FAQ', href: '/#faq' },
   ];

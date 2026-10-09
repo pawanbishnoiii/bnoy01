@@ -20,3 +20,4 @@
 - Reuse Signup for full-page and modal authentication so appearance and busy states remain consistent.
 - Truecaller polling is single-flight, resumes on browser focus, and accepts signup/session issuance only after server-fetched phone verification.
 - Project descriptions use a standalone Tiptap editor and sanitized Markdown/HTML rendering to preserve formatting without executing user markup.
+- Send app emails through the personal Gmail SMTP sender (server-only, SMTP_USER/SMTP_PASS secrets), logging every send to email_logs; worker-mailer on the published runtime, nodemailer in dev, because the Worker has no plain SMTP client.
