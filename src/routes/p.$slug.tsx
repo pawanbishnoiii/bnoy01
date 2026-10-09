@@ -1,16 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import Screen from "@/screens/ProjectDetail";
+import { getPublicProject } from '@/lib/public-catalog.functions';
+import { projectHead } from '@/lib/catalog-head';
 
 export const Route = createFileRoute("/p/$slug")({
-  head: () => ({
-    meta: [
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { title: "Project — Bnoy Studios" },
-      { name: "description", content: "Project details, live preview and pricing." },
-      { property: "og:title", content: "Project — Bnoy Studios" },
-      { property: "og:description", content: "Project details, live preview and pricing." },
-    ],
-  }),
+  loader: ({params}) => getPublicProject({data:{value:params.slug,by:'slug'}}),
+  head: ({loaderData}) => projectHead(loaderData),
   component: Screen,
 });

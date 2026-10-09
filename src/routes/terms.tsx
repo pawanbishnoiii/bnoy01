@@ -1,0 +1,3 @@
+import { createFileRoute } from '@tanstack/react-router';
+import PolicyPage from '@/components/PolicyPage';
+export const Route = createFileRoute('/terms')({ head: () => ({ meta: [ { title:'Terms & Conditions — Bnoy Studios' }, { name:'description',content:'Draft terms for Bnoy Studios products and appointment requests.' }, { property:'og:title',content:'Terms & Conditions — Bnoy Studios' }, { property:'og:description',content:'Read the Bnoy Studios draft terms and existing refund policy.' }, { property:'og:type',content:'website' }, { name:'twitter:card',content:'summary' }, { name:'robots',content:'noindex' } ] }), component: () => <PolicyPage kind="terms" /> });

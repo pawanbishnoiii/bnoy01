@@ -27,10 +27,8 @@ import { injectGoogle } from "@/components/admin/AdminGoogle";
 /** Public site settings needed in <head> on every page (Google verification etc). */
 const getHeadSettings = createServerFn({ method: "GET" }).handler(async () => {
   try {
-    const { createClient } = await import("@supabase/supabase-js");
-    const sb = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+    const { publicCatalogClient } = await import('@/lib/public-catalog.server');
+    const sb = publicCatalogClient();
     const { data } = await sb
       .from("site_settings")
       .select("google_site_verification, bing_site_verification, ga_measurement_id, gtm_id, brand_name")
@@ -94,7 +92,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
         { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" },
         { rel: "stylesheet", href: appCss },
-        { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+        { rel: "icon", href: "/favicon.png", type: "image/png" },
         { rel: "sitemap", type: "application/xml", href: "/sitemap.xml" },
       ],
     };

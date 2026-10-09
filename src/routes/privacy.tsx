@@ -1,0 +1,3 @@
+import { createFileRoute } from '@tanstack/react-router';
+import PolicyPage from '@/components/PolicyPage';
+export const Route = createFileRoute('/privacy')({ head: () => ({ meta: [ { title:'Privacy Notice — Bnoy Studios' }, { name:'description',content:'Information about account, booking and security data used by Bnoy Studios.' }, { property:'og:title',content:'Privacy Notice — Bnoy Studios' }, { property:'og:description',content:'Read the Bnoy Studios draft privacy notice and contact the studio about your information.' }, { property:'og:type',content:'website' }, { name:'twitter:card',content:'summary' }, { name:'robots',content:'noindex' } ] }), component: () => <PolicyPage kind="privacy" /> });

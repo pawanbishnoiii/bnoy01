@@ -2,7 +2,7 @@
 
 ## Priority and current checks
 - **Sabse pehle preview:** home, booking aur marketplace ab content dikha rahe hain; browser check mein crash/error overlay nahi mila. Initial load par blank delay mila—first phase mein loading aur animation visibility investigate karke fix karenge. Signed-out `/admin` public home par laut raha hai; signed-in admin separately verify hoga.
-- **SMTP_USER aur SMTP_PASS:** secure form se updates save ho gaye. Email delivery abhi tested nahi hai. Chat mein share hua password revoke karke naya Gmail app password use karna safest hai.
+- **SMTP_USER aur SMTP_PASS:** previous save status unverified hai; secure secret interface mein confirm karna baaki hai. Email delivery tested nahi hai. Chat mein share hua password revoke karke naya Gmail app password use karna safest hai.
 - Uploaded `.backup` PostgreSQL archive hai. Iska safe inventory aur current database comparison hoga; blind restore nahi hoga.
 - Pehle complete plan, phir phases ko isi order mein implement aur verify karenge. Existing working authentication, checkout, releases aur team data preserve rahenge.
 

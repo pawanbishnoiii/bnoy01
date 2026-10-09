@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams, useNavigate } from '@/lib/router';
 import { motion } from 'framer-motion';
 import { SlidersHorizontal, Code2, Monitor, Smartphone, X } from 'lucide-react';
@@ -19,6 +19,9 @@ import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/store/authStore';
 import { useToast } from '@/hooks/use-toast';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { gsap } from 'gsap';
+import { Flip } from 'gsap/Flip';
+import webImage from '@/assets/studio-web.png';
 
 type Price = 'all' | 'free' | 'paid';
 type Sort = 'newest' | 'price-asc' | 'price-desc' | 'popular';
@@ -106,9 +109,19 @@ export default function Marketplace() {
   ].filter(Boolean) as { key: string; label: string }[];
 
   const clearAll = () => { setSearchInput(''); setParams(new URLSearchParams(), { replace: true }); };
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const flipState = useRef<ReturnType<typeof Flip.getState> | null>(null);
+  useLayoutEffect(() => {
+    if (!resultsRef.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    gsap.registerPlugin(Flip);
+    const targets = resultsRef.current.querySelectorAll('[data-product]');
+    const state = flipState.current;
+    const animation = state ? Flip.from(state,{targets,duration:.35,ease:'power2.out',absolute:false,prune:true}) : undefined;
+    return () => { animation?.kill(); if(resultsRef.current) flipState.current = Flip.getState(resultsRef.current.querySelectorAll('[data-product]')); };
+  },[filtered]);
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="min-h-screen bg-background">
+    <motion.div initial={false} className="min-h-screen bg-background">
       <Navbar />
       <AuthModal />
 
@@ -123,7 +136,7 @@ export default function Marketplace() {
        </section>
 
       {/* Sticky glass filter bar */}
-      <section className="py-4 bg-white/80 border-b border-border sticky top-16 z-30 backdrop-blur-xl">
+      <section className="py-4 bg-background/95 border-b border-border sticky top-16 z-30 backdrop-blur-xl">
         <div className="container mx-auto px-4 space-y-3">
           <div className="flex flex-col md:flex-row gap-2 items-stretch md:items-center">
             <div className="flex-1 min-w-0">
@@ -178,8 +191,8 @@ export default function Marketplace() {
         </div>
       </section>
 
-      <section className="py-12 bg-white">
-        <div className="container mx-auto px-4">
+      <section className="py-8 bg-background">
+        <div ref={resultsRef} className="container mx-auto px-4">
           {projectsError ? <div className="text-center py-12" role="alert"><p className="text-destructive mb-4">Projects could not load.</p><Button variant="outline" onClick={() => retryProjects()}>Retry</Button></div> : isLoading ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -195,7 +208,7 @@ export default function Marketplace() {
                   return (
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                       {filtered.map((project: any, i: number) => (
-                        <ProjectCard key={project.id} project={project} index={i} onPreview={setPreviewUrl} onBuy={handleBuy} />
+                        <div key={project.id} data-product data-flip-id={project.id}><ProjectCard project={project} index={i} onPreview={setPreviewUrl} onBuy={handleBuy} /></div>
                       ))}
                     </div>
                   );
@@ -215,7 +228,7 @@ export default function Marketplace() {
                       </div>
                       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {items.map((project: any, i: number) => (
-                          <ProjectCard key={project.id} project={project} index={i} onPreview={setPreviewUrl} onBuy={handleBuy} />
+                          <div key={project.id} data-product data-flip-id={project.id}><ProjectCard project={project} index={i} onPreview={setPreviewUrl} onBuy={handleBuy} /></div>
                         ))}
                       </div>
                     </div>
@@ -232,9 +245,7 @@ export default function Marketplace() {
             </>
           ) : (
             <div className="text-center py-12 max-w-md mx-auto">
-              <div className="w-40 h-40 mx-auto grid place-items-center rounded-3xl bg-warm-bg/60 border border-border text-7xl">
-                🗂️
-              </div>
+              <img src={webImage} alt="" width={384} height={512} loading="lazy" className="mx-auto h-40 w-40 object-contain" />
               <h3 className="font-display text-xl font-bold text-ink mt-4">No projects match your filters</h3>
               <p className="text-muted-foreground text-sm mt-2">Try clearing a few filters or searching for something else.</p>
               <Button variant="outline" className="mt-4" onClick={clearAll}>Clear all filters</Button>

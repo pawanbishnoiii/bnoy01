@@ -15,6 +15,8 @@ import Footer from '@/components/Footer';
 import BackToTop from '@/components/BackToTop';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Link } from '@tanstack/react-router';
+import { useSearchParams } from '@/lib/router';
 
 const platformMeta: Record<string, { color: string; icon: any; label: string }> = {
   android: { color: 'bg-green-100 text-green-700 border-green-200', icon: Smartphone, label: 'Android' },
@@ -28,7 +30,8 @@ const tabs = ['all', 'android', 'ios', 'windows', 'mac', 'linux'];
 
 export default function AppsPage({ platform }: { platform?: string }) {
   const [filter, setFilter] = useState<string>(platform || 'all');
-  const [search, setSearch] = useState('');
+  const [params] = useSearchParams();
+  const [search, setSearch] = useState(params.get('q') || '');
   const { user, setShowAuthModal } = useAuthStore();
   const { openPayment } = useRazorpay();
   const { toast } = useToast();
@@ -147,7 +150,7 @@ export default function AppsPage({ platform }: { platform?: string }) {
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-display font-bold text-lg text-ink truncate">{app.name}</h3>
+                      <h3 className="font-display font-bold text-lg text-foreground break-words"><Link to="/app/$id" params={{id:app.id}}>{app.name}</Link></h3>
                       <Badge variant="outline" className="text-[10px] border-gray-200 text-gray-600">v{app.version}</Badge>
                     </div>
                     <Badge className={`mt-1 ${meta.color} border`}>
@@ -173,6 +176,7 @@ export default function AppsPage({ platform }: { platform?: string }) {
                 </div>
 
                 <div className="mt-auto space-y-2">
+                  <Button asChild variant="outline" className="w-full"><Link to="/app/$id" params={{id:app.id}}>View details</Link></Button>
                   {(() => {
                     const isFree = !app.price || app.price === 0;
                     const owned = ownedIds.has(app.id);
