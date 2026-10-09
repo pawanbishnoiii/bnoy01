@@ -20,8 +20,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-import Navbar from '@/components/Navbar';
-import AuthModal from '@/components/AuthModal';
+import WorkspaceShell from '@/components/admin/WorkspaceShell';
+import AdminMediaCloud from '@/components/admin/AdminMediaCloud';
 import AdminApps from '@/components/admin/AdminApps';
 import AdminCategories from '@/components/admin/AdminCategories';
 import AdminGoogle from '@/components/admin/AdminGoogle';
@@ -47,6 +47,7 @@ const sidebarItems = [
   { id: 'projects', label: 'Projects', icon: Package },
   { id: 'add', label: 'Add Project', icon: PlusCircle },
   { id: 'editor', label: 'Editor Studio', icon: Sparkles },
+  { id: 'media-cloud', label: 'Media Cloud', icon: Package },
   { id: 'apps', label: 'Apps', icon: Smartphone },
   { id: 'categories', label: 'Categories', icon: Tags },
   { id: 'orders', label: 'Orders', icon: ShoppingBag },
@@ -65,12 +66,10 @@ const sidebarItems = [
 
 const COLORS = ['#FF5722', '#FFC107', '#E64A19', '#FFD54F', '#FF8A65'];
 
-import FullscreenButton from '@/components/admin/FullscreenButton';
-
 export default function AdminPanel() {
   const { user, isAdmin, authReady } = useAuthStore();
   const [activeTab, setActiveTab] = useState('dashboard');
-  useEffect(() => { const t = new URLSearchParams(window.location.search).get('tab'); if (t) setActiveTab(t); }, []);
+  useEffect(() => { const t = new URLSearchParams(window.location.search).get('tab'); if (t && sidebarItems.some(i => i.id === t)) setActiveTab(t); }, []);
   const [editingId, setEditingId] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -92,44 +91,13 @@ export default function AdminPanel() {
   const goAdd = (id: string | null = null) => { setEditingId(id); setActiveTab('add'); };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar /><AuthModal />
-      <div className="flex pt-20">
-        <aside className="hidden md:flex w-64 flex-col warm-bg border-r border-border h-[calc(100vh-5rem)] overflow-y-auto p-4 fixed left-0 top-20">
-          <div className="px-4 py-4 mb-4 border-b border-border space-y-3"><div><p className="font-display text-lg font-bold">Studio workspace</p><p className="text-xs text-muted-foreground mt-1">Bnoy Studios</p></div><FullscreenButton /></div>
-          <nav className="space-y-1">
-            {sidebarItems.map((item) => (
-              <Button variant="ghost"
-                key={item.id}
-                onClick={() => { setActiveTab(item.id); if (item.id !== 'add') setEditingId(null); }}
-                className={`w-full h-11 justify-start flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all ${
-                  activeTab === item.id
-                    ? 'bg-primary/10 text-primary font-semibold'
-                    : 'text-muted-foreground hover:text-ink hover:bg-white'
-                }`}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </Button>
-            ))}
-          </nav>
-        </aside>
-
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border flex overflow-x-auto p-2">
-          {sidebarItems.map((item) => (
-            <Button variant="ghost" key={item.id} onClick={() => setActiveTab(item.id)} className={`h-auto shrink-0 flex flex-col items-center gap-1 p-2 rounded-lg text-xs ${activeTab === item.id ? 'text-primary' : 'text-muted-foreground'}`}>
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </Button>
-          ))}
-        </div>
-
-        <main className="flex-1 md:ml-64 p-6 pb-24 md:pb-6">
+    <WorkspaceShell items={sidebarItems} active={activeTab} onSelect={(id) => { setActiveTab(id); setEditingId(null); const url = new URL(window.location.href); url.searchParams.set('tab', id); window.history.replaceState(null, '', url); }}>
           <motion.div key={activeTab + (editingId || '')} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             {activeTab === 'dashboard' && <AdminDashboard />}
             {activeTab === 'projects' && <AdminProjects onEdit={goAdd} onAdd={() => goAdd(null)} />}
             {activeTab === 'add' && <AdminAddProject editingId={editingId} onDone={() => { setEditingId(null); setActiveTab('projects'); }} />}
             {activeTab === 'apps' && <AdminApps />}
+            {activeTab === 'media-cloud' && <AdminMediaCloud />}
             {activeTab === 'editor' && <EditorStudio onGo={(t) => { setEditingId(null); setActiveTab(t); }} onEdit={goAdd} />}
             {activeTab === 'categories' && <AdminCategories />}
             {activeTab === 'orders' && <AdminOrders />}
@@ -145,9 +113,7 @@ export default function AdminPanel() {
             {activeTab === 'ai-deploy' && <AdminAiDeploy />}
             {activeTab === 'settings' && <AdminSettings />}
           </motion.div>
-        </main>
-      </div>
-    </div>
+    </WorkspaceShell>
   );
 }
 

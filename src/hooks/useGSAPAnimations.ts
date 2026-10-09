@@ -69,7 +69,7 @@ export function useGSAPAnimations() {
       }
     });
 
-    return () => { ctx.revert(); ScrollTrigger.killAll(); };
+    return () => { ctx.revert(); };
   }, []);
 }
 

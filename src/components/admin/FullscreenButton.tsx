@@ -14,12 +14,11 @@ export default function FullscreenButton() {
     try {
       if (document.fullscreenElement) await document.exitFullscreen();
       else await document.documentElement.requestFullscreen();
-    catch { toast.info('Full screen is unavailable in this browser window.'); }
+    } catch { toast.info('Full screen is unavailable in this browser window.'); }
   };
   return (
-    <Button variant="outline" size="sm" onClick={toggle} className="w-full gap-2" aria-label="Toggle full screen">
+    <Button variant="outline" size="icon" onClick={toggle} className="shrink-0" title={isFull ? 'Exit full screen' : 'Full screen'} aria-label={isFull ? 'Exit full screen' : 'Full screen'} aria-pressed={isFull}>
       {isFull ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-      {isFull ? 'Exit full screen' : 'Full screen'}
     </Button>
   );
 }
