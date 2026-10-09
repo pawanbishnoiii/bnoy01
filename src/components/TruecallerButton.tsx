@@ -3,7 +3,7 @@ import { useServerFn } from '@tanstack/react-start';
 import { useNavigate } from '@tanstack/react-router';
 import { LoaderCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { startTruecaller } from '@/lib/truecaller.functions';
+import { startTruecaller, reportTruecallerError } from '@/lib/truecaller.functions';
 import { useToast } from '@/hooks/use-toast';
 import TruecallerAnimation from '@/components/TruecallerAnimation';
 import { TRUECALLER_STORAGE_KEY } from '@/lib/truecaller-client';
@@ -12,6 +12,7 @@ export default function TruecallerButton({ link = false, disabled = false, onBus
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate(); const { toast } = useToast();
   const start = useServerFn(startTruecaller);
+  const report = useServerFn(reportTruecallerError);
   const locked = useRef(false);
   const [error, setError] = useState('');
   useEffect(() => setSupported(/Android/i.test(navigator.userAgent)), []);
@@ -25,6 +26,7 @@ export default function TruecallerButton({ link = false, disabled = false, onBus
       await navigate({ to: '/auth/true-sdk' });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Please try another sign-in method.';
+      void report({ data: { stage: 'start', message } }).catch(() => {});
       setError(message); toast({ title: 'Truecaller unavailable', description: message, variant: 'destructive' });
     } finally { locked.current = false; setBusy(false); onBusyChange?.(false); }
   }}>{busy ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <TruecallerAnimation compact />}{busy ? 'Opening Truecaller…' : link ? 'Verify phone with Truecaller' : 'Continue with Truecaller'}</Button>{error && <p role="alert" className="text-xs text-destructive">{error}</p>}</div>;
