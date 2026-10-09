@@ -28,6 +28,7 @@ import AdminNotifications from '@/components/admin/AdminNotifications';
 import AdminVisitors from '@/components/admin/AdminVisitors';
 import AdminTeam from '@/components/admin/AdminTeam';
 import AdminEmails from '@/components/admin/AdminEmails';
+import AdminUsersPro from '@/components/admin/AdminUsersPro';
 import AdminTruecaller from '@/components/admin/AdminTruecaller';
 import AdminLoginSecurity from '@/components/admin/AdminLoginSecurity';
 import AiListingGenerator from '@/components/admin/AiListingGenerator';
@@ -123,7 +124,7 @@ export default function AdminPanel() {
             {activeTab === 'apps' && <AdminApps />}
             {activeTab === 'categories' && <AdminCategories />}
             {activeTab === 'orders' && <AdminOrders />}
-            {activeTab === 'users' && <AdminUsers />}
+            {activeTab === 'users' && <AdminUsersPro />}
             {activeTab === 'emails' && <AdminEmails />}
             {activeTab === 'team' && <AdminTeam />}
             {activeTab === 'truecaller' && <AdminTruecaller />}
