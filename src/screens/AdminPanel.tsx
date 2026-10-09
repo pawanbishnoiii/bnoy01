@@ -93,7 +93,7 @@ export default function AdminPanel() {
   const goAdd = (id: string | null = null) => { setEditingId(id); setActiveTab('add'); };
 
   return (
-    <WorkspaceShell items={sidebarItems} active={activeTab} onSelect={(id) => { setActiveTab(id); setEditingId(null); const url = new URL(window.location.href); url.searchParams.set('tab', id); window.history.replaceState(null, '', url); }}>
+    <WorkspaceShell items={sidebarItems} active={activeTab} onSelect={(id) => { setActiveTab(id); setEditingId(null); setAppCreation(undefined); const url = new URL(window.location.href); url.searchParams.set('tab', id); window.history.replaceState(null, '', url); }}>
           <motion.div key={activeTab + (editingId || '')} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             {activeTab === 'dashboard' && <AdminDashboard />}
             {activeTab === 'projects' && <AdminProjects onEdit={goAdd} onAdd={() => goAdd(null)} />}
@@ -534,7 +534,7 @@ function AdminAddProject({ editingId, onDone, initialType = 'website' }: { editi
       <h1 className="font-display text-2xl font-bold">{isEdit ? 'Edit Project' : 'Add New Project'}</h1>
       <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key !== 'Enter' || e.nativeEvent.isComposing || !(e.target instanceof HTMLInputElement) || ['file', 'checkbox', 'radio'].includes(e.target.type)) return; e.preventDefault(); if (!e.target.reportValidity()) return; const sections = ['info', 'versions', 'media', 'publish'] as const; const next = sections[sections.indexOf(sec) + 1]; if (next) setSec(next); }} className="space-y-6">
         <div className="sticky top-20 z-10 -mx-1 flex gap-1 overflow-x-auto rounded-2xl border border-border bg-background/90 p-1 backdrop-blur">
-          {([['versions','1 · Versions'],['info','2 · Info'],['media','3 · Media'],['publish','4 · Publish & SEO']] as const).map(([k,l]) => <button type="button" key={k} onClick={() => setSec(k)} className={`flex-1 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition ${sec === k ? 'bg-primary text-primary-foreground shadow' : 'text-muted-foreground hover:text-foreground'}`}>{l}</button>)}
+          {([['info','1 · Info'],['versions','2 · Versions'],['media','3 · Media'],['publish','4 · Publish & SEO']] as const).map(([k,l]) => <Button variant={sec === k ? 'default' : 'ghost'} type="button" key={k} onClick={() => setSec(k)} className="flex-1 whitespace-nowrap">{l}</Button>)}
         </div>
         <div hidden={sec !== 'versions'} className="space-y-6">
         <div className="space-y-2"><Label>Project type</Label><div className="grid grid-cols-2 md:grid-cols-4 gap-2">{[['website','🌐 Website'],['app','📱 App'],['windows','🪟 Windows'],['automation','⚙️ Automation']].map(([v,l]) => <button type="button" key={v} onClick={() => setForm({ ...form, project_type: v })} className={`rounded-xl border p-3 text-sm font-semibold transition ${form.project_type === v ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/40'}`}>{l}</button>)}</div></div>

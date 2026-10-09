@@ -1,4 +1,4 @@
-type Product = { id: string; status: string; category?: string[] | null; tech_stack?: string[] | null; project_type?: string | null; platform?: string | null; price?: number | null; discount_price?: number | null; created_at?: string | null; views_count?: number | null; likes_count?: number | null; download_count?: number | null };
+type Product = { id: string; status: string | null; category?: string[] | null; tech_stack?: string[] | null; project_type?: string | null; platform?: string | null; price?: number | null; discount_price?: number | null; created_at?: string | null; views_count?: number | null; likes_count?: number | null; download_count?: number | null };
 const overlap = (a?: string[] | null, b?: string[] | null) => { const set = new Set((a || []).map(s => s.toLowerCase())); return new Set((b || []).map(s => s.toLowerCase()).filter(s => set.has(s))).size; };
 export function rankRecommendations<T extends Product>(current: Product, candidates: T[], limit = 6, now = Date.now()): T[] {
   const seen = new Set<string>();
