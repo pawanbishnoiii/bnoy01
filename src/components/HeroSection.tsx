@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Star, ShieldCheck, Sparkles, Zap } from 'lucide-react';
+import { Star, ShieldCheck, Sparkles, Zap, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/authStore';
 import { Link, useNavigate } from '@/lib/router';
@@ -19,6 +19,7 @@ import benefitTeam from '@/assets/benefit-team.png';
 import benefitSecure from '@/assets/benefit-secure.png';
 import benefitHandoff from '@/assets/benefit-handoff.png';
 import mobileHeroArt from '@/assets/mobile-hero.png';
+import workspacePhoto from '@/assets/studio-workspace.jpg';
 
 if (typeof window !== 'undefined') gsap.registerPlugin(ScrollTrigger);
 
@@ -219,34 +220,13 @@ export default function HeroSection() {
 }
 
 function MobileHero({ brand, tagline, badge, isAdmin }: { brand: string; tagline: string; badge: string; isAdmin: boolean }) {
-  const stats = [['50+', 'Projects'], ['4.9★', 'Rating'], ['24/7', 'Support']];
   return (
-    <section className="md:hidden relative overflow-hidden bg-warm-bg text-ink pt-24 pb-10 px-5">
-      <motion.div aria-hidden animate={{ scale: [1, 1.2, 1], rotate: [0, 30, 0] }} transition={{ repeat: Infinity, duration: 12 }}
-        className="absolute -top-24 -right-24 h-72 w-72 rounded-full pointer-events-none" style={{ background: 'radial-gradient(closest-side, hsl(14 100% 60% / 0.4), transparent)' }} />
-      <motion.div aria-hidden animate={{ scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 9, delay: 1 }}
-        className="absolute top-72 -left-24 h-64 w-64 rounded-full pointer-events-none" style={{ background: 'radial-gradient(closest-side, hsl(43 100% 55% / 0.4), transparent)' }} />
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-[11px] font-semibold uppercase tracking-wider shadow-card">
-        <Sparkles className="h-3 w-3 text-fire" />{badge}
-      </motion.div>
-      <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="relative mt-4 font-display text-[40px] leading-[1.02] font-extrabold tracking-tight">
-        Ship-ready code,<br /><span className="bg-gradient-to-br from-fire via-sun to-fire bg-clip-text text-transparent">in your pocket.</span>
-      </motion.h1>
-      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="relative mt-3 text-[15px] text-muted-foreground">{tagline}</motion.p>
-      <motion.div initial={{ opacity: 0, scale: 0.85, rotate: -4 }} animate={{ opacity: 1, scale: 1, rotate: 0 }} transition={{ delay: 0.2, type: 'spring', stiffness: 90 }} className="relative my-4">
-        <motion.img src={mobileHeroArt} alt={`${brand} web, app and Windows projects`} width={1024} height={1024} className="mx-auto w-[88%] max-w-sm drop-shadow-2xl"
-          animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }} />
-        <motion.div animate={{ y: [0, -6, 0] }} transition={{ repeat: Infinity, duration: 3 }} className="absolute left-0 top-6 rounded-2xl border border-border bg-card px-3 py-2 text-xs font-semibold shadow-card flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-fire" />Secure checkout</motion.div>
-        <motion.div animate={{ y: [0, 6, 0] }} transition={{ repeat: Infinity, duration: 3.5 }} className="absolute right-0 bottom-6 rounded-2xl border border-border bg-card px-3 py-2 text-xs font-semibold shadow-card flex items-center gap-1.5"><Zap className="h-3.5 w-3.5 text-sun" />Instant download</motion.div>
-      </motion.div>
-      <div className="relative grid grid-cols-3 gap-2">
-        {stats.map(([v, l]) => <div key={l} className="rounded-2xl border border-border bg-card/80 backdrop-blur py-3 text-center shadow-card"><div className="font-display text-lg font-extrabold">{v}</div><div className="text-[11px] text-muted-foreground">{l}</div></div>)}
+    <section className="md:hidden border-b border-border bg-background pt-20">
+      <div className="relative min-h-[520px] overflow-hidden">
+        <img src={workspacePhoto} alt="Web and mobile software on a laptop and phone" width={1280} height={960} fetchPriority="high" className="absolute inset-0 h-full w-full object-cover object-bottom" />
+        <div className="relative px-5 pt-7"><p className="flex items-center gap-2 text-xs font-semibold text-primary"><Sparkles className="h-3.5 w-3.5" />Web · Apps · Windows</p><h1 className="mt-3 max-w-xs font-display text-4xl font-extrabold leading-tight text-foreground">{brand}</h1><p className="mt-3 max-w-xs text-sm text-foreground">{tagline}</p><div className="mt-5 flex flex-wrap gap-2"><Button asChild><Link to="/marketplace">Browse projects</Link></Button><Button asChild variant="outline"><Link to={isAdmin ? '/admin' : '/call'}>{isAdmin ? 'Studio workspace' : 'Book a call'}</Link></Button></div></div>
       </div>
-      <div className="relative mt-5 flex flex-col gap-2.5">
-        <Link to="/marketplace"><Button size="lg" className="w-full rounded-full h-12 text-base">Browse projects</Button></Link>
-        {isAdmin ? <Link to="/admin"><Button size="lg" variant="outline" className="w-full rounded-full h-12">Admin Panel</Button></Link>
-          : <Link to="/windows"><Button size="lg" variant="outline" className="w-full rounded-full h-12">Windows software</Button></Link>}
-      </div>
+      <div className="flex items-center justify-between gap-2 px-5 py-4 text-xs font-medium text-muted-foreground"><span className="flex items-center gap-1.5"><Globe className="h-4 w-4 text-primary" />Web projects</span><span>Mobile apps</span><Link to="/windows" className="text-primary">Windows software →</Link></div>
     </section>
   );
 }
