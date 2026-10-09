@@ -84,8 +84,6 @@ export const sendWelcomeIfNeeded = createServerFn({ method: 'POST' })
     const { data: p } = await supabaseAdmin.from('profiles').select('email,name,welcome_email_sent').eq('id', context.userId).maybeSingle();
     if (!p?.email || p.welcome_email_sent || p.email.endsWith('.invalid')) return { sent: false };
     await supabaseAdmin.from('profiles').update({ welcome_email_sent: true }).eq('id', context.userId);
-    const { getTheme, renderEmail, sendMail } = await import('./mailer.server');
-    const theme = await getTheme();
-    if (!theme.signup_enabled) return { sent: false };
-    return sendMail(p.email, 'Welcome to Bnoy Studios', renderEmail(theme, { title: `Welcome${p.name ? ', ' + p.name : ''}!`, intro: 'Your account is ready. Explore ready-made projects or book a free call to build your own idea.', cta: { label: 'Book a free call', url: 'https://bnoy01.lovable.app/call' } }), 'welcome');
+    const { sendWelcome } = await import('./email-link.functions');
+    return sendWelcome(p.email, p.name || '');
   });
