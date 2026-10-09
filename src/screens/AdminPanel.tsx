@@ -30,6 +30,7 @@ import AdminTeam from '@/components/admin/AdminTeam';
 import AdminTruecaller from '@/components/admin/AdminTruecaller';
 import AdminLoginSecurity from '@/components/admin/AdminLoginSecurity';
 import AiListingGenerator from '@/components/admin/AiListingGenerator';
+import SystemStatusBlock from '@/components/ui/system-status-block';
 import { TECH_SUGGESTIONS, techIcon } from '@/lib/techIcons';
 
 const DescriptionEditor = lazy(() => import('@/components/admin/DescriptionEditor'));
@@ -157,6 +158,7 @@ function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-5"><div><p className="text-xs text-muted-foreground mb-2">STUDIO / OVERVIEW</p><h1 className="font-display text-3xl font-bold">Dashboard Overview</h1></div><Badge variant="outline">{projects?.filter((p: any) => p.status === 'draft').length || 0} drafts</Badge></div>
+      <SystemStatusBlock />
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((c) => (
           <div key={c.label} className="bg-card rounded-lg border border-border p-5">
