@@ -37,7 +37,7 @@ export async function truecallerCallback(request: Request) {
       const reason = result.status === 401 || result.status === 403 ? 'Truecaller rejected the sign-in token (check the app key in admin settings).' : `Truecaller profile service returned error ${result.status}.`;
       return fail(`${reason} Please retry.`, 200);
     }
-    const profile = await result.json() as { phoneNumbers?: unknown[] };
+    const profile = await result.json() as { phoneNumbers?: string[] } & Record<string, string | string[] | null>;
     if (!Array.isArray(profile.phoneNumbers) || !profile.phoneNumbers.length) return fail('Your Truecaller profile has no phone number.', 200);
     const { error } = await db.from('truecaller_requests').update({ status: 'verified', verified_profile: profile }).eq('id', p.requestId).eq('status', 'pending');
     if (error) { console.error('truecaller callback: save failed', error.message); return fail('Your profile could not be saved. Please retry.', 200); }
