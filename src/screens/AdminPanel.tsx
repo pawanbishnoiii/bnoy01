@@ -28,6 +28,8 @@ import AdminNotifications from '@/components/admin/AdminNotifications';
 import AdminVisitors from '@/components/admin/AdminVisitors';
 import AdminTeam from '@/components/admin/AdminTeam';
 import AdminEmails from '@/components/admin/AdminEmails';
+import AdminUsersPro from '@/components/admin/AdminUsersPro';
+import EditorStudio from '@/components/admin/EditorStudio';
 import AdminTruecaller from '@/components/admin/AdminTruecaller';
 import AdminLoginSecurity from '@/components/admin/AdminLoginSecurity';
 import AiListingGenerator from '@/components/admin/AiListingGenerator';
@@ -40,6 +42,7 @@ const sidebarItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'projects', label: 'Projects', icon: Package },
   { id: 'add', label: 'Add Project', icon: PlusCircle },
+  { id: 'editor', label: 'Editor Studio', icon: Sparkles },
   { id: 'apps', label: 'Apps', icon: Smartphone },
   { id: 'categories', label: 'Categories', icon: Tags },
   { id: 'orders', label: 'Orders', icon: ShoppingBag },
@@ -62,6 +65,7 @@ import FullscreenButton from '@/components/admin/FullscreenButton';
 export default function AdminPanel() {
   const { user, isAdmin, authReady } = useAuthStore();
   const [activeTab, setActiveTab] = useState('dashboard');
+  useEffect(() => { const t = new URLSearchParams(window.location.search).get('tab'); if (t) setActiveTab(t); }, []);
   const [editingId, setEditingId] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -121,9 +125,10 @@ export default function AdminPanel() {
             {activeTab === 'projects' && <AdminProjects onEdit={goAdd} onAdd={() => goAdd(null)} />}
             {activeTab === 'add' && <AdminAddProject editingId={editingId} onDone={() => { setEditingId(null); setActiveTab('projects'); }} />}
             {activeTab === 'apps' && <AdminApps />}
+            {activeTab === 'editor' && <EditorStudio onGo={(t) => { setEditingId(null); setActiveTab(t); }} onEdit={goAdd} />}
             {activeTab === 'categories' && <AdminCategories />}
             {activeTab === 'orders' && <AdminOrders />}
-            {activeTab === 'users' && <AdminUsers />}
+            {activeTab === 'users' && <AdminUsersPro />}
             {activeTab === 'emails' && <AdminEmails />}
             {activeTab === 'team' && <AdminTeam />}
             {activeTab === 'truecaller' && <AdminTruecaller />}
