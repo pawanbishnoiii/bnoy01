@@ -7,13 +7,25 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { sendTestEmail } from '@/lib/booking.functions';
+import { sendTestEmail, announceProduct } from '@/lib/booking.functions';
 import { useAuthStore } from '@/store/authStore';
 
 export default function AdminEmails() {
   const qc = useQueryClient();
   const { user } = useAuthStore();
   const test = useServerFn(sendTestEmail);
+  const announce = useServerFn(announceProduct);
+  const [pid, setPid] = useState('');
+  const [sending, setSending] = useState(false);
+  const { data: projects = [] } = useQuery({ queryKey: ['email-projects'], queryFn: async () => (await supabase.from('projects').select('id,title,slug').eq('status', 'published').order('created_at', { ascending: false }).limit(100)).data || [] });
+  const sendProduct = async () => {
+    const p: any = projects.find((x: any) => x.id === pid); if (!p) return toast.error('Pick a product');
+    if (!confirm(`Email all users about "${p.title}"?`)) return;
+    setSending(true);
+    try { const r = await announce({ data: { title: p.title, url: `https://bnoy01.lovable.app/p/${p.slug || p.id}` } }); toast.success(`Sent to ${r.sent} users`); }
+    catch (e) { toast.error(e instanceof Error ? e.message : 'Failed'); }
+    finally { setSending(false); qc.invalidateQueries({ queryKey: ['email-logs'] }); }
+  };
   const { data: theme } = useQuery({ queryKey: ['email-theme'], queryFn: async () => (await supabase.from('email_theme').select('*').eq('id', true).maybeSingle()).data });
   const { data: logs = [] } = useQuery({ queryKey: ['email-logs'], queryFn: async () => (await supabase.from('email_logs').select('*').order('created_at', { ascending: false }).limit(50)).data || [] });
   const { data: bookings = [] } = useQuery({ queryKey: ['admin-bookings'], queryFn: async () => (await supabase.from('bookings').select('*').order('booking_date', { ascending: false }).limit(100)).data || [] });
@@ -64,6 +76,9 @@ export default function AdminEmails() {
           </div>
         </div>
       )}
+      <section className="rounded-2xl border border-border p-5"><h2 className="font-display text-lg font-bold mb-1">Announce a new product</h2><p className="text-sm text-muted-foreground mb-3">Sends a launch email to every user with an email address.</p>
+        <div className="flex flex-wrap gap-2"><select value={pid} onChange={(e) => setPid(e.target.value)} className="flex-1 min-w-[200px] rounded-md border border-border bg-background px-3 h-10"><option value="">Choose a product…</option>{projects.map((p: any) => <option key={p.id} value={p.id}>{p.title}</option>)}</select><Button onClick={sendProduct} disabled={sending}>{sending ? 'Sending…' : 'Send launch email'}</Button></div>
+      </section>
       <section><h2 className="font-display text-lg font-bold mb-3">Call bookings ({bookings.length})</h2>
         <div className="overflow-x-auto rounded-2xl border border-border"><table className="w-full text-sm"><thead><tr className="border-b border-border text-left">{['When', 'Name', 'Contact', 'Type', 'Budget', 'Idea', 'Status'].map((h) => <th key={h} className="p-3">{h}</th>)}</tr></thead>
           <tbody>{bookings.map((b: any) => <tr key={b.id} className="border-b border-border align-top"><td className="p-3 whitespace-nowrap">{b.booking_date} {b.booking_time}</td><td className="p-3">{b.name}</td><td className="p-3">{b.email}<br /><span className="text-muted-foreground">{b.phone}</span></td><td className="p-3">{b.project_type}</td><td className="p-3">{b.budget}</td><td className="p-3 max-w-xs">{b.details}</td><td className="p-3"><select value={b.status} onChange={(e) => setStatus(b.id, e.target.value)} className="rounded border border-border bg-background px-2 py-1">{['pending', 'confirmed', 'done', 'cancelled'].map((s) => <option key={s}>{s}</option>)}</select></td></tr>)}</tbody></table></div>
