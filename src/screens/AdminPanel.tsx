@@ -35,6 +35,8 @@ import AdminTruecaller from '@/components/admin/AdminTruecaller';
 import AdminLoginSecurity from '@/components/admin/AdminLoginSecurity';
 import AdminAiDeploy from '@/components/admin/AdminAiDeploy';
 import AiListingGenerator from '@/components/admin/AiListingGenerator';
+import { aiProjectAssist } from '@/lib/ai-project.functions';
+import { useServerFn } from '@tanstack/react-start';
 import SystemStatusBlock from '@/components/ui/system-status-block';
 import { TECH_SUGGESTIONS, techIcon } from '@/lib/techIcons';
 
@@ -353,7 +355,19 @@ function AdminAddProject({ editingId, onDone }: { editingId: string | null; onDo
     changelog: '[]', views_count: 0,
     lov_email: '', project_url: '', external_url_enabled: false,
     demo_admin_email: '', demo_admin_password: '', preview_watermark: '',
+    project_type: 'website', seo_title: '', seo_description: '', seo_keywords: [] as string[], og_image_url: '', noindex: false,
   });
+  const [sec, setSec] = useState<'versions' | 'info' | 'media' | 'publish'>('info');
+  const [aiBusy, setAiBusy] = useState('');
+  const aiAssist = useServerFn(aiProjectAssist);
+  const runAi = async (kind: 'short' | 'full' | 'tech' | 'seo') => {
+    setAiBusy(kind);
+    try {
+      const r = await aiAssist({ data: { kind, title: form.title, short_desc: form.short_desc, full_desc: form.full_desc, project_type: form.project_type } });
+      setForm((f: any) => kind === 'short' ? { ...f, short_desc: (r.text || '').slice(0, 160) } : kind === 'full' ? { ...f, full_desc: r.text || f.full_desc } : kind === 'tech' ? { ...f, tech_stack: Array.from(new Set([...(f.tech_stack || []), ...(r.tech || [])])) } : { ...f, seo_title: r.seo_title || f.seo_title, seo_description: r.seo_description || f.seo_description, seo_keywords: r.keywords || f.seo_keywords });
+      toast({ title: 'AI filled it in ✨' });
+    } catch (e: any) { toast({ title: 'AI failed', description: e.message, variant: 'destructive' }); } finally { setAiBusy(''); }
+  };
   const [bumpOpen, setBumpOpen] = useState(false);
   const [bumpForm, setBumpForm] = useState({ version: '', notes: '', date: new Date().toISOString().slice(0,10) });
   const [loading, setLoading] = useState(false);
@@ -384,6 +398,7 @@ function AdminAddProject({ editingId, onDone }: { editingId: string | null; onDo
       external_url_enabled: !!(existing as any).external_url_enabled,
       demo_admin_email: (existing as any).demo_admin_email || '', demo_admin_password: (existing as any).demo_admin_password || '',
       preview_watermark: (existing as any).preview_watermark || '',
+      project_type: (existing as any).project_type || 'website', seo_title: (existing as any).seo_title || '', seo_description: (existing as any).seo_description || '', seo_keywords: (existing as any).seo_keywords || [], og_image_url: (existing as any).og_image_url || '', noindex: !!(existing as any).noindex,
     });
   }, [existing]);
 
@@ -529,6 +544,7 @@ function AdminAddProject({ editingId, onDone }: { editingId: string | null; onDo
         external_url_enabled: !!form.external_url_enabled,
         demo_admin_email: form.demo_admin_email || null, demo_admin_password: form.demo_admin_password || null,
         preview_watermark: form.preview_watermark || null,
+        project_type: form.project_type, seo_title: form.seo_title || null, seo_description: form.seo_description || null, seo_keywords: form.seo_keywords || [], og_image_url: form.og_image_url || null, noindex: !!form.noindex,
       };
       const { error } = isEdit
         ? await supabase.from('projects').update(payload).eq('id', editingId || '')
@@ -549,6 +565,43 @@ function AdminAddProject({ editingId, onDone }: { editingId: string | null; onDo
     <div className="space-y-6 max-w-3xl">
       <h1 className="font-display text-2xl font-bold">{isEdit ? 'Edit Project' : 'Add New Project'}</h1>
       <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="sticky top-20 z-10 -mx-1 flex gap-1 overflow-x-auto rounded-2xl border border-border bg-background/90 p-1 backdrop-blur">
+          {([['versions','1 · Versions'],['info','2 · Info'],['media','3 · Media'],['publish','4 · Publish & SEO']] as const).map(([k,l]) => <button type="button" key={k} onClick={() => setSec(k)} className={`flex-1 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition ${sec === k ? 'bg-primary text-primary-foreground shadow' : 'text-muted-foreground hover:text-foreground'}`}>{l}</button>)}
+        </div>
+        <div hidden={sec !== 'versions'} className="space-y-6">
+        <div className="space-y-2"><Label>Project type</Label><div className="grid grid-cols-2 md:grid-cols-4 gap-2">{[['website','🌐 Website'],['app','📱 App'],['windows','🪟 Windows'],['automation','⚙️ Automation']].map(([v,l]) => <button type="button" key={v} onClick={() => setForm({ ...form, project_type: v })} className={`rounded-xl border p-3 text-sm font-semibold transition ${form.project_type === v ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/40'}`}>{l}</button>)}</div></div>
+        {/* Changelog + version-bump shortcut */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <Label>Changelog (JSON array)</Label>
+            <Button type="button" variant="outline" size="sm" onClick={() => setBumpOpen(o => !o)}>
+              {bumpOpen ? 'Close' : '＋ Add new version'}
+            </Button>
+          </div>
+          {bumpOpen && (
+            <div className="rounded-xl border border-fire/20 bg-fire/5 p-4 grid md:grid-cols-3 gap-3">
+              <Input placeholder="v1.2" value={bumpForm.version} onChange={e => setBumpForm({ ...bumpForm, version: e.target.value })} className="bg-white border-border" />
+              <Input type="date" value={bumpForm.date} onChange={e => setBumpForm({ ...bumpForm, date: e.target.value })} className="bg-white border-border" />
+              <div />
+              <Textarea placeholder="What's new in this version…" value={bumpForm.notes} onChange={e => setBumpForm({ ...bumpForm, notes: e.target.value })} rows={3} className="md:col-span-3 bg-white border-border" />
+              <Button type="button" className="gradient-fire-strong text-white md:col-span-3" onClick={() => {
+                if (!bumpForm.version || !bumpForm.notes) { toast({ title: 'Version and notes required', variant: 'destructive' }); return; }
+                let arr: any[] = [];
+                try { arr = form.changelog ? JSON.parse(form.changelog) : []; } catch { arr = []; }
+                arr = [{ version: bumpForm.version, date: bumpForm.date, notes: bumpForm.notes }, ...arr.filter((x: any) => x.version !== bumpForm.version)];
+                setForm({ ...form, changelog: JSON.stringify(arr, null, 2), version: bumpForm.version });
+                setBumpForm({ version: '', notes: '', date: new Date().toISOString().slice(0,10) });
+                setBumpOpen(false);
+                toast({ title: `Version ${bumpForm.version} added — also tip: upload fresh screenshots below.` });
+              }}>Save version & sync</Button>
+            </div>
+          )}
+          <Textarea value={form.changelog} onChange={(e) => setForm({ ...form, changelog: e.target.value })} rows={6} className="bg-warm-bg border-border font-mono text-xs"
+            placeholder={`[\n  { "version": "v1.1", "date": "2026-05-01", "notes": "Added X..." }\n]`} />
+        </div>
+
+        </div>
+        <div hidden={sec !== 'info'} className="space-y-6">
         <div className="grid md:grid-cols-2 gap-4">
           <div className="space-y-2"><Label>Title *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required className="bg-warm-bg border-border" /></div>
           <div className="space-y-2">
@@ -570,39 +623,14 @@ function AdminAddProject({ editingId, onDone }: { editingId: string | null; onDo
         <AiListingGenerator defaultName={form.title} onApply={(r) => setForm((f: any) => ({ ...f, short_desc: r.short_desc, full_desc: r.full_desc, tech_stack: Array.from(new Set([...(f.tech_stack || []), ...r.tags])) }))} />
 
         <div className="space-y-2 relative">
-          <Label>Short Description *</Label>
+          <div className="flex items-center justify-between"><Label>Short Description *</Label><Button type="button" size="sm" variant="outline" disabled={!!aiBusy} onClick={() => runAi('short')}><Sparkles className="h-3.5 w-3.5 mr-1" />{aiBusy === 'short' ? 'Writing…' : 'Write with AI'}</Button></div>
           <Textarea value={form.short_desc} onChange={(e) => setForm({ ...form, short_desc: e.target.value })} required className="bg-warm-bg border-border" rows={2} />
           <span className={`absolute right-2 bottom-2 text-xs ${shortLen > 160 ? 'text-destructive' : 'text-muted-foreground'}`}>{shortLen}/160</span>
         </div>
 
-        <div className="space-y-2"><Label>Full Description</Label><Suspense fallback={<p className="text-muted-foreground">Loading editor…</p>}><DescriptionEditor value={form.full_desc} onChange={(value) => setForm((f: any) => ({ ...f, full_desc: value }))} /></Suspense></div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label>Price (₹)</Label>
-            <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
-              <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) || 0 })} className="bg-warm-bg border-border pl-7" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label>Discount Price</Label>
-            <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
-              <Input type="number" value={form.discount_price} onChange={(e) => setForm({ ...form, discount_price: parseInt(e.target.value) || 0 })} className="bg-warm-bg border-border pl-7" />
-            </div>
-          </div>
-          <div className="space-y-2"><Label>Version</Label><Input value={form.version} onChange={(e) => setForm({ ...form, version: e.target.value })} placeholder="v1.0" className="bg-warm-bg border-border" /></div>
-          <div className="space-y-2">
-            <Label>Status</Label>
-            <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-              <SelectTrigger className="bg-warm-bg border-border"><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="draft">Draft</SelectItem><SelectItem value="published">Published</SelectItem></SelectContent>
-            </Select>
-          </div>
-        </div>
+        <div className="space-y-2"><div className="flex items-center justify-between"><Label>Full Description</Label><Button type="button" size="sm" variant="outline" disabled={!!aiBusy} onClick={() => runAi('full')}><Sparkles className="h-3.5 w-3.5 mr-1" />{aiBusy === 'full' ? 'Writing…' : 'Write with AI'}</Button></div><Suspense fallback={<p className="text-muted-foreground">Loading editor…</p>}><DescriptionEditor value={form.full_desc} onChange={(value) => setForm((f: any) => ({ ...f, full_desc: value }))} /></Suspense></div>
 
         <TagInput label="Categories" value={form.category} onChange={(v) => setForm({ ...form, category: v })} placeholder="Type and press Enter" suggestions={catSuggestions || []} />
-        <TagInput label="Tech Stack" value={form.tech_stack} onChange={(v) => setForm({ ...form, tech_stack: v })} placeholder="React, TypeScript…" suggestions={TECH_SUGGESTIONS} withIcons />
-
         {/* Admin-only links shown on the Project page */}
         <div className="grid md:grid-cols-2 gap-4 rounded-xl border border-amber-200 bg-amber-50/40 p-4">
           <div className="md:col-span-2">
@@ -640,42 +668,8 @@ function AdminAddProject({ editingId, onDone }: { editingId: string | null; onDo
           </div>
         </div>
 
-        {/* Changelog + version-bump shortcut */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <Label>Changelog (JSON array)</Label>
-            <Button type="button" variant="outline" size="sm" onClick={() => setBumpOpen(o => !o)}>
-              {bumpOpen ? 'Close' : '＋ Add new version'}
-            </Button>
-          </div>
-          {bumpOpen && (
-            <div className="rounded-xl border border-fire/20 bg-fire/5 p-4 grid md:grid-cols-3 gap-3">
-              <Input placeholder="v1.2" value={bumpForm.version} onChange={e => setBumpForm({ ...bumpForm, version: e.target.value })} className="bg-white border-border" />
-              <Input type="date" value={bumpForm.date} onChange={e => setBumpForm({ ...bumpForm, date: e.target.value })} className="bg-white border-border" />
-              <div />
-              <Textarea placeholder="What's new in this version…" value={bumpForm.notes} onChange={e => setBumpForm({ ...bumpForm, notes: e.target.value })} rows={3} className="md:col-span-3 bg-white border-border" />
-              <Button type="button" className="gradient-fire-strong text-white md:col-span-3" onClick={() => {
-                if (!bumpForm.version || !bumpForm.notes) { toast({ title: 'Version and notes required', variant: 'destructive' }); return; }
-                let arr: any[] = [];
-                try { arr = form.changelog ? JSON.parse(form.changelog) : []; } catch { arr = []; }
-                arr = [{ version: bumpForm.version, date: bumpForm.date, notes: bumpForm.notes }, ...arr.filter((x: any) => x.version !== bumpForm.version)];
-                setForm({ ...form, changelog: JSON.stringify(arr, null, 2), version: bumpForm.version });
-                setBumpForm({ version: '', notes: '', date: new Date().toISOString().slice(0,10) });
-                setBumpOpen(false);
-                toast({ title: `Version ${bumpForm.version} added — also tip: upload fresh screenshots below.` });
-              }}>Save version & sync</Button>
-            </div>
-          )}
-          <Textarea value={form.changelog} onChange={(e) => setForm({ ...form, changelog: e.target.value })} rows={6} className="bg-warm-bg border-border font-mono text-xs"
-            placeholder={`[\n  { "version": "v1.1", "date": "2026-05-01", "notes": "Added X..." }\n]`} />
         </div>
-
-        <div className="space-y-2 max-w-xs">
-          <Label>Views count (manual override)</Label>
-          <Input type="number" value={form.views_count} onChange={(e) => setForm({ ...form, views_count: e.target.value })} className="bg-warm-bg border-border" />
-        </div>
-
-
+        <div hidden={sec !== 'media'} className="space-y-6">
         {/* Thumbnail upload */}
         <div className="space-y-2">
           <Label>Thumbnail Image</Label>
@@ -797,6 +791,51 @@ function AdminAddProject({ editingId, onDone }: { editingId: string | null; onDo
           </div>
         </div>
 
+        </div>
+        <div hidden={sec !== 'publish'} className="space-y-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label>Price (₹)</Label>
+            <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+              <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) || 0 })} className="bg-warm-bg border-border pl-7" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Discount Price</Label>
+            <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+              <Input type="number" value={form.discount_price} onChange={(e) => setForm({ ...form, discount_price: parseInt(e.target.value) || 0 })} className="bg-warm-bg border-border pl-7" />
+            </div>
+          </div>
+          <div className="space-y-2"><Label>Version</Label><Input value={form.version} onChange={(e) => setForm({ ...form, version: e.target.value })} placeholder="v1.0" className="bg-warm-bg border-border" /></div>
+          <div className="space-y-2">
+            <Label>Status</Label>
+            <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+              <SelectTrigger className="bg-warm-bg border-border"><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="draft">Draft</SelectItem><SelectItem value="published">Published</SelectItem></SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-2"><div className="flex justify-end"><Button type="button" size="sm" variant="outline" disabled={!!aiBusy} onClick={() => runAi('tech')}><Sparkles className="h-3.5 w-3.5 mr-1" />{aiBusy === 'tech' ? 'Detecting…' : 'Fetch tech with AI'}</Button></div>
+        <TagInput label="Tech Stack" value={form.tech_stack} onChange={(v) => setForm({ ...form, tech_stack: v })} placeholder="React, TypeScript…" suggestions={TECH_SUGGESTIONS} withIcons />
+
+        </div>
+        <div className="rounded-xl border border-border p-4 space-y-3">
+          <div className="flex items-center justify-between"><p className="font-semibold">Search engine (SEO)</p><Button type="button" size="sm" variant="outline" disabled={!!aiBusy} onClick={() => runAi('seo')}><Sparkles className="h-3.5 w-3.5 mr-1" />{aiBusy === 'seo' ? 'Writing…' : 'Generate SEO with AI'}</Button></div>
+          <div className="space-y-1"><Label>SEO title <span className="text-xs text-muted-foreground">{(form.seo_title || '').length}/60</span></Label><Input value={form.seo_title} onChange={(e) => setForm({ ...form, seo_title: e.target.value })} placeholder={form.title} /></div>
+          <div className="space-y-1"><Label>SEO description <span className="text-xs text-muted-foreground">{(form.seo_description || '').length}/155</span></Label><Textarea rows={2} value={form.seo_description} onChange={(e) => setForm({ ...form, seo_description: e.target.value })} placeholder={form.short_desc} /></div>
+          <TagInput label="Keywords" value={form.seo_keywords} onChange={(v) => setForm({ ...form, seo_keywords: v })} placeholder="Type and press Enter" suggestions={[]} />
+          <div className="space-y-1"><Label>Share image URL</Label><Input value={form.og_image_url} onChange={(e) => setForm({ ...form, og_image_url: e.target.value })} placeholder="Defaults to thumbnail" /></div>
+          <label className="flex items-center gap-3 text-sm"><Switch checked={!!form.noindex} onCheckedChange={(v) => setForm({ ...form, noindex: v })} />Hide from Google (noindex)</label>
+          <div className="rounded-lg bg-muted/50 p-3"><p className="text-[11px] text-muted-foreground">Google preview</p><p className="text-primary font-medium truncate">{form.seo_title || form.title || 'Project title'}</p><p className="text-xs text-green-700">bnoy01.lovable.app/p/{form.slug || 'your-slug'}</p><p className="text-xs text-muted-foreground line-clamp-2">{form.seo_description || form.short_desc}</p></div>
+        </div>
+        <div className="space-y-2 max-w-xs">
+          <Label>Views count (manual override)</Label>
+          <Input type="number" value={form.views_count} onChange={(e) => setForm({ ...form, views_count: e.target.value })} className="bg-warm-bg border-border" />
+        </div>
+
+
+        </div>
         <div className="flex gap-3">
           <Button type="submit" disabled={loading} className="gradient-fire-strong text-white">{loading ? 'Saving…' : isEdit ? 'Update Project' : 'Create Project'}</Button>
           <Button type="button" variant="outline" onClick={onDone}>Cancel</Button>
