@@ -27,10 +27,8 @@ import { injectGoogle } from "@/components/admin/AdminGoogle";
 /** Public site settings needed in <head> on every page (Google verification etc). */
 const getHeadSettings = createServerFn({ method: "GET" }).handler(async () => {
   try {
-    const { createClient } = await import("@supabase/supabase-js");
-    const sb = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+    const { publicCatalogClient } = await import('@/lib/public-catalog.server');
+    const sb = publicCatalogClient();
     const { data } = await sb
       .from("site_settings")
       .select("google_site_verification, bing_site_verification, ga_measurement_id, gtm_id, brand_name")

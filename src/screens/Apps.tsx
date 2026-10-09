@@ -16,6 +16,7 @@ import BackToTop from '@/components/BackToTop';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from '@tanstack/react-router';
+import { useSearchParams } from '@/lib/router';
 
 const platformMeta: Record<string, { color: string; icon: any; label: string }> = {
   android: { color: 'bg-green-100 text-green-700 border-green-200', icon: Smartphone, label: 'Android' },
@@ -29,7 +30,8 @@ const tabs = ['all', 'android', 'ios', 'windows', 'mac', 'linux'];
 
 export default function AppsPage({ platform }: { platform?: string }) {
   const [filter, setFilter] = useState<string>(platform || 'all');
-  const [search, setSearch] = useState('');
+  const [params] = useSearchParams();
+  const [search, setSearch] = useState(params.get('q') || '');
   const { user, setShowAuthModal } = useAuthStore();
   const { openPayment } = useRazorpay();
   const { toast } = useToast();
