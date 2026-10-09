@@ -362,6 +362,42 @@ export type Database = {
         }
         Relationships: []
       }
+      media_files: {
+        Row: {
+          created_at: string
+          folder: string
+          id: string
+          mime: string | null
+          name: string
+          path: string
+          size: number
+          starred: boolean
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          folder?: string
+          id?: string
+          mime?: string | null
+          name: string
+          path: string
+          size?: number
+          starred?: boolean
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          folder?: string
+          id?: string
+          mime?: string | null
+          name?: string
+          path?: string
+          size?: number
+          starred?: boolean
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           audience: string
@@ -953,6 +989,30 @@ export type Database = {
           support_email?: string | null
           updated_at?: string
           whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
+      system_checks: {
+        Row: {
+          created_at: string
+          id: string
+          ms: number | null
+          service: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ms?: number | null
+          service: string
+          status: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ms?: number | null
+          service?: string
+          status?: string
         }
         Relationships: []
       }
