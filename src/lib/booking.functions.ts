@@ -16,6 +16,13 @@ const bookingSchema = z.object({
   name: z.string().trim().min(2).max(80),
   email: z.string().trim().email().max(160),
   phone: z.string().trim().max(20).optional().default(''),
+  whatsapp: z.string().trim().max(20).optional().default(''),
+  age: z.number().int().min(10).max(110).optional(),
+  gender: z.string().max(30).optional().default(''),
+  address: z.string().trim().max(300).optional().default(''),
+  pincode: z.string().trim().max(12).optional().default(''),
+  company: z.string().trim().max(120).optional().default(''),
+  preferred_contact: z.enum(['call', 'whatsapp', 'email']).optional().default('call'),
   project_type: z.enum(['web', 'app', 'automation', 'software', 'windows', 'other']),
   budget: z.string().max(40).optional().default(''),
   details: z.string().trim().max(2000).optional().default(''),
@@ -24,7 +31,7 @@ const bookingSchema = z.object({
 });
 
 export const createBooking = createServerFn({ method: 'POST' })
-  .inputValidator((d) => bookingSchema.parse(d))
+  .inputValidator((d) => bookingSchema.refine((v) => /\d{7,}/.test((v.phone || '') + (v.whatsapp || '')), { message: 'Phone or WhatsApp number is required.' }).parse(d))
   .handler(async ({ data }) => {
     const today = new Date().toISOString().slice(0, 10);
     if (data.booking_date < today) throw new Error('Please pick a future date.');
@@ -39,7 +46,7 @@ export const createBooking = createServerFn({ method: 'POST' })
       const r = await sendMail(data.email, 'Your call with Bnoy Studios is booked', renderEmail(theme, { title: 'Your call is booked!', intro: `Hi ${data.name}, thanks for sharing your idea. We will call you at the time below and plan how to turn it into real software.`, rows }), 'booking');
       emailed = r.sent;
       const admin = process.env['SMTP_USER'];
-      if (admin) await sendMail(admin, `New booking: ${data.name} (${data.booking_date} ${data.booking_time})`, renderEmail(theme, { title: 'New call booking', intro: data.details || 'No details given.', rows: [...rows, ['Name', data.name], ['Email', data.email], ['Phone', data.phone || '—']] }), 'booking-admin');
+      if (admin) await sendMail(admin, `New booking: ${data.name} (${data.booking_date} ${data.booking_time})`, renderEmail(theme, { title: 'New call booking', intro: data.details || 'No details given.', rows: [...rows, ['Name', data.name], ['Email', data.email], ['Phone', data.phone || '—'], ['WhatsApp', data.whatsapp || '—'], ['Age', data.age ? String(data.age) : '—'], ['Gender', data.gender || '—'], ['Address', [data.address, data.pincode].filter(Boolean).join(' ') || '—'], ['Company', data.company || '—'], ['Prefers', data.preferred_contact]] }), 'booking-admin');
     }
     return { id: row.id, emailed };
   });
