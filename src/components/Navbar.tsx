@@ -26,6 +26,11 @@ export default function Navbar() {
     queryKey: ['site-settings'],
     queryFn: async () => (await supabase.from('site_settings').select('*').limit(1).maybeSingle()).data,
   });
+  const { data: profile } = useQuery({
+    queryKey: ['my-profile-avatar', user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => (await supabase.from('profiles').select('avatar_url').eq('id', user!.id).maybeSingle()).data,
+  });
   const bnoyLogo = (settings as any)?.logo_url || bnoyLogoFallback;
   const brandName = settings?.brand_name?.split(' ')[0] || 'Bnoy';
   const brandSuffix = settings?.brand_name?.split(' ').slice(1).join(' ') || 'Studios';
@@ -99,7 +104,7 @@ export default function Navbar() {
               user={{
                 name: user.user_metadata?.name || user.user_metadata?.full_name || (user.email?.split('@')[0] ?? 'You'),
                 email: user.email ?? undefined,
-                avatar: user.user_metadata?.avatar_url || user.user_metadata?.picture,
+                avatar: profile?.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture || undefined,
                 initials: (user.user_metadata?.name || user.email || 'U').slice(0, 2).toUpperCase(),
                 status: 'online',
               }}

@@ -55,6 +55,8 @@ const sidebarItems = [
 
 const COLORS = ['#FF5722', '#FFC107', '#E64A19', '#FFD54F', '#FF8A65'];
 
+import FullscreenButton from '@/components/admin/FullscreenButton';
+
 export default function AdminPanel() {
   const { user, isAdmin, authReady } = useAuthStore();
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -83,7 +85,7 @@ export default function AdminPanel() {
       <Navbar /><AuthModal />
       <div className="flex pt-20">
         <aside className="hidden md:flex w-64 flex-col warm-bg border-r border-border h-[calc(100vh-5rem)] overflow-y-auto p-4 fixed left-0 top-20">
-          <div className="px-4 py-4 mb-4 border-b border-border"><p className="font-display text-lg font-bold">Studio workspace</p><p className="text-xs text-muted-foreground mt-1">Bnoy Studios</p></div>
+          <div className="px-4 py-4 mb-4 border-b border-border space-y-3"><div><p className="font-display text-lg font-bold">Studio workspace</p><p className="text-xs text-muted-foreground mt-1">Bnoy Studios</p></div><FullscreenButton /></div>
           <nav className="space-y-1">
             {sidebarItems.map((item) => (
               <Button variant="ghost"
