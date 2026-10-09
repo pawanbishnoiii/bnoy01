@@ -16,4 +16,11 @@
 - [x] Keep source purchases routed through the existing server-priced demo checkout.
 - [ ] Verify live Truecaller approval and success redirect — requires registered domain deployment and real Android Truecaller approval; cannot simulate identity proof.
 - [ ] Verify imported media/source downloads — backup contains URLs, not original storage files; inaccessible files require source storage access.
-- [x] Preserve existing login auditing and admin Login Security monitoring.
+- [x] Preserve existing login auditing and admin Login Security monitoring.- [x] 3-step onboarding (photo, name/gender/age/email, interests) + first-visit redirect.
+- [x] Sitemap auto-updates from published projects.
+- [ ] Phone-only hero redesign.
+- [ ] /admin/editor 4-type versioned dashboard (web, app, Windows, automation).
+- [ ] Admin Users page upgrade (Truecaller + Google user management).
+- [ ] /p/ project page phone redesign.
+- [ ] Team section dynamic data swap (current photos kept).
+- [ ] Email theme + logo test send.

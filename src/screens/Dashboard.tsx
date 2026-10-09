@@ -55,6 +55,11 @@ export default function Dashboard() {
     }
   }, [profile, user, qc]);
 
+  // First visit: send new users through the 3-step onboarding.
+  useEffect(() => {
+    if (profile && (profile as { onboarded?: boolean }).onboarded === false) window.location.replace('/onboarding');
+  }, [profile]);
+
   const { data: purchases, isLoading: purchasesLoading } = useQuery({
     queryKey: ['my-purchases', user.id],
     queryFn: async () => {

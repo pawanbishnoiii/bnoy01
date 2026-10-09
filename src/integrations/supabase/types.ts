@@ -405,6 +405,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          age: number | null
           avatar_url: string | null
           city: string | null
           company: string | null
@@ -418,13 +419,16 @@ export type Database = {
           job_title: string | null
           last_name: string | null
           name: string | null
+          onboarded: boolean
           phone: string | null
           phone_verified: boolean
+          preferences: string[]
           truecaller_last_seen: string | null
           verified_name: boolean
           welcome_email_sent: boolean
         }
         Insert: {
+          age?: number | null
           avatar_url?: string | null
           city?: string | null
           company?: string | null
@@ -438,13 +442,16 @@ export type Database = {
           job_title?: string | null
           last_name?: string | null
           name?: string | null
+          onboarded?: boolean
           phone?: string | null
           phone_verified?: boolean
+          preferences?: string[]
           truecaller_last_seen?: string | null
           verified_name?: boolean
           welcome_email_sent?: boolean
         }
         Update: {
+          age?: number | null
           avatar_url?: string | null
           city?: string | null
           company?: string | null
@@ -458,8 +465,10 @@ export type Database = {
           job_title?: string | null
           last_name?: string | null
           name?: string | null
+          onboarded?: boolean
           phone?: string | null
           phone_verified?: boolean
+          preferences?: string[]
           truecaller_last_seen?: string | null
           verified_name?: boolean
           welcome_email_sent?: boolean
