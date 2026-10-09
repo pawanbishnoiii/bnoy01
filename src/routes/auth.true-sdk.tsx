@@ -1,14 +1,14 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ShieldAlert, LoaderCircle, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useServerFn } from '@tanstack/react-start';
 import { motion } from 'framer-motion';
 import TruecallerAnimation from '@/components/TruecallerAnimation';
 import { readTruecallerAttempt, TRUECALLER_STORAGE_KEY } from '@/lib/truecaller-client';
 import { useAuthStore } from '@/store/authStore';
 import creatorWorkspace from '@/assets/creator-workspace.png';
-import { finishTruecaller } from '@/lib/truecaller.functions';
+import { finishTruecaller, reportTruecallerError } from '@/lib/truecaller.functions';
 import { truecallerCallback } from '@/lib/truecaller-callback';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from '@tanstack/react-router';
@@ -30,7 +30,9 @@ function TruecallerStatus() {
   const [retry, setRetry] = useState(0);
   const navigate = useNavigate();
   const finish = useServerFn(finishTruecaller);
-  const redirect = useCallback(() => navigate({ to: '/dashboard', replace: true }), [navigate]);
+  const report = useServerFn(reportTruecallerError);
+  const needsRef = useRef<string[]>([]);
+  const redirect = useCallback(() => needsRef.current.length ? navigate({ to: '/onboarding', search: { needs: needsRef.current.join(',') }, replace: true }) : navigate({ to: '/dashboard', replace: true }), [navigate]);
   useEffect(() => {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -51,7 +53,7 @@ function TruecallerStatus() {
         failures = 0;
         if (result.status === 'pending') {
           const elapsed = Date.now() - started;
-          if (elapsed >= 60000) { finished = true; setPhase('error'); setMessage('Truecaller has not responded. Check that the app is installed and retry, or use another sign-in method.'); return; }
+          if (elapsed >= 60000) { void report({ data: { requestId: attempt.requestId, stage: 'timeout', message: 'No callback received within 60s' } }).catch(() => {}); finished = true; setPhase('error'); setMessage('Truecaller has not responded. Check that the app is installed and retry, or use another sign-in method.'); return; }
           if (elapsed >= 12000) { setPhase('slow'); setMessage('Still waiting for Truecaller. You can reopen the app or choose another sign-in method.'); }
           else setMessage('Waiting for Truecaller confirmation…');
           timer = setTimeout(poll, elapsed < 12000 ? 900 : 2000);
@@ -64,6 +66,7 @@ function TruecallerStatus() {
         } else if (result.status !== 'linked') {
           finished = true; setPhase('error'); setMessage(result.message || 'Verification could not complete. Please try again.'); return;
         }
+        needsRef.current = 'needs' in result && Array.isArray(result.needs) ? result.needs : [];
         if (cancelled) return;
         sessionStorage.removeItem(TRUECALLER_STORAGE_KEY);
         finished = true;
@@ -72,7 +75,9 @@ function TruecallerStatus() {
       } catch (err) {
         if (cancelled) return;
         if (++failures < 3) { timer = setTimeout(poll, 1500); return; }
-        finished = true; setPhase('error'); setMessage(err instanceof Error ? err.message : 'Connection interrupted. Please retry.');
+        const msg = err instanceof Error ? err.message : 'Connection interrupted. Please retry.';
+        void report({ data: { requestId: attempt.requestId, stage: 'poll', message: msg } }).catch(() => {});
+        finished = true; setPhase('error'); setMessage(msg);
       } finally { inFlight = false; }
     };
     const resume = () => { if (document.visibilityState === 'visible') void poll(); };
@@ -85,7 +90,7 @@ function TruecallerStatus() {
       window.location.assign(attempt.deepLink);
     }
     return () => { cancelled = true; clearTimeout(timer); document.removeEventListener('visibilitychange', resume); window.removeEventListener('focus', resume); };
-  }, [finish, retry]);
+  }, [finish, report, retry]);
   const waiting = phase === 'waiting' || phase === 'slow';
   return <main className="auth-page"><motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="auth-card !max-w-[860px]">
     <div className="auth-form-panel"><Link to="/login" className="text-sm font-semibold">Bnoy Studios</Link>

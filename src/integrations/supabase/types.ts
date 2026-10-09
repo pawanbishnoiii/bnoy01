@@ -827,6 +827,36 @@ export type Database = {
         }
         Relationships: []
       }
+      truecaller_logs: {
+        Row: {
+          created_at: string
+          details: Json | null
+          id: string
+          message: string
+          request_id: string | null
+          stage: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          message: string
+          request_id?: string | null
+          stage: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          message?: string
+          request_id?: string | null
+          stage?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       truecaller_requests: {
         Row: {
           created_at: string
