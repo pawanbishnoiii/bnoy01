@@ -18,10 +18,10 @@
 - [ ] Verify imported media/source downloads — backup contains URLs, not original storage files; inaccessible files require source storage access.
 - [x] Preserve existing login auditing and admin Login Security monitoring.- [x] 3-step onboarding (photo, name/gender/age/email, interests) + first-visit redirect.
 - [x] Sitemap auto-updates from published projects.
-- [ ] Phone-only hero redesign.
-- [ ] /admin/editor 4-type versioned dashboard (web, app, Windows, automation).
-- [ ] Admin Users page upgrade (Truecaller + Google user management).
-- [ ] /p/ project page phone redesign.
-- [ ] Team section dynamic data swap (current photos kept).
-- [ ] Email theme + logo test send.
-- [ ] Admin auto-redirect to /admin after login.
+- [x] Phone-only hero redesign.
+- [x] /admin/editor 4-type versioned dashboard (web, app, Windows, automation).
+- [x] Admin Users page upgrade (Truecaller + Google user management).
+- [x] /p/ project page phone redesign.
+- [x] Team section dynamic data swap (current photos kept).
+- [x] Email theme + logo test send.
+- [x] Admin auto-redirect to /admin after login.
