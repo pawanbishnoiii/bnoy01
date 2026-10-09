@@ -235,8 +235,9 @@
 .truecaller-button { color: var(--truecaller-brand); background: var(--auth-surface); border-color: color-mix(in srgb, var(--truecaller-brand) 35%, transparent); overflow: hidden; }
 .truecaller-animation { position: relative; display: inline-flex; width: 240px; max-width: 100%; aspect-ratio: 4 / 1; overflow: hidden; background: var(--auth-surface); }
 .truecaller-animation video { position: relative; z-index: 1; width: 100%; height: 100%; object-fit: contain; }
-.truecaller-animation.compact { width: 34px; height: 34px; flex-shrink: 0; aspect-ratio: 1; }
-.truecaller-animation.compact video { width: 136px; max-width: none; height: 34px; object-fit: fill; flex-shrink: 0; }
+.truecaller-animation.compact { width: 34px; height: 34px; flex-shrink: 0; aspect-ratio: 1; border-radius: 9999px; background: var(--truecaller-brand); }
+/* The source video is a full 4:1 button; scale it so only the round blue phone icon fills the circle. */
+.truecaller-animation.compact video { position: absolute; left: -9px; top: -4px; width: 168px; max-width: none; height: 42px; object-fit: fill; }
 .truecaller-video-fallback { position: absolute; inset: 25%; width: 50%; height: 50%; color: var(--truecaller-brand); }
 .truecaller-status { width: min(100%, 430px); margin: auto; padding: 38px 30px; text-align: center; }
 .truecaller-status .truecaller-animation:has(video[aria-label="Truecaller verification successful"]) { width: 180px; aspect-ratio: 1; }
