@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { logTruecaller } from '@/lib/truecaller-log';
 const schema = z.object({ requestId: z.string().min(1).max(200), accessToken: z.string().min(10).max(4000).optional(), endpoint: z.string().max(500).optional(), status: z.string().max(80).optional() }).passthrough();
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function truecallerCallback(request: Request) {
@@ -6,16 +7,18 @@ export async function truecallerCallback(request: Request) {
   const body = await request.text();
   if (body.length > 10000) return new Response('Too large', { status: 413 });
   let json: unknown;
-  try { json = JSON.parse(body); } catch (e) { console.error('truecaller callback: invalid JSON', e); return new Response('Invalid callback', { status: 400 }); }
+  const ua = request.headers.get('user-agent');
+  try { json = JSON.parse(body); } catch (e) { console.error('truecaller callback: invalid JSON', e); await logTruecaller({ stage: 'callback_parse', message: 'Callback body was not JSON', details: { sample: body.slice(0, 300) }, userAgent: ua }); return new Response('Invalid callback', { status: 400 }); }
   const input = schema.safeParse(json);
-  if (!input.success || !uuid.test(input.data.requestId)) { console.error('truecaller callback: unexpected payload shape'); return new Response('Invalid callback', { status: 400 }); }
+  if (!input.success || !uuid.test(input.data.requestId)) { console.error('truecaller callback: unexpected payload shape'); await logTruecaller({ stage: 'callback_shape', message: 'Callback payload had unexpected shape', details: { keys: json && typeof json === 'object' ? Object.keys(json) : [] }, userAgent: ua }); return new Response('Invalid callback', { status: 400 }); }
   const { supabaseAdmin: db } = await import('@/integrations/supabase/client.server');
   const p = input.data;
   const { data: attempt } = await db.from('truecaller_requests').select('id,expires_at,status').eq('id', p.requestId).maybeSingle();
-  if (!attempt || attempt.status !== 'pending' || Date.parse(attempt.expires_at) < Date.now()) return new Response('Expired', { status: 400 });
-  const fail = async (msg: string, code: number) => {
+  if (!attempt || attempt.status !== 'pending' || Date.parse(attempt.expires_at) < Date.now()) { await logTruecaller({ requestId: p.requestId, stage: 'callback_expired', message: `Callback for ${attempt ? attempt.status : 'unknown'} request`, details: { status: p.status }, userAgent: ua }); return new Response('Expired', { status: 400 }); }
+  const fail = async (msg: string, code: number, details?: unknown) => {
     const { error } = await db.from('truecaller_requests').update({ status: 'error', error: msg }).eq('id', p.requestId).eq('status', 'pending');
     if (error) console.error('truecaller callback: could not save error', error.message);
+    await logTruecaller({ requestId: p.requestId, stage: 'callback', message: msg, details: { truecallerStatus: p.status ?? null, endpointHost: (() => { try { return p.endpoint ? new URL(p.endpoint).hostname : null; } catch { return 'invalid'; } })(), ...(details && typeof details === 'object' ? details : {}) }, userAgent: ua });
     // Always answer 200 once the error is recorded so Truecaller does not keep retrying; the waiting page shows the reason.
     return new Response(msg, { status: error ? 503 : code });
   };
