@@ -1,4 +1,21 @@
 # Requested upgrades
+
+# Comprehensive upgrade requested Oct 9
+- [ ] Diagnose preview first; verify visible pages, not only response codes.
+- [x] Update SMTP_USER and SMTP_PASS through secure secret form.
+- [x] Produce complete phased upgrade plan before implementation.
+- [ ] Upgrade distraction-free admin shell, sidebar, fullscreen and all admin modules; add Media Cloud menu.
+- [ ] Upgrade Editor Studio with type-first creation, guided sections and desktop Enter navigation.
+- [ ] Upgrade Login Security and Visitors with useful filters, summaries and accurate states.
+- [ ] Redesign phone hero; fix Live Scanner; preserve desktop-like mobile team composition.
+- [ ] Rebuild /call as ordered animated booking steps with PIN lookup and conditional contact/company fields.
+- [ ] Generate and integrate branded PNG illustrations, realistic imagery and booking video.
+- [ ] Upgrade booking storage, availability and admin email confirmation; verify Gmail delivery.
+- [ ] Upgrade marketplace and independent project/app/Windows pages with ranked recommendations.
+- [ ] Add policy footer links and privacy/terms pages without inventing business policies.
+- [ ] Upgrade SEO, sitemap and search-engine submission readiness; do not promise indexing.
+- [ ] Inspect uploaded backup and compare safely; never restore credentials or managed schemas wholesale.
+- [ ] Verify desktop/mobile flows, permissions, database writes and existing regressions.
 - [x] Implement faster single-flight Truecaller polling, recovery and clear loading/error states.
 - [x] Reuse the /login card in the popup and add uploaded loading/success videos with browser-compatible alternatives.
 - [x] Add modern admin/project presentation, formatting editor, preview and screenshot ordering.
