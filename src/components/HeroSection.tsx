@@ -61,7 +61,7 @@ export default function HeroSection() {
 
   // Helper: split a word into per-char spans for letter-level stagger.
   const splitChars = (word: string, keyPrefix: string) => (
-    <span className="bnoy-hero-word inline-block mr-3 overflow-hidden align-bottom" style={{ perspective: 600 }}>
+    <span key={keyPrefix} className="bnoy-hero-word inline-block mr-3 overflow-hidden align-bottom" style={{ perspective: 600 }}>
       {Array.from(word).map((c, i) => (
         <span key={`${keyPrefix}-${i}`} className="bnoy-hero-char inline-block" style={{ transformOrigin: '50% 100%' }}>{c}</span>
       ))}
