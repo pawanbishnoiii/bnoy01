@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -17,6 +17,7 @@ export default function AdminUsersPro() {
   const [q, setQ] = useState('');
   const [prov, setProv] = useState('all');
   const [open, setOpen] = useState<P | null>(null);
+  const qc = useQueryClient();
   const { data: profiles = [] } = useQuery({ queryKey: ['admin-profiles'], queryFn: async () => (await supabase.from('profiles').select('*').order('created_at', { ascending: false })).data || [] });
   const { data: logs = [] } = useQuery({ queryKey: ['admin-login-logs-all'], queryFn: async () => (await supabase.from('user_login_logs').select('*').order('login_at', { ascending: false }).limit(1000)).data || [] });
   const { data: roles = [] } = useQuery({ queryKey: ['admin-roles'], queryFn: async () => (await supabase.from('user_roles').select('user_id,role')).data || [] });
