@@ -18,6 +18,7 @@ import bnoyLogo from '@/assets/bnoy-logo.png';
 import benefitTeam from '@/assets/benefit-team.png';
 import benefitSecure from '@/assets/benefit-secure.png';
 import benefitHandoff from '@/assets/benefit-handoff.png';
+import mobileHeroArt from '@/assets/mobile-hero.png';
 
 if (typeof window !== 'undefined') gsap.registerPlugin(ScrollTrigger);
 
@@ -72,7 +73,9 @@ export default function HeroSection() {
   const headline2 = ['Launch', 'in', 'minutes.'];
 
   return (
-    <section ref={sectionRef} className="relative min-h-[100vh] flex items-center overflow-hidden pt-28 pb-20 bg-warm-bg text-ink">
+    <>
+    <MobileHero brand={brand} tagline={tagline} badge={badge} isAdmin={isAdmin} />
+    <section ref={sectionRef} className="relative min-h-[100vh] hidden md:flex items-center overflow-hidden pt-28 pb-20 bg-warm-bg text-ink">
       {/* LAYER 1 — light backdrop, optional video / bg image */}
       <div className="absolute inset-0 -z-10">
         {heroVideo ? (
@@ -216,6 +219,40 @@ export default function HeroSection() {
             </motion.div>
           </div>
         </div>
+      </div>
+    </section>
+    </>
+  );
+}
+
+function MobileHero({ brand, tagline, badge, isAdmin }: { brand: string; tagline: string; badge: string; isAdmin: boolean }) {
+  const stats = [['50+', 'Projects'], ['4.9★', 'Rating'], ['24/7', 'Support']];
+  return (
+    <section className="md:hidden relative overflow-hidden bg-warm-bg text-ink pt-24 pb-10 px-5">
+      <motion.div aria-hidden animate={{ scale: [1, 1.2, 1], rotate: [0, 30, 0] }} transition={{ repeat: Infinity, duration: 12 }}
+        className="absolute -top-24 -right-24 h-72 w-72 rounded-full pointer-events-none" style={{ background: 'radial-gradient(closest-side, hsl(14 100% 60% / 0.4), transparent)' }} />
+      <motion.div aria-hidden animate={{ scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 9, delay: 1 }}
+        className="absolute top-72 -left-24 h-64 w-64 rounded-full pointer-events-none" style={{ background: 'radial-gradient(closest-side, hsl(43 100% 55% / 0.4), transparent)' }} />
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="relative inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-[11px] font-semibold uppercase tracking-wider shadow-card">
+        <Sparkles className="h-3 w-3 text-fire" />{badge}
+      </motion.div>
+      <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="relative mt-4 font-display text-[40px] leading-[1.02] font-extrabold tracking-tight">
+        Ship-ready code,<br /><span className="bg-gradient-to-br from-fire via-sun to-fire bg-clip-text text-transparent">in your pocket.</span>
+      </motion.h1>
+      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="relative mt-3 text-[15px] text-muted-foreground">{tagline}</motion.p>
+      <motion.div initial={{ opacity: 0, scale: 0.85, rotate: -4 }} animate={{ opacity: 1, scale: 1, rotate: 0 }} transition={{ delay: 0.2, type: 'spring', stiffness: 90 }} className="relative my-4">
+        <motion.img src={mobileHeroArt} alt={`${brand} web, app and Windows projects`} width={1024} height={1024} className="mx-auto w-[88%] max-w-sm drop-shadow-2xl"
+          animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }} />
+        <motion.div animate={{ y: [0, -6, 0] }} transition={{ repeat: Infinity, duration: 3 }} className="absolute left-0 top-6 rounded-2xl border border-border bg-card px-3 py-2 text-xs font-semibold shadow-card flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-fire" />Secure checkout</motion.div>
+        <motion.div animate={{ y: [0, 6, 0] }} transition={{ repeat: Infinity, duration: 3.5 }} className="absolute right-0 bottom-6 rounded-2xl border border-border bg-card px-3 py-2 text-xs font-semibold shadow-card flex items-center gap-1.5"><Zap className="h-3.5 w-3.5 text-sun" />Instant download</motion.div>
+      </motion.div>
+      <div className="relative grid grid-cols-3 gap-2">
+        {stats.map(([v, l]) => <div key={l} className="rounded-2xl border border-border bg-card/80 backdrop-blur py-3 text-center shadow-card"><div className="font-display text-lg font-extrabold">{v}</div><div className="text-[11px] text-muted-foreground">{l}</div></div>)}
+      </div>
+      <div className="relative mt-5 flex flex-col gap-2.5">
+        <Link to="/marketplace"><Button size="lg" className="w-full rounded-full h-12 text-base">Browse projects</Button></Link>
+        {isAdmin ? <Link to="/admin"><Button size="lg" variant="outline" className="w-full rounded-full h-12">Admin Panel</Button></Link>
+          : <Link to="/windows"><Button size="lg" variant="outline" className="w-full rounded-full h-12">Windows software</Button></Link>}
       </div>
     </section>
   );
