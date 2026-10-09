@@ -1,11 +1,11 @@
 {
-  "version": 1,
   "asset_id": "75fb4eff-d6f7-4625-931f-5a79f014a80c",
-  "project_id": "c1725524-b583-4554-b432-49332d642fa4",
-  "url": "/__l5e/assets-v1/75fb4eff-d6f7-4625-931f-5a79f014a80c/bnoy-logo.png",
-  "r2_key": "a/v1/c1725524-b583-4554-b432-49332d642fa4/75fb4eff-d6f7-4625-931f-5a79f014a80c/bnoy-logo.png",
-  "original_filename": "bnoy-logo.png",
-  "size": 701081,
   "content_type": "image/png",
-  "created_at": "2026-10-09T05:16:56Z"
+  "created_at": "2026-10-09T05:16:56Z",
+  "original_filename": "bnoy-logo.png",
+  "project_id": "34d2a0fe-ae45-4ef4-9f1b-70d98d70219a",
+  "r2_key": "a/v1/34d2a0fe-ae45-4ef4-9f1b-70d98d70219a/75fb4eff-d6f7-4625-931f-5a79f014a80c/bnoy-logo.png",
+  "size": 701081,
+  "url": "/__l5e/assets-v1/75fb4eff-d6f7-4625-931f-5a79f014a80c/bnoy-logo.png",
+  "version": 1
 }

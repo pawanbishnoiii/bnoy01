@@ -1,11 +1,11 @@
 {
-  "version": 1,
   "asset_id": "56c5d7ac-92d7-42e2-8e97-cd97dbd6bec4",
-  "project_id": "c1725524-b583-4554-b432-49332d642fa4",
-  "url": "/__l5e/assets-v1/56c5d7ac-92d7-42e2-8e97-cd97dbd6bec4/welcome-banner.jpg",
-  "r2_key": "a/v1/c1725524-b583-4554-b432-49332d642fa4/56c5d7ac-92d7-42e2-8e97-cd97dbd6bec4/welcome-banner.jpg",
-  "original_filename": "welcome-banner.jpg",
-  "size": 54036,
   "content_type": "image/jpeg",
-  "created_at": "2026-10-09T05:16:53Z"
+  "created_at": "2026-10-09T05:16:53Z",
+  "original_filename": "welcome-banner.jpg",
+  "project_id": "34d2a0fe-ae45-4ef4-9f1b-70d98d70219a",
+  "r2_key": "a/v1/34d2a0fe-ae45-4ef4-9f1b-70d98d70219a/56c5d7ac-92d7-42e2-8e97-cd97dbd6bec4/welcome-banner.jpg",
+  "size": 54036,
+  "url": "/__l5e/assets-v1/56c5d7ac-92d7-42e2-8e97-cd97dbd6bec4/welcome-banner.jpg",
+  "version": 1
 }

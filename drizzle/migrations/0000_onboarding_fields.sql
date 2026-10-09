@@ -1,1 +1,0 @@
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS age integer, ADD COLUMN IF NOT EXISTS preferences text[] NOT NULL DEFAULT '{}', ADD COLUMN IF NOT EXISTS onboarded boolean NOT NULL DEFAULT false;
