@@ -91,7 +91,7 @@ function TruecallerStatus() {
     <div className="auth-form-panel"><Link to="/login" className="text-sm font-semibold">Bnoy Studios</Link>
       <div className="truecaller-status space-y-5">
         {phase === 'error' ? <ShieldAlert className="w-12 h-12 text-destructive mx-auto" /> : <TruecallerAnimation success={phase === 'success'} onComplete={phase === 'success' ? redirect : undefined} />}
-        <h1 className="font-display text-2xl font-semibold">{phase === 'success' ? 'You’re signed in' : 'Truecaller sign-in'}</h1>
+        <h1 className="font-display text-2xl font-semibold">{phase === 'success' ? 'You’re signed in' : phase === 'error' ? 'Truecaller problem detected' : 'Truecaller sign-in'}</h1>
         <div className="truecaller-status-steps" aria-hidden="true"><span className="active" /><span className={phase === 'success' ? 'active' : ''} /><span className={phase === 'success' ? 'active' : ''} /></div>
         <p role={phase === 'error' ? 'alert' : 'status'} className="text-sm text-muted-foreground min-h-12">{message}</p>
         {waiting && <Button disabled aria-busy="true" className="w-full auth-submit rounded-full"><LoaderCircle className="w-4 h-4 animate-spin" />Verifying…</Button>}
