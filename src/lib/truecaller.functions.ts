@@ -3,6 +3,7 @@ import { getRequest } from '@tanstack/react-start/server';
 import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { normalizePhone } from '@/lib/identity';
+import { logTruecaller } from '@/lib/truecaller-log';
 
 export const startTruecaller = createServerFn({ method: 'POST' }).handler(async () => {
   const request = getRequest();
@@ -34,7 +35,7 @@ export const finishTruecaller = createServerFn({ method: 'POST' }).inputValidato
   if (!attempt || Date.parse(attempt.expires_at) < Date.now()) return { status: 'error', message: 'Verification expired. Please retry.' };
   if (attempt.status === 'pending') return { status: 'pending' };
   if (attempt.status === 'consuming') return { status: 'pending' };
-  if (attempt.status !== 'verified') return { status: 'error', message: attempt.error || 'Verification could not be completed.' };
+  if (attempt.status !== 'verified') return { status: 'error', message: attempt.error || 'Verification could not be completed.', requestId: attempt.id };
   const { data: claimed } = await db.from('truecaller_requests').update({ status: 'consuming' }).eq('id', attempt.id).eq('status', 'verified').select('id').maybeSingle();
   if (!claimed) return { status: 'error', message: 'Verification has already been used.' };
   try {
@@ -43,6 +44,7 @@ export const finishTruecaller = createServerFn({ method: 'POST' }).inputValidato
     const { data: existing } = await db.from('profiles').select('id').eq('phone', phone).eq('phone_verified', true).maybeSingle();
     if (attempt.user_id && existing && existing.id !== attempt.user_id) {
       await db.from('truecaller_requests').update({ status: 'conflict', error: 'This verified phone belongs to another account. Sign in to that account before linking; accounts were not merged.' }).eq('id', attempt.id);
+      await logTruecaller({ requestId: attempt.id, stage: 'finish_conflict', message: 'Verified phone belongs to another account' });
       return { status: 'conflict', message: 'This phone is already linked to another account. Sign in to that account to resolve the conflict.' };
     }
     let userId = attempt.user_id || existing?.id;
@@ -64,17 +66,19 @@ export const finishTruecaller = createServerFn({ method: 'POST' }).inputValidato
     const fields = { id: userId, phone, country_code: countryCode, phone_verified: true, first_name: String(p.name?.first || '').slice(0,100), last_name: String(p.name?.last || '').slice(0,100), name: [p.name?.first, p.name?.last].filter(Boolean).join(' ').slice(0,200), avatar_url: typeof p.avatarUrl === 'string' && p.avatarUrl.startsWith('https://') ? p.avatarUrl : null, gender: typeof p.gender === 'string' ? p.gender : null, city: p.addresses?.[0]?.city || null, company: p.companyName || null, job_title: p.jobTitle || null, verified_name: Array.isArray(p.badges) && p.badges.includes('verified'), email: actualEmail, email_verified: !!actualEmail };
     const { error } = await db.from('profiles').upsert(fields);
     if (error) throw new Error('Could not link verified profile.');
+    const needs = [...(actualEmail ? [] : ['email']), ...(fields.first_name ? [] : ['name'])];
     if (attempt.user_id) {
       await db.from('truecaller_requests').update({ status: 'consumed', verified_profile: null }).eq('id', attempt.id);
-      return { status: 'linked' };
+      return { status: 'linked', needs };
     }
     if (!authUser.user.email) throw new Error('Account session cannot be issued.');
     const { data: link, error: linkError } = await db.auth.admin.generateLink({ type: 'magiclink', email: authUser.user.email });
     if (linkError || !link.properties?.hashed_token) throw new Error('Could not create a secure session.');
     await db.from('truecaller_requests').update({ status: 'consumed', verified_profile: null }).eq('id', attempt.id);
-    return { status: 'ready', tokenHash: link.properties.hashed_token };
+    return { status: 'ready', tokenHash: link.properties.hashed_token, needs };
   } catch (err) {
     await db.from('truecaller_requests').update({ status: 'error', verified_profile: null, error: 'Verification failed. Please retry.' }).eq('id', attempt.id);
+    await logTruecaller({ requestId: attempt.id, stage: 'finish', message: err instanceof Error ? err.message : 'Verification failed', details: { stack: err instanceof Error ? err.stack?.slice(0, 800) : String(err) } });
     return { status: 'error', message: err instanceof Error ? err.message : 'Verification failed.' };
   }
 });
@@ -93,4 +97,27 @@ export const requestEmailLink = createServerFn({ method: 'POST' }).middleware([r
   const { error } = await context.supabase.auth.updateUser({ email: data.email.toLowerCase() });
   if (error) throw new Error('Email could not be linked. If it belongs to another account, sign in to that account; no accounts were merged.');
   return { success: true };
+});
+export const reportTruecallerError = createServerFn({ method: 'POST' }).inputValidator(input => z.object({ requestId: z.string().max(60).optional(), stage: z.string().min(1).max(60), message: z.string().min(1).max(1000) }).parse(input)).handler(async ({ data }) => {
+  await logTruecaller({ requestId: data.requestId, stage: `client_${data.stage}`, message: data.message, userAgent: getRequest().headers.get('user-agent') });
+  return { ok: true };
+});
+
+export const getOnboardingNeeds = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+  const { data: { user } } = await context.supabase.auth.getUser();
+  if (!user) throw new Error('Sign in required.');
+  const { supabaseAdmin: db } = await import('@/integrations/supabase/client.server');
+  const { data: profile } = await db.from('profiles').select('first_name,last_name,name').eq('id', user.id).maybeSingle();
+  const hasEmail = !!user.email && !user.email.endsWith('@phone.bnoy.invalid');
+  return { needs: [...(hasEmail ? [] : ['email']), ...(profile?.first_name || profile?.name ? [] : ['name'])], pendingEmail: user.new_email || null };
+});
+
+export const saveOnboardingName = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).inputValidator(input => z.object({ firstName: z.string().trim().min(1).max(100), lastName: z.string().trim().max(100) }).parse(input)).handler(async ({ data, context }) => {
+  const { supabaseAdmin: db } = await import('@/integrations/supabase/client.server');
+  const { data: profile } = await db.from('profiles').select('first_name,name').eq('id', context.userId).maybeSingle();
+  // Only fill a name Truecaller did not provide; never overwrite verified data.
+  if (profile?.first_name || profile?.name) return { saved: false };
+  const { error } = await db.from('profiles').upsert({ id: context.userId, first_name: data.firstName, last_name: data.lastName || null, name: [data.firstName, data.lastName].filter(Boolean).join(' ') });
+  if (error) throw new Error('Name could not be saved. Please retry.');
+  return { saved: true };
 });
