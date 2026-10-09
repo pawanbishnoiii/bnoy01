@@ -14,7 +14,7 @@ export default function AdminEmails() {
   const qc = useQueryClient();
   const { user } = useAuthStore();
   const test = useServerFn(sendTestEmail);
-  const confirm = useServerFn(confirmBooking);
+  const confirmAppointment = useServerFn(confirmBooking);
   const [confirming, setConfirming] = useState<string | null>(null);
   const [bookingSearch, setBookingSearch] = useState('');
   const announce = useServerFn(announceProduct);
@@ -52,7 +52,7 @@ export default function AdminEmails() {
   const setStatus = async (id: string, status: string) => { const { error } = await supabase.from('bookings').update({ status }).eq('id', id); if (error) toast.error('Booking status could not update.'); else qc.invalidateQueries({ queryKey: ['admin-bookings'] }); };
   const sendConfirmation = async (id: string) => {
     setConfirming(id);
-    try { const result = await confirm({ data: { id } }); result.sent ? toast.success(result.alreadySent ? 'Confirmation was already sent.' : 'Confirmation email sent.') : toast.error(result.error || 'Confirmation could not be sent.'); }
+    try { const result = await confirmAppointment({ data: { id } }); result.sent ? toast.success(result.alreadySent ? 'Confirmation was already sent.' : 'Confirmation email sent.') : toast.error(result.error || 'Confirmation could not be sent.'); }
     catch (error) { toast.error(error instanceof Error ? error.message : 'Confirmation failed.'); }
     finally { setConfirming(null); qc.invalidateQueries({ queryKey: ['admin-bookings'] }); qc.invalidateQueries({ queryKey: ['email-logs'] }); }
   };

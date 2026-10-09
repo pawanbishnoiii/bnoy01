@@ -51,7 +51,7 @@ export default function EditorStudio({ onGo, onEdit, onCreate }: { onGo: (tab: s
             <img src={m.image} alt="" loading="lazy" width={384} height={512} className="mx-auto h-36 w-full object-contain" />
             <p className="mt-3 flex items-center gap-2 font-display font-bold"><m.icon className="h-4 w-4 text-primary" />{m.title}</p>
             <p className="mt-2 text-xs text-muted-foreground">{m.stat}</p>
-            <Button className="mt-4 w-full" variant="outline" onClick={() => onCreate(m.type)}><Plus className="mr-2 h-4 w-4" />Create {m.title.toLowerCase()}</Button>
+            <Button className="mt-4 w-full" variant="outline" aria-label={`Create ${m.title.toLowerCase()}`} onClick={() => onCreate(m.type)}><Plus className="mr-2 h-4 w-4" />Create</Button>
           </motion.div>
         ))}
       </div>
