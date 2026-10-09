@@ -19,6 +19,9 @@ import webImage from '@/assets/studio-web.png';
 import appImage from '@/assets/studio-app.png';
 import windowsImage from '@/assets/studio-windows.png';
 import automationImage from '@/assets/studio-automation.png';
+import BookingStepMark from '@/components/BookingStepMark';
+import { gsap } from 'gsap';
+import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
 
 const TYPES = [
   { id: 'web', label: 'Website / Web app', icon: Globe, image: webImage },
@@ -70,7 +73,7 @@ export default function CallBooking() {
   const today = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
   const update = (key: keyof typeof form, value: string) => setForm(f => ({ ...f, [key]: value }));
   const go = (next: number) => { setDirection(next > step ? 1 : -1); setStep(next); };
-  useEffect(() => { if (step > 0) { section.current?.scrollIntoView({ behavior: reduced ? 'instant' : 'smooth', block: 'start' }); section.current?.focus({ preventScroll: true }); } }, [step, reduced]);
+  useEffect(() => { if (step === 0 || !section.current) return; section.current.focus({preventScroll:true}); if(reduced) {section.current.scrollIntoView({behavior:'instant',block:'start'}); return;} gsap.registerPlugin(ScrollToPlugin); const tween = gsap.to(window,{scrollTo:{y:section.current,offsetY:100,autoKill:true},duration:.4,ease:'power2.out'}); return () => {tween.kill();}; }, [step, reduced]);
   const next = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (step === 0 && !type) return toast.error('Choose what you want to build.');
@@ -118,7 +121,7 @@ export default function CallBooking() {
         <div className="mb-8 grid grid-cols-7 gap-2" aria-label={`Step ${step + 1} of 7`}>{TITLES.map((title, i) => <div key={title} className={`h-1 rounded-full ${i <= step ? 'bg-primary' : 'bg-muted'}`} />)}</div>
         <div ref={section} tabIndex={-1} className="scroll-mt-24 outline-none">
           <AnimatePresence mode="wait" initial={false}><motion.form key={step} initial={reduced ? false : { opacity: 0, x: direction * 18 }} animate={{ opacity: 1, x: 0 }} exit={reduced ? {} : { opacity: 0, x: -direction * 18 }} transition={{ duration: .2 }} onSubmit={next} className="space-y-7">
-            <h2 className="font-display text-2xl font-bold sm:text-3xl">{TITLES[step]}</h2>
+            <div className="flex items-center gap-3"><BookingStepMark step={step} /><h2 className="font-display text-2xl font-bold sm:text-3xl">{TITLES[step]}</h2></div>
             {step === 0 && <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{TYPES.map(t => <Button type="button" key={t.id} variant="outline" aria-pressed={type === t.id} onClick={() => setType(t.id)} className={`h-auto min-h-44 flex-col items-start gap-3 whitespace-normal rounded-lg p-4 text-left ${type === t.id ? 'border-primary bg-primary/5' : ''}`}><img src={t.image} alt="" width={384} height={512} className="h-24 w-full object-contain" /><span className="flex items-center gap-2"><t.icon className="h-4 w-4 shrink-0" />{t.label}</span></Button>)}</div>}
             {step === 1 && <div className="max-w-xl space-y-6"><div className="grid grid-cols-3 gap-3">{([{ id: 'call', title: 'Call', icon: Phone }, { id: 'whatsapp', title: 'WhatsApp', icon: MessageCircle }, { id: 'email', title: 'Email', icon: Mail }] as const).map(c => <Button type="button" key={c.id} variant="outline" aria-pressed={contact === c.id} onClick={() => setContact(c.id)} className={`h-24 flex-col gap-3 ${contact === c.id ? 'border-primary bg-primary/5 text-primary' : ''}`}><c.icon className="h-6 w-6" />{c.title}</Button>)}</div>{contact && <div className="space-y-2"><Label htmlFor="primary-contact">{contact === 'email' ? 'Email address' : contact === 'call' ? 'Phone number' : 'WhatsApp number'}</Label><Input id="primary-contact" required type={contact === 'email' ? 'email' : 'tel'} autoComplete={contact === 'email' ? 'email' : 'tel'} value={form[contact === 'call' ? 'phone' : contact]} onChange={e => update(contact === 'call' ? 'phone' : contact, e.target.value)} placeholder={contact === 'email' ? 'you@example.com' : '+91'} maxLength={contact === 'email' ? 160 : 30} /></div>}</div>}
             {step === 2 && <div className="grid max-w-2xl gap-3 sm:grid-cols-2">{BUDGETS.map(b => <Button key={b} type="button" variant="outline" aria-pressed={budget === b} className={`h-16 justify-start ${budget === b ? 'border-primary bg-primary/5 text-primary' : ''}`} onClick={() => setBudget(b)}>{b}</Button>)}</div>}
