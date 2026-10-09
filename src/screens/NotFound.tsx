@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Home, Search } from 'lucide-react';
 import LottieAnimation from '@/components/ui/lottie-animation';
+import error404 from '@/assets/error-404.json.asset.json';
 import { Button } from '@/components/ui/button';
 
 const NotFound = () => {
@@ -22,9 +23,9 @@ const NotFound = () => {
         initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
         className="relative text-center max-w-lg"
       >
-        <div className="w-64 h-64 mx-auto -mb-4">
+        <div className="w-72 h-72 md:w-96 md:h-96 mx-auto -mb-6">
           <LottieAnimation
-            src="https://lottie.host/4d42d6f3-7e2e-4f74-9c4d-d6df45e6f5f1/8O4Vp4f8nB.lottie"
+            src={error404.url}
             fallback={<div className="w-full h-full grid place-items-center text-7xl">🛸</div>}
           />
         </div>

@@ -102,6 +102,20 @@ export default function Signup({ embedded = false, onSuccess, intent }: { embedd
               </motion.div>
             </AnimatePresence>
 
+            <div className="md:hidden space-y-3 mb-4">
+              <div className="grid grid-cols-2 gap-3 ">
+                <Button variant="outline" type="button" disabled={busy} onClick={() => oauth('apple')}
+                  className="h-11 rounded-full border border-zinc-300 bg-white/60 backdrop-blur text-sm font-medium text-zinc-700 hover:bg-white transition inline-flex items-center justify-center gap-2">
+                  <AppleGlyph /> Apple
+                </Button>
+                <Button variant="outline" type="button" disabled={busy} onClick={() => oauth('google')}
+                  className="h-11 rounded-full border border-zinc-300 bg-white/60 backdrop-blur text-sm font-medium text-zinc-700 hover:bg-white transition inline-flex items-center justify-center gap-2">
+                  <GoogleGlyph /> Google
+                </Button>
+              </div>
+              <TruecallerButton disabled={loading} onBusyChange={setTruecallerBusy} />
+                <div className="flex items-center gap-3 text-xs text-zinc-400"><span className="h-px flex-1 bg-zinc-200" />or use email<span className="h-px flex-1 bg-zinc-200" /></div>
+              </div>
             <form onSubmit={handleSubmit} className="space-y-3">
               {mode === 'signup' && (
                 <Field label="Full name">
@@ -144,6 +158,8 @@ export default function Signup({ embedded = false, onSuccess, intent }: { embedd
                 {loading ? 'Please wait…' : mode === 'signup' ? 'Submit' : 'Sign in'} <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
 
+
+              <div className="hidden md:block space-y-3">
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <Button variant="outline" type="button" disabled={busy} onClick={() => oauth('apple')}
                   className="h-11 rounded-full border border-zinc-300 bg-white/60 backdrop-blur text-sm font-medium text-zinc-700 hover:bg-white transition inline-flex items-center justify-center gap-2">
@@ -155,6 +171,7 @@ export default function Signup({ embedded = false, onSuccess, intent }: { embedd
                 </Button>
               </div>
               <TruecallerButton disabled={loading} onBusyChange={setTruecallerBusy} />
+              </div>
             </form>
           </div>
 
