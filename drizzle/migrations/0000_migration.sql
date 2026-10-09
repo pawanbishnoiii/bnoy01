@@ -1,5 +1,0 @@
-INSERT INTO public.team_members (name, expertise, image_url, website_url, linkedin_url, instagram_url, github_url, x_url, sort_order, published) VALUES
-('Pawan Bishnoi','Founder & Full-Stack Developer','https://api.dicebear.com/9.x/notionists/svg?seed=Pawan&backgroundColor=ffd5dc','https://bnoy.in','https://linkedin.com','https://instagram.com','https://github.com','https://x.com',1,true),
-('Aarav Sharma','UI/UX Designer','https://api.dicebear.com/9.x/notionists/svg?seed=Aarav&backgroundColor=c0aede','https://bnoy.in','https://linkedin.com','https://instagram.com','','https://x.com',2,true),
-('Priya Verma','Mobile App Developer','https://api.dicebear.com/9.x/notionists/svg?seed=Priya&backgroundColor=d1f4d9','','https://linkedin.com','https://instagram.com','https://github.com','',3,true),
-('Rohit Jangid','Backend & Cloud Engineer','https://api.dicebear.com/9.x/notionists/svg?seed=Rohit&backgroundColor=b6e3f4','','https://linkedin.com','','https://github.com','https://x.com',4,true);
