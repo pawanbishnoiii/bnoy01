@@ -24,3 +24,4 @@
 - [ ] /p/ project page phone redesign.
 - [ ] Team section dynamic data swap (current photos kept).
 - [ ] Email theme + logo test send.
+- [ ] Admin auto-redirect to /admin after login.
