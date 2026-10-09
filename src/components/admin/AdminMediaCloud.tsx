@@ -1,11 +1,12 @@
 import { useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Cloud, Folder, FolderPlus, Grid3x3, List, Star, Trash2, Link2, Upload, FileText, Film, Image as ImageIcon, Search, ChevronRight, Download } from 'lucide-react';
+import { Cloud, Folder, FolderPlus, Grid3x3, List, Star, Trash2, Link2, Upload, FileText, Film, Image as ImageIcon, Search, ChevronRight, Download, RefreshCw, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 type MediaFile = { id: string; name: string; path: string; folder: string; mime: string | null; size: number; starred: boolean; created_at: string };
 const BUCKET = 'media-cloud';
@@ -18,16 +19,20 @@ export default function AdminMediaCloud() {
   const [folder, setFolder] = useState('/');
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [q, setQ] = useState(''); const [filter, setFilter] = useState<'all' | 'image' | 'video' | 'doc' | 'starred'>('all');
-  const [uploads, setUploads] = useState<{ name: string; done: boolean }[]>([]);
+  const [uploads, setUploads] = useState<{ name: string; status: 'uploading' | 'done' | 'failed' }[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [preview, setPreview] = useState<{ file: MediaFile; url: string } | null>(null);
   const [drag, setDrag] = useState(false);
 
-  const { data: files = [], isLoading } = useQuery({
+  const { data: files = [], isLoading, error, refetch } = useQuery({
     queryKey: ['media-files'],
-    queryFn: async () => (await supabase.from('media_files').select('*').order('created_at', { ascending: false }).limit(2000)).data as MediaFile[] || [],
+    queryFn: async () => { const { data,error } = await supabase.from('media_files').select('*').order('created_at', { ascending: false }).limit(2000); if(error) throw error; return data as MediaFile[] || []; },
   });
   const { data: thumbs = {} } = useQuery({
     queryKey: ['media-thumbs', files.map((f) => f.id).join()],
     enabled: files.length > 0,
+    staleTime: 45 * 60 * 1000,
+    refetchInterval: 45 * 60 * 1000,
     queryFn: async () => {
       const imgs = files.filter((f) => f.mime?.startsWith('image/') || f.mime?.startsWith('video/'));
       if (!imgs.length) return {};
@@ -42,17 +47,25 @@ export default function AdminMediaCloud() {
   const used = files.reduce((a, f) => a + Number(f.size), 0);
 
   const upload = async (list: FileList | File[]) => {
+    if (uploading) return;
     const arr = Array.from(list);
-    setUploads(arr.map((f) => ({ name: f.name, done: false })));
+    if (!arr.length) return;
+    setUploading(true);
+    setUploads(arr.map((f) => ({ name: f.name, status: 'uploading' })));
+    let succeeded = 0;
     const { data: { user } } = await supabase.auth.getUser();
     for (const [i, f] of arr.entries()) {
       const path = `${folder.replace(/^\//, '')}${crypto.randomUUID()}-${f.name.replace(/[^\w.-]+/g, '_')}`;
       const { error } = await supabase.storage.from(BUCKET).upload(path, f, { contentType: f.type });
-      if (error) { toast.error(`${f.name}: ${error.message}`); continue; }
-      await supabase.from('media_files').insert({ name: f.name, path, folder, mime: f.type || null, size: f.size, uploaded_by: user?.id });
-      setUploads((u) => u.map((x, j) => j === i ? { ...x, done: true } : x));
+      if (error) { toast.error(`${f.name}: ${error.message}`); setUploads(u => u.map((x,j) => j === i ? {...x,status:'failed'} : x)); continue; }
+      const { error: recordError } = await supabase.from('media_files').insert({ name: f.name, path, folder, mime: f.type || null, size: f.size, uploaded_by: user?.id });
+      if (recordError) { await supabase.storage.from(BUCKET).remove([path]); setUploads(u => u.map((x,j) => j === i ? {...x,status:'failed'} : x)); toast.error(`${f.name}: file could not be recorded.`); continue; }
+      succeeded++;
+      setUploads((u) => u.map((x, j) => j === i ? { ...x, status: 'done' } : x));
     }
-    toast.success('Upload finished'); setTimeout(() => setUploads([]), 1500);
+    setUploading(false);
+    if (succeeded === arr.length) toast.success(`${succeeded} file${succeeded === 1 ? '' : 's'} uploaded.`);
+    else toast.error(`${succeeded} of ${arr.length} files uploaded. Check failed files.`);
     qc.invalidateQueries({ queryKey: ['media-files'] });
   };
   const newFolder = () => { const n = prompt('Folder name'); if (!n) return; const f = `${folder}${n.replace(/[^\w -]+/g, '').trim()}/`; setFolder(f); toast.message('Folder ready — upload files into it'); };
@@ -61,10 +74,14 @@ export default function AdminMediaCloud() {
     if (error) return toast.error(error.message);
     await navigator.clipboard.writeText(data.signedUrl); toast.success('7-day link copied');
   };
-  const star = async (f: MediaFile) => { await supabase.from('media_files').update({ starred: !f.starred }).eq('id', f.id); qc.invalidateQueries({ queryKey: ['media-files'] }); };
+  const star = async (f: MediaFile) => { const {error} = await supabase.from('media_files').update({ starred: !f.starred }).eq('id', f.id); if(error) toast.error('Star could not update.'); else qc.invalidateQueries({ queryKey: ['media-files'] }); };
+  const openPreview = async (f: MediaFile) => { const {data,error} = await supabase.storage.from(BUCKET).createSignedUrl(f.path,3600); if(error) return toast.error('Preview could not load.'); setPreview({file:f,url:data.signedUrl}); };
   const remove = async (f: MediaFile) => {
     if (!confirm(`Delete ${f.name}?`)) return;
-    await supabase.storage.from(BUCKET).remove([f.path]); await supabase.from('media_files').delete().eq('id', f.id);
+    const { error: storageError } = await supabase.storage.from(BUCKET).remove([f.path]);
+    if(storageError) return toast.error('File could not be deleted.');
+    const { error: recordError } = await supabase.from('media_files').delete().eq('id', f.id);
+    if(recordError) return toast.error('File removed, but its record could not be deleted. Refresh and retry.');
     qc.invalidateQueries({ queryKey: ['media-files'] });
   };
   const crumbs = folder.split('/').filter(Boolean);
@@ -74,8 +91,9 @@ export default function AdminMediaCloud() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div><h1 className="font-display text-2xl font-bold flex items-center gap-2"><Cloud className="h-6 w-6 text-primary" />Media Cloud</h1><p className="text-sm text-muted-foreground">{files.length} files · {fmt(used)} used · drag files anywhere to upload</p></div>
         <div className="flex gap-2">
+          <Button variant="ghost" size="icon" aria-label="Refresh files" onClick={() => { refetch(); qc.invalidateQueries({queryKey:['media-thumbs']}); }}><RefreshCw className="h-4 w-4" /></Button>
           <Button variant="outline" onClick={newFolder}><FolderPlus className="h-4 w-4 mr-1" />New folder</Button>
-          <Button onClick={() => input.current?.click()}><Upload className="h-4 w-4 mr-1" />Upload</Button>
+          <Button disabled={uploading} onClick={() => input.current?.click()}><Upload className="h-4 w-4 mr-1" />Upload</Button>
           <input ref={input} type="file" multiple hidden onChange={(e) => e.target.files && upload(e.target.files)} />
         </div>
       </div>
@@ -87,7 +105,8 @@ export default function AdminMediaCloud() {
         <Button size="icon" variant="ghost" aria-label="List view" onClick={() => setView('list')}><List className="h-4 w-4" /></Button>
       </div>
       {!q && <div className="flex items-center gap-1 text-sm"><button onClick={() => setFolder('/')} className="font-semibold hover:text-primary">My Drive</button>{crumbs.map((c, i) => <span key={i} className="flex items-center gap-1"><ChevronRight className="h-3 w-3" /><button className="hover:text-primary" onClick={() => setFolder('/' + crumbs.slice(0, i + 1).join('/') + '/')}>{c}</button></span>)}</div>}
-      {uploads.length > 0 && <div className="rounded-xl border border-border p-3 space-y-1 text-sm">{uploads.map((u, i) => <div key={i} className="flex justify-between"><span className="truncate">{u.name}</span><span className={u.done ? 'text-primary' : 'text-muted-foreground'}>{u.done ? 'Done' : 'Uploading…'}</span></div>)}</div>}
+      {uploads.length > 0 && <div className="rounded-lg border border-border p-3 space-y-1 text-sm">{uploads.map((u, i) => <div key={i} className="flex justify-between gap-3"><span className="truncate">{u.name}</span><span className={u.status === 'failed' ? 'text-destructive' : 'text-muted-foreground'}>{u.status === 'uploading' ? 'Uploading…' : u.status === 'done' ? 'Done' : 'Failed'}</span></div>)}</div>}
+      {error && <p role="alert" className="text-destructive">Files could not load. Please refresh.</p>}
       {drag && <div className="rounded-2xl border-2 border-dashed border-primary bg-primary/5 p-10 text-center font-semibold text-primary">Drop to upload into {folder}</div>}
       {!q && folders.length > 0 && <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">{folders.map((f) => <button key={f} onClick={() => setFolder(f)} className="flex items-center gap-2 rounded-xl border border-border p-3 text-sm font-medium hover:border-primary"><Folder className="h-5 w-5 text-primary" />{f.slice(folder.length).replace('/', '')}</button>)}</div>}
       {isLoading ? <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">{Array.from({ length: 12 }).map((_, i) => <Skeleton key={i} className="aspect-square rounded-xl" />)}</div>
@@ -96,7 +115,8 @@ export default function AdminMediaCloud() {
           <div key={f.id} className="group relative rounded-xl border border-border overflow-hidden bg-card">
             <div className="aspect-square bg-muted grid place-items-center">{t && f.mime?.startsWith('image/') ? <img src={t} alt={f.name} loading="lazy" className="h-full w-full object-cover" /> : t && f.mime?.startsWith('video/') ? <video src={t} muted className="h-full w-full object-cover" /> : <I className="h-10 w-10 text-muted-foreground" />}</div>
             <div className="p-2"><p className="truncate text-xs font-medium">{f.name}</p><p className="text-[10px] text-muted-foreground">{fmt(Number(f.size))}</p></div>
-            <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition">
+            <div className="absolute top-1 right-1 flex flex-wrap gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition">
+              <Button size="icon" variant="secondary" className="h-7 w-7" aria-label={`Preview ${f.name}`} onClick={() => openPreview(f)}><Eye className="h-3.5 w-3.5" /></Button>
               <Button size="icon" variant="secondary" className="h-7 w-7" aria-label="Star" onClick={() => star(f)}><Star className={`h-3.5 w-3.5 ${f.starred ? 'fill-current text-primary' : ''}`} /></Button>
               <Button size="icon" variant="secondary" className="h-7 w-7" aria-label="Copy link" onClick={() => copyLink(f)}><Link2 className="h-3.5 w-3.5" /></Button>
               <Button size="icon" variant="secondary" className="h-7 w-7 text-destructive" aria-label="Delete" onClick={() => remove(f)}><Trash2 className="h-3.5 w-3.5" /></Button>
@@ -105,10 +125,12 @@ export default function AdminMediaCloud() {
           </div>); })}</div>
         : <div className="rounded-2xl border border-border divide-y divide-border">{shown.map((f) => { const I = iconFor(f.mime); return (
           <div key={f.id} className="flex items-center gap-3 p-3 text-sm"><I className="h-5 w-5 text-muted-foreground" /><span className="flex-1 truncate">{f.name}</span><span className="text-xs text-muted-foreground w-20">{fmt(Number(f.size))}</span><span className="text-xs text-muted-foreground w-28 hidden sm:block">{new Date(f.created_at).toLocaleDateString()}</span>
+            <Button size="icon" variant="ghost" aria-label={`Preview ${f.name}`} onClick={() => openPreview(f)}><Eye className="h-4 w-4" /></Button>
             <Button size="icon" variant="ghost" aria-label="Star" onClick={() => star(f)}><Star className={`h-4 w-4 ${f.starred ? 'fill-current text-primary' : ''}`} /></Button>
             <Button size="icon" variant="ghost" aria-label="Copy link" onClick={() => copyLink(f)}><Link2 className="h-4 w-4" /></Button>
             <Button size="icon" variant="ghost" aria-label="Download" onClick={async () => { const { data } = await supabase.storage.from(BUCKET).createSignedUrl(f.path, 300, { download: f.name }); if (data) window.open(data.signedUrl); }}><Download className="h-4 w-4" /></Button>
             <Button size="icon" variant="ghost" aria-label="Delete" className="text-destructive" onClick={() => remove(f)}><Trash2 className="h-4 w-4" /></Button></div>); })}</div>}
+      <Dialog open={!!preview} onOpenChange={o => !o && setPreview(null)}><DialogContent className="max-w-4xl"><DialogHeader><DialogTitle className="break-all">{preview?.file.name}</DialogTitle></DialogHeader>{preview && (preview.file.mime?.startsWith('image/') ? <img src={preview.url} alt={preview.file.name} className="max-h-[70vh] w-full object-contain" /> : preview.file.mime?.startsWith('video/') ? <video src={preview.url} controls className="max-h-[70vh] w-full" /> : <a href={preview.url} target="_blank" rel="noopener noreferrer" className="text-primary underline">Open file</a>)}</DialogContent></Dialog>
     </div>
   );
 }
