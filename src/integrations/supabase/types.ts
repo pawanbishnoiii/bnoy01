@@ -138,8 +138,11 @@ export type Database = {
           booking_date: string
           booking_time: string
           budget: string | null
+          city: string
           company: string | null
+          confirmation_sent_at: string | null
           created_at: string
+          customer_type: string
           details: string | null
           email: string
           gender: string | null
@@ -159,8 +162,11 @@ export type Database = {
           booking_date: string
           booking_time: string
           budget?: string | null
+          city?: string
           company?: string | null
+          confirmation_sent_at?: string | null
           created_at?: string
+          customer_type?: string
           details?: string | null
           email: string
           gender?: string | null
@@ -180,8 +186,11 @@ export type Database = {
           booking_date?: string
           booking_time?: string
           budget?: string | null
+          city?: string
           company?: string | null
+          confirmation_sent_at?: string | null
           created_at?: string
+          customer_type?: string
           details?: string | null
           email?: string
           gender?: string | null
