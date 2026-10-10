@@ -12,7 +12,7 @@ export const startTruecaller = createServerFn({ method: 'POST' }).handler(async 
   if (settingsError) throw new Error('Truecaller settings are unavailable. Please try another sign-in method.');
   if (!settings?.enabled || !settings.app_key) throw new Error('Truecaller is not configured.');
   const origin = new URL(request.url).origin;
-  if (origin !== settings.app_domain && !origin.startsWith('http://localhost:')) throw new Error('Use the registered app domain for Truecaller sign-in.');
+  if (origin !== settings.app_domain && !origin.startsWith('http://localhost:')) throw new Error(`Truecaller is registered only for ${settings.app_domain}. Please sign in with Google or email here, or ask the admin to register this site in Admin → Truecaller.`);
   const callback = new URL(settings.callback_url);
   if (callback.protocol !== 'https:' || callback.origin !== settings.app_domain || !['/auth/true-sdk', '/api/public/truecaller'].includes(callback.pathname)) throw new Error('Ask the administrator to register /auth/true-sdk as the Truecaller callback on the app domain.');
   let userId: string | null = null;

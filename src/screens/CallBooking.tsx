@@ -12,7 +12,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { createBooking, getTakenSlots } from '@/lib/booking.functions';
+import { createBooking } from '@/lib/booking.functions';
+import { supabase } from '@/integrations/supabase/client';
 import { bookingSchema, SLOTS } from '@/lib/booking-validation';
 import { useAuthStore } from '@/store/authStore';
 import webImage from '@/assets/studio-web.png';
@@ -39,16 +40,11 @@ type Contact = 'call' | 'whatsapp' | 'email';
 export default function CallBooking() {
   const { user } = useAuthStore();
   const book = useServerFn(createBooking);
-  const fetchTaken = useServerFn(getTakenSlots);
   const reduced = useReducedMotion();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [date, setDate] = useState<Date>();
   const [time, setTime] = useState('');
-  const [taken, setTaken] = useState<string[]>([]);
-  const [slotsLoading, setSlotsLoading] = useState(false);
-  const [slotsError, setSlotsError] = useState(false);
-  const [retrySlots, setRetrySlots] = useState(0);
   const [type, setType] = useState<(typeof TYPES)[number]['id']>();
   const [budget, setBudget] = useState('');
   const [contact, setContact] = useState<Contact>();
@@ -62,14 +58,9 @@ export default function CallBooking() {
   const pinRequest = useRef<AbortController | null>(null);
   useEffect(() => () => pinRequest.current?.abort(), []);
   useEffect(() => { if (user) setForm(f => ({ ...f, email: f.email || (user.email?.endsWith('.invalid') ? '' : user.email || ''), name: f.name || user.user_metadata?.name || '' })); }, [user]);
-  useEffect(() => {
-    let current = true;
-    setTime(''); setTaken([]); setSlotsError(false);
-    if (!date) return;
-    setSlotsLoading(true);
-    fetchTaken({ data: { date: ymd(date) } }).then(result => { if (current) setTaken(result); }).catch(() => { if (current) setSlotsError(true); }).finally(() => { if (current) setSlotsLoading(false); });
-    return () => { current = false; };
-  }, [date, retrySlots, fetchTaken]);
+  const [waNumber, setWaNumber] = useState('');
+  useEffect(() => { setTime(''); }, [date]);
+  useEffect(() => { supabase.from('site_settings').select('whatsapp_number').limit(1).maybeSingle().then(({ data }) => setWaNumber((data?.whatsapp_number || '').replace(/\D/g, ''))); }, []);
   const today = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
   const update = (key: keyof typeof form, value: string) => setForm(f => ({ ...f, [key]: value }));
   const go = (next: number) => { setDirection(next > step ? 1 : -1); setStep(next); };
@@ -102,12 +93,16 @@ export default function CallBooking() {
     finally { window.clearTimeout(timeout); if (controller === pinRequest.current) setPinBusy(false); }
   };
   const submit = async () => {
-    if (!date || !time || slotsLoading || slotsError) return toast.error('Choose an available time.');
+    if (!date || !time) return toast.error('Choose a preferred time.');
     const parsed = bookingSchema.safeParse({ ...form, age: form.age ? Number(form.age) : undefined, preferred_contact: contact, project_type: type, budget, booking_date: ymd(date), booking_time: time });
     if (!parsed.success) return toast.error(parsed.error.issues[0]?.message || 'Check your answers.');
     setBusy(true);
-    try { const result = await book({ data: parsed.data }); setDone({ emailed: result.emailed }); }
-    catch (error) { toast.error(error instanceof Error ? error.message : 'Booking could not be saved.'); setRetrySlots(v => v + 1); }
+    const d = parsed.data;
+    const lines = ['Hi Bnoy Studios! I just requested a call.', `Project: ${TYPES.find(t => t.id === type)?.label}`, `Budget: ${budget}`, `Name: ${d.name}`, d.age ? `Age: ${d.age}` : '', d.gender ? `Gender: ${d.gender}` : '', `For: ${d.customer_type === 'company' ? `Company - ${d.company}` : 'Personal'}`, d.city ? `City: ${d.city}${d.pincode ? ` (${d.pincode})` : ''}` : '', `Contact via: ${contact}`, d.phone ? `Phone: ${d.phone}` : '', d.whatsapp ? `WhatsApp: ${d.whatsapp}` : '', `Email: ${d.email}`, `Preferred: ${date.toDateString()} ${time} IST`, d.details ? `Idea: ${d.details}` : ''].filter(Boolean).join('\n');
+    const wa = `https://wa.me/${waNumber}?text=${encodeURIComponent(lines)}`;
+    const popup = window.open('', '_blank');
+    try { const result = await book({ data: parsed.data }); setDone({ emailed: result.emailed }); if (popup) popup.location.href = wa; else window.location.href = wa; }
+    catch (error) { popup?.close(); toast.error(error instanceof Error ? error.message : 'Booking could not be saved.'); }
     finally { setBusy(false); }
   };
   return <div className="min-h-screen bg-background">
@@ -128,8 +123,8 @@ export default function CallBooking() {
             {step === 3 && <div className="grid max-w-2xl gap-5 sm:grid-cols-2"><div className="space-y-2 sm:col-span-2"><Label htmlFor="booking-name">Name</Label><Input id="booking-name" required minLength={2} maxLength={80} autoComplete="name" value={form.name} onChange={e => update('name',e.target.value)} /></div><div className="space-y-2"><Label htmlFor="booking-gender">Gender (optional)</Label><Select value={form.gender || 'unspecified'} onValueChange={v => update('gender',v === 'unspecified' ? '' : v)}><SelectTrigger id="booking-gender"><SelectValue /></SelectTrigger><SelectContent>{['unspecified','Male','Female','Other','Prefer not to say'].map(g => <SelectItem key={g} value={g}>{g === 'unspecified' ? 'Not specified' : g}</SelectItem>)}</SelectContent></Select></div><div className="space-y-2"><Label htmlFor="booking-age">Age (optional)</Label><Input id="booking-age" type="number" min={10} max={110} value={form.age} onChange={e => update('age', e.target.value)} /></div><div className="flex gap-3 sm:col-span-2">{['personal','company'].map(c => <Button key={c} type="button" variant="outline" aria-pressed={form.customer_type === c} className={`capitalize ${form.customer_type === c ? 'border-primary text-primary' : ''}`} onClick={() => update('customer_type',c)}>{c}</Button>)}</div>{form.customer_type === 'company' && <div className="space-y-2 sm:col-span-2"><Label htmlFor="booking-company">Company name</Label><Input id="booking-company" required maxLength={120} value={form.company} onChange={e => update('company',e.target.value)} /></div>}</div>}
             {step === 4 && <div className="max-w-2xl space-y-5"><div className="space-y-2"><Label htmlFor="booking-pin">PIN code (optional)</Label><div className="flex gap-2"><Input id="booking-pin" inputMode="numeric" maxLength={6} pattern="[0-9]{6}" value={form.pincode} onChange={e => { pinRequest.current?.abort(); setPinBusy(false); setCities([]); setPinMessage(''); update('pincode',e.target.value); }} /><Button type="button" variant="outline" disabled={pinBusy} onClick={lookupPin}>{pinBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="mr-2 h-4 w-4" />}Find city</Button></div><p aria-live="polite" className="text-xs text-muted-foreground">{pinMessage}</p></div><div className="space-y-2"><Label htmlFor="booking-city">City (optional)</Label><Input id="booking-city" list="booking-cities" value={form.city} maxLength={120} onChange={e => update('city',e.target.value)} /><datalist id="booking-cities">{cities.map(c => <option key={c} value={c} />)}</datalist></div><div className="space-y-2"><Label htmlFor="booking-idea">Describe your idea (optional)</Label><Textarea id="booking-idea" rows={5} maxLength={2000} value={form.details} onChange={e => update('details',e.target.value)} /></div></div>}
             {step === 5 && <Calendar mode="single" selected={date} onSelect={setDate} disabled={d => d < today || d.getDay() === 0} className="w-fit rounded-lg border border-border" />}
-            {step === 6 && <div className="max-w-2xl space-y-6"><div className="space-y-2"><Label htmlFor="secondary-email">{contact === 'email' ? 'Email address' : 'Secondary contact email'}</Label><Input id="secondary-email" required type="email" autoComplete="email" maxLength={160} value={form.email} onChange={e => update('email',e.target.value)} /></div><div><p className="mb-3 text-sm font-semibold">{date?.toDateString()} · Time (IST)</p>{slotsLoading ? <p role="status" className="text-sm text-muted-foreground">Checking available times…</p> : slotsError ? <Button type="button" variant="outline" onClick={() => setRetrySlots(v => v + 1)}>Retry available times</Button> : <div className="grid grid-cols-4 gap-2">{SLOTS.map(s => { const unavailable = taken.includes(s) || (date && new Date(`${ymd(date)}T${s}:00+05:30`) <= new Date()); return <Button key={s} type="button" variant="outline" disabled={!!unavailable} aria-pressed={time === s} className={time === s ? 'border-primary bg-primary/5 text-primary' : ''} onClick={() => setTime(s)}>{s}</Button>; })}</div>}</div><dl className="grid grid-cols-2 gap-x-5 gap-y-3 border-y border-border py-5 text-sm">{[['Project',TYPES.find(t => t.id === type)?.label],['Contact',contact],['Budget',budget],['Name',form.name],['For',form.customer_type === 'company' ? form.company : 'Personal'],['City',form.city || 'Not specified']].map(([k,v]) => <div key={k}><dt className="text-muted-foreground">{k}</dt><dd className="mt-1 break-words font-medium capitalize">{v}</dd></div>)}</dl></div>}
-            <div className="flex items-center justify-between gap-3 border-t border-border pt-6"><Button type="button" variant="ghost" disabled={step === 0 || busy} onClick={() => go(step - 1)}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button><Button type="submit" disabled={busy || (step === 6 && (!time || slotsLoading || slotsError))}>{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}{step === 6 ? 'Request appointment' : step === 4 && !form.details ? 'Skip idea & continue' : 'Continue'}{step < 6 && <ArrowRight className="ml-2 h-4 w-4" />}</Button></div>
+            {step === 6 && <div className="max-w-2xl space-y-6"><div className="space-y-2"><Label htmlFor="secondary-email">{contact === 'email' ? 'Email address' : 'Secondary contact email'}</Label><Input id="secondary-email" required type="email" autoComplete="email" maxLength={160} value={form.email} onChange={e => update('email',e.target.value)} /></div><div><p className="mb-3 text-sm font-semibold">{date?.toDateString()} · Time (IST)</p><div className="grid grid-cols-4 gap-2">{SLOTS.map(s => <Button key={s} type="button" variant="outline" aria-pressed={time === s} className={time === s ? 'border-primary bg-primary/5 text-primary' : ''} onClick={() => setTime(s)}>{s}</Button>)}</div><div className="mt-3 flex items-center gap-3"><Label htmlFor="custom-time" className="shrink-0 text-sm">Or any time</Label><Input id="custom-time" type="time" className="max-w-40" value={time} onChange={e => setTime(e.target.value)} /></div><p className="mt-2 text-xs text-muted-foreground">This is your preferred time — we'll confirm the exact slot on WhatsApp.</p></div><dl className="grid grid-cols-2 gap-x-5 gap-y-3 border-y border-border py-5 text-sm">{[['Project',TYPES.find(t => t.id === type)?.label],['Contact',contact],['Budget',budget],['Name',form.name],['For',form.customer_type === 'company' ? form.company : 'Personal'],['City',form.city || 'Not specified']].map(([k,v]) => <div key={k}><dt className="text-muted-foreground">{k}</dt><dd className="mt-1 break-words font-medium capitalize">{v}</dd></div>)}</dl></div>}
+            <div className="flex items-center justify-between gap-3 border-t border-border pt-6"><Button type="button" variant="ghost" disabled={step === 0 || busy} onClick={() => go(step - 1)}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button><Button type="submit" disabled={busy || (step === 6 && !time)}>{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}{step === 6 ? 'Request & open WhatsApp' : step === 4 && !form.details ? 'Skip idea & continue' : 'Continue'}{step < 6 && <ArrowRight className="ml-2 h-4 w-4" />}</Button></div>
           </motion.form></AnimatePresence>
         </div>
       </>}

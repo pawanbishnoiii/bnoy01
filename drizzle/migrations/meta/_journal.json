@@ -8,6 +8,13 @@
       "when": 1791527618431,
       "tag": "0000_booking_contact_and_location",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791639652334,
+      "tag": "0001_flexible_booking_times",
+      "breakpoints": true
     }
   ]
 }
