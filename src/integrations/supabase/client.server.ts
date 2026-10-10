@@ -9,6 +9,19 @@ function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith('sb_publishable_') || value.startsWith('sb_secret_');
 }
 
+function isPrivilegedSupabaseKey(value: string): boolean {
+  if (value.startsWith('sb_secret_')) return true;
+  if (value.startsWith('sb_')) return false;
+  try {
+    const payload = value.split('.')[1];
+    if (!payload) return false;
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(payload.length / 4) * 4, '=');
+    return (JSON.parse(atob(normalized)) as { role?: string }).role === 'service_role';
+  } catch {
+    return false;
+  }
+}
+
 function createSupabaseFetch(supabaseKey: string): typeof fetch {
   return (input, init) => {
     const headers = new Headers(
@@ -33,10 +46,10 @@ function createSupabaseAdminClient() {
   const SUPABASE_URL = process.env['SUPABASE_URL'];
   const SUPABASE_SERVICE_ROLE_KEY = process.env['SUPABASE_SERVICE_ROLE_KEY'] || process.env['SUPABASE_SECRET_KEY'];
 
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || SUPABASE_SERVICE_ROLE_KEY.startsWith('sb_publishable_')) {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !isPrivilegedSupabaseKey(SUPABASE_SERVICE_ROLE_KEY)) {
     const missing = [
       ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
-      ...(!SUPABASE_SERVICE_ROLE_KEY || SUPABASE_SERVICE_ROLE_KEY.startsWith('sb_publishable_') ? ['SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY (must not be sb_publishable_)'] : []),
+      ...(!SUPABASE_SERVICE_ROLE_KEY || !isPrivilegedSupabaseKey(SUPABASE_SERVICE_ROLE_KEY) ? ['SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY (must be an sb_secret_ key or a service_role JWT)'] : []),
     ];
     const message = `Missing server credential: ${missing.join(', ')}. Trusted server features, including Truecaller verified sign-in, cannot use the public publishable key. Add the Supabase sb_secret or service_role key only to Vercel as SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY.`;
     console.error(`[Supabase] ${message}`);
