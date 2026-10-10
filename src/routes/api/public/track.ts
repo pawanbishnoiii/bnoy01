@@ -54,7 +54,10 @@ export const Route = createFileRoute("/api/public/track")({
         const body = (await request.json().catch(() => ({}))) as Body;
         const visitorId = clip(body.visitorId, 80);
         if (!visitorId || !/^[a-zA-Z0-9-]{8,80}$/.test(visitorId)) return Response.json({ error: "bad visitor" }, { status: 400 });
-        const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+        const { supabaseAdmin: db, hasSupabaseAdminCredentials } = await import("@/integrations/supabase/client.server");
+        if (!hasSupabaseAdminCredentials()) {
+          return Response.json({ sessionId: null, tracked: false }, { status: 202 });
+        }
 
         let userId: string | null = null;
         const token = (request.headers.get("Authorization") ?? "").replace("Bearer ", "");

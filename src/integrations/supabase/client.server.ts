@@ -22,6 +22,12 @@ function isPrivilegedSupabaseKey(value: string): boolean {
   }
 }
 
+export function hasSupabaseAdminCredentials(): boolean {
+  const url = process.env['SUPABASE_URL'];
+  const key = process.env['SUPABASE_SERVICE_ROLE_KEY'] || process.env['SUPABASE_SECRET_KEY'];
+  return Boolean(url && key && isPrivilegedSupabaseKey(key));
+}
+
 function createSupabaseFetch(supabaseKey: string): typeof fetch {
   return (input, init) => {
     const headers = new Headers(
