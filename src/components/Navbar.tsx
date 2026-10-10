@@ -47,6 +47,13 @@ export default function Navbar() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previous; };
+  }, [mobileOpen]);
+
   const handleLogout = async () => { await supabase.auth.signOut(); navigate('/'); };
   const handleSearch = (q: string) => {
     setSearchQuery(q);
@@ -133,28 +140,31 @@ export default function Navbar() {
       </div>
 
       {mobileOpen && (
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="lg:hidden bg-background border-t border-border">
-          <div className="container mx-auto px-4 py-4 flex flex-col gap-2">
+        <>
+        <button type="button" aria-label="Close menu" className="fixed inset-0 top-16 z-10 bg-foreground/20 lg:hidden" onClick={() => setMobileOpen(false)} />
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="absolute inset-x-0 top-full z-20 max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-border bg-white shadow-xl lg:hidden">
+          <div className="container mx-auto flex flex-col gap-1 px-5 py-5">
             <input
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               placeholder="Search projects…"
-              className="px-3 py-2 rounded-lg border border-border bg-white text-sm mb-2"
+              className="mb-3 rounded-lg border border-border bg-white px-3 py-2 text-sm"
             />
             {links.map((l) => (
-              <Link key={l.label} to={l.href} onClick={() => setMobileOpen(false)} className="text-sm font-medium py-2">{l.label}</Link>
+              <Link key={l.label} to={l.href} onClick={() => setMobileOpen(false)} className="rounded-md px-2 py-2.5 text-sm font-medium hover:bg-muted">{l.label}</Link>
             ))}
             {user ? (
               <>
-                {isAdmin && <Link to="/admin" onClick={() => setMobileOpen(false)} className="text-sm py-2">Admin Panel</Link>}
-                <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="text-sm py-2">Dashboard</Link>
-                <button onClick={() => { setMobileOpen(false); setConfirmLogout(true); }} className="text-sm py-2 text-left text-destructive">Logout</button>
+                {isAdmin && <Link to="/admin" onClick={() => setMobileOpen(false)} className="mt-2 rounded-md bg-primary/10 px-2 py-2.5 text-sm font-semibold text-primary">Admin Panel</Link>}
+                <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="rounded-md px-2 py-2.5 text-sm">Dashboard</Link>
+                <button onClick={() => { setMobileOpen(false); setConfirmLogout(true); }} className="rounded-md px-2 py-2.5 text-left text-sm text-destructive">Logout</button>
               </>
             ) : (
               <Button size="sm" className="gradient-fire-strong text-white" onClick={() => { setShowAuthModal(true); setMobileOpen(false); }}>Login / Sign Up</Button>
             )}
           </div>
         </motion.div>
+        </>
       )}
 
       <AlertDialog open={confirmLogout} onOpenChange={setConfirmLogout}>
