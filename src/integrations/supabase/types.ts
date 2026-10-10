@@ -1370,6 +1370,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_taken_booking_slots: {
+        Args: { requested_date: string }
+        Returns: { booking_time: string }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1380,6 +1384,10 @@ export type Database = {
       increment_project_views: {
         Args: { _project_id: string }
         Returns: undefined
+      }
+      submit_booking: {
+        Args: { payload: Json }
+        Returns: string
       }
     }
     Enums: {

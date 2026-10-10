@@ -29,6 +29,13 @@
       "when": 1791643500000,
       "tag": "0003_project_version_integrity",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791646800000,
+      "tag": "0004_public_booking_api",
+      "breakpoints": true
     }
   ]
 }

@@ -19,4 +19,7 @@ describe('booking validation', () => {
     expect(() => validateBookingTime('2026-10-11','10:00',now)).toThrow();
     expect(() => validateBookingTime('2026-10-12','10:00',now)).not.toThrow();
   });
+  it('accepts valid early-morning IST slots without UTC date drift', () => {
+    expect(() => validateBookingTime('2026-10-12', '04:00', new Date('2026-10-11T12:00:00Z'))).not.toThrow();
+  });
 });

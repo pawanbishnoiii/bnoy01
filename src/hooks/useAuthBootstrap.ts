@@ -22,14 +22,17 @@ export function useAuthBootstrap() {
 
     const fetchRole = async (userId: string | undefined) => {
       if (!userId) { setIsAdmin(false); return; }
-      const { data } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .eq('role', 'admin')
-        .maybeSingle();
-      if (!cancelled) setIsAdmin(!!data);
-      return !!data;
+      for (const delay of [0, 250, 750]) {
+        if (delay) await new Promise(resolve => window.setTimeout(resolve, delay));
+        const role = await supabase.rpc('has_role', { _user_id: userId, _role: 'admin' });
+        if (!role.error) {
+          if (!cancelled) setIsAdmin(!!role.data);
+          return !!role.data;
+        }
+      }
+      const fallback = await supabase.from('user_roles').select('role').eq('user_id', userId).eq('role', 'admin').maybeSingle();
+      if (!cancelled) setIsAdmin(!!fallback.data);
+      return !!fallback.data;
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {

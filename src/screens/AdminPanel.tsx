@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Package, PlusCircle, ShoppingBag, Users2, BarChart3,
   Pencil, Trash2, IndianRupee, TrendingUp, Eye, Settings2, Smartphone, Tags, Search, Globe2, Bell, ArrowLeft, ArrowRight, X, Lock as LockIcon,
-  Sparkles, MessagesSquare,
+  Sparkles, MessagesSquare, ShieldAlert, RefreshCw,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
@@ -90,7 +90,8 @@ export default function AdminPanel() {
       </div>
     );
   }
-  if (!user || !isAdmin) return <Navigate to="/" replace />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (!isAdmin) return <AdminAccessCheck />;
 
   const goAdd = (id: string | null = null) => { setEditingId(id); setActiveTab('add'); };
 
@@ -120,6 +121,21 @@ export default function AdminPanel() {
           </motion.div>
     </WorkspaceShell>
   );
+}
+
+function AdminAccessCheck() {
+  const { user, setIsAdmin } = useAuthStore();
+  const { toast } = useToast();
+  const [checking, setChecking] = useState(false);
+  const check = async () => {
+    if (!user) return;
+    setChecking(true);
+    const { data, error } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' });
+    setChecking(false);
+    if (data) setIsAdmin(true);
+    else toast({ title: 'Admin access unavailable', description: error?.message || 'This account does not have the admin role.', variant: 'destructive' });
+  };
+  return <div className="grid min-h-screen place-items-center bg-background px-5"><div className="max-w-md text-center"><ShieldAlert className="mx-auto h-12 w-12 text-primary" /><h1 className="mt-5 font-display text-2xl font-bold">Checking admin access</h1><p className="mt-2 text-sm leading-6 text-muted-foreground">Your account is signed in, but its admin role has not loaded yet.</p><div className="mt-6 flex justify-center gap-2"><Button onClick={check} disabled={checking}>{checking ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : null}Check access</Button><Button variant="outline" asChild><a href="/">Home</a></Button></div></div></div>;
 }
 
 function AdminDashboard() {

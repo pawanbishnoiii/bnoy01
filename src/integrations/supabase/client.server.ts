@@ -33,10 +33,10 @@ function createSupabaseAdminClient() {
   const SUPABASE_URL = process.env['SUPABASE_URL'];
   const SUPABASE_SERVICE_ROLE_KEY = process.env['SUPABASE_SERVICE_ROLE_KEY'];
 
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || SUPABASE_SERVICE_ROLE_KEY.startsWith('sb_publishable_')) {
     const missing = [
       ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
-      ...(!SUPABASE_SERVICE_ROLE_KEY ? ['SUPABASE_SERVICE_ROLE_KEY'] : []),
+      ...(!SUPABASE_SERVICE_ROLE_KEY || SUPABASE_SERVICE_ROLE_KEY.startsWith('sb_publishable_') ? ['SUPABASE_SERVICE_ROLE_KEY (must be sb_secret_ or service_role, not sb_publishable_)'] : []),
     ];
     const message = `Missing server credential: ${missing.join(', ')}. Trusted server features, including Truecaller verified sign-in, cannot use the public publishable key. Get the service_role or sb_secret key from Supabase Dashboard -> Project Settings -> API, then add it only to the Vercel server environment as SUPABASE_SERVICE_ROLE_KEY.`;
     console.error(`[Supabase] ${message}`);
@@ -55,7 +55,18 @@ function createSupabaseAdminClient() {
   });
 }
 
+function createSupabasePublicServerClient() {
+  const url = process.env['SUPABASE_URL'];
+  const key = process.env['SUPABASE_PUBLISHABLE_KEY'];
+  if (!url || !key) throw new Error('Public Supabase connection is unavailable.');
+  return createClient<Database>(url, key, {
+    global: { fetch: createSupabaseFetch(key) },
+    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+  });
+}
+
 let _supabaseAdmin: ReturnType<typeof createSupabaseAdminClient> | undefined;
+let _supabasePublic: ReturnType<typeof createSupabasePublicServerClient> | undefined;
 
 // Server-side Supabase client with service role - bypasses RLS
 // SECURITY: Only use this for trusted server-side operations, never expose to client code
@@ -65,5 +76,12 @@ export const supabaseAdmin = new Proxy({} as ReturnType<typeof createSupabaseAdm
   get(_, prop, receiver) {
     if (!_supabaseAdmin) _supabaseAdmin = createSupabaseAdminClient();
     return Reflect.get(_supabaseAdmin, prop, receiver);
+  },
+});
+
+export const supabasePublic = new Proxy({} as ReturnType<typeof createSupabasePublicServerClient>, {
+  get(_, prop, receiver) {
+    if (!_supabasePublic) _supabasePublic = createSupabasePublicServerClient();
+    return Reflect.get(_supabasePublic, prop, receiver);
   },
 });

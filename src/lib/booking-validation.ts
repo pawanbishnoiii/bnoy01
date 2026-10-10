@@ -35,8 +35,11 @@ export const bookingSchema = z.object({
 });
 
 export function validateBookingTime(date: string, time: string, now = new Date()) {
+  const [year, month, day] = date.split('-').map(Number);
+  const calendarDate = new Date(Date.UTC(year, month - 1, day));
+  if (calendarDate.getUTCFullYear() !== year || calendarDate.getUTCMonth() !== month - 1 || calendarDate.getUTCDate() !== day) throw new Error('Please pick a valid date.');
   const start = new Date(`${date}T${time}:00+05:30`);
-  if (!Number.isFinite(start.getTime()) || start.toISOString().slice(0, 10) !== date) throw new Error('Please pick a valid date.');
-  if (new Date(`${date}T12:00:00+05:30`).getUTCDay() === 0) throw new Error('Sunday appointments are unavailable.');
+  if (!Number.isFinite(start.getTime())) throw new Error('Please pick a valid date and time.');
+  if (calendarDate.getUTCDay() === 0) throw new Error('Sunday appointments are unavailable.');
   if (start <= now) throw new Error('Please pick a future date and time.');
 }

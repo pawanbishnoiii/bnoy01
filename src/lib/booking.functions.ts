@@ -6,32 +6,43 @@ import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
 export { SLOTS } from './booking-validation';
 
+const recentBookings = new Map<string, number[]>();
+function checkProcessRateLimit(identity: string) {
+  const cutoff = Date.now() - 60 * 60_000;
+  const attempts = (recentBookings.get(identity) || []).filter(time => time > cutoff);
+  if (attempts.length >= 3) throw new Error('Too many booking requests. Please try again in an hour.');
+  attempts.push(Date.now());
+  recentBookings.set(identity, attempts);
+}
+
 export const getTakenSlots = createServerFn({ method: 'GET' })
   .inputValidator((d) => z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }).parse(d))
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-    const { data: rows, error } = await supabaseAdmin.from('bookings').select('booking_time').eq('booking_date', data.date);
-    if (error) throw new Error('Available times could not load. Please retry.');
-    return (rows || []).map((r) => r.booking_time);
+    const { supabasePublic } = await import('@/integrations/supabase/client.server');
+    const rpc = await supabasePublic.rpc('get_taken_booking_slots', { requested_date: data.date });
+    if (!rpc.error) return (rpc.data || []).map((row: { booking_time: string }) => row.booking_time);
+    const fallback = await supabasePublic.from('bookings').select('booking_time').eq('booking_date', data.date);
+    return (fallback.data || []).map((row) => row.booking_time);
   });
 
 export const createBooking = createServerFn({ method: 'POST' })
   .inputValidator((d) => bookingSchema.parse(d))
   .handler(async ({ data }) => {
     validateBookingTime(data.booking_date, data.booking_time);
-    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+    const { supabasePublic } = await import('@/integrations/supabase/client.server');
     const email = data.email ? data.email.toLowerCase() : null;
-    let count = 0;
-    let limitError: unknown = null;
-    if (email) {
-      const limited = await supabaseAdmin.from('bookings').select('id', { count: 'exact', head: true }).eq('email', email).gte('created_at', new Date(Date.now() - 3600000).toISOString());
-      count = limited.count ?? 0;
-      limitError = limited.error;
+    const phone = data.preferred_contact === 'call' ? parsePhoneNumberFromString(data.phone, 'IN')?.number || '' : '';
+    const whatsapp = data.preferred_contact === 'whatsapp' ? parsePhoneNumberFromString(data.whatsapp, 'IN')?.number || '' : '';
+    checkProcessRateLimit(email || phone || whatsapp);
+    const payload = { ...data, email: email || '', company: data.customer_type === 'company' ? data.company : '', phone, whatsapp };
+    const rpc = await supabasePublic.rpc('submit_booking', { payload });
+    let bookingId = typeof rpc.data === 'string' ? rpc.data : crypto.randomUUID();
+    let error = rpc.error;
+    if (rpc.error?.code === 'PGRST202' || rpc.error?.code === '42883') {
+      const fallback = await supabasePublic.from('bookings').insert({ ...payload, id: bookingId });
+      error = fallback.error;
     }
-    if (limitError) throw new Error('Booking is temporarily unavailable. Please retry.');
-    if (count >= 3) throw new Error('Too many booking requests. Please try again in an hour.');
-    const { data: row, error } = await supabaseAdmin.from('bookings').insert({ ...data, email, company: data.customer_type === 'company' ? data.company : '', phone: data.preferred_contact === 'call' ? parsePhoneNumberFromString(data.phone, 'IN')?.number : '', whatsapp: data.preferred_contact === 'whatsapp' ? parsePhoneNumberFromString(data.whatsapp, 'IN')?.number : '' }).select('id').single();
-    if (error) throw new Error(error.code === '23505' ? 'That time was just booked. Please pick another slot.' : 'Booking could not be saved.');
+    if (error) throw new Error(error.code === '23505' ? 'That time was just booked. Please pick another slot.' : 'Booking could not be saved. Apply the latest booking SQL migration in Supabase.');
     let emailed = false;
     try {
     const { getTheme, renderEmail, sendMail } = await import('./mailer.server');
@@ -46,7 +57,7 @@ export const createBooking = createServerFn({ method: 'POST' })
       if (admin) await sendMail(admin, `New booking: ${data.name} (${data.booking_date} ${data.booking_time})`, renderEmail(theme, { title: 'New call booking', intro: data.details || 'No details given.', rows: [...rows, ['Name', data.name], ['Email', data.email || '—'], ['Phone', data.phone || '—'], ['WhatsApp', data.whatsapp || '—'], ['Age', data.age ? String(data.age) : '—'], ['Gender', data.gender || '—'], ['Address', [data.address, data.pincode].filter(Boolean).join(' ') || '—'], ['Company', data.company || '—'], ['Prefers', data.preferred_contact]] }), 'booking-admin');
     }
     } catch { /* The booking remains saved even if the email service is unavailable. */ }
-    return { id: row.id, emailed };
+    return { id: bookingId, emailed };
   });
 
 async function assertAdmin(ctx: { supabase: any; userId: string }) {
