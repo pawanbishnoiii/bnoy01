@@ -46,7 +46,7 @@ export function useAuthBootstrap() {
       setTimeout(() => {
         fetchRole(session?.user?.id).then(admin => {
           // Admins land on the dashboard right after signing in.
-          if (admin && event === 'SIGNED_IN' && ['/', '/login', '/signup', '/dashboard', '/onboarding'].includes(window.location.pathname)) {
+          if (admin && event === 'SIGNED_IN' && ['/login', '/signup', '/onboarding'].includes(window.location.pathname)) {
             window.location.replace('/admin');
           }
         });

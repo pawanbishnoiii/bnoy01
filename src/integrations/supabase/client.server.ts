@@ -31,14 +31,14 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 
 function createSupabaseAdminClient() {
   const SUPABASE_URL = process.env['SUPABASE_URL'];
-  const SUPABASE_SERVICE_ROLE_KEY = process.env['SUPABASE_SERVICE_ROLE_KEY'];
+  const SUPABASE_SERVICE_ROLE_KEY = process.env['SUPABASE_SERVICE_ROLE_KEY'] || process.env['SUPABASE_SECRET_KEY'];
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || SUPABASE_SERVICE_ROLE_KEY.startsWith('sb_publishable_')) {
     const missing = [
       ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
-      ...(!SUPABASE_SERVICE_ROLE_KEY || SUPABASE_SERVICE_ROLE_KEY.startsWith('sb_publishable_') ? ['SUPABASE_SERVICE_ROLE_KEY (must be sb_secret_ or service_role, not sb_publishable_)'] : []),
+      ...(!SUPABASE_SERVICE_ROLE_KEY || SUPABASE_SERVICE_ROLE_KEY.startsWith('sb_publishable_') ? ['SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY (must not be sb_publishable_)'] : []),
     ];
-    const message = `Missing server credential: ${missing.join(', ')}. Trusted server features, including Truecaller verified sign-in, cannot use the public publishable key. Get the service_role or sb_secret key from Supabase Dashboard -> Project Settings -> API, then add it only to the Vercel server environment as SUPABASE_SERVICE_ROLE_KEY.`;
+    const message = `Missing server credential: ${missing.join(', ')}. Trusted server features, including Truecaller verified sign-in, cannot use the public publishable key. Add the Supabase sb_secret or service_role key only to Vercel as SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY.`;
     console.error(`[Supabase] ${message}`);
     throw new Error(message);
   }

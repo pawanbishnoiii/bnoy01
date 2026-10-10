@@ -41,7 +41,7 @@ export default function AdminTruecaller() {
       <ul className="mt-2 list-disc space-y-1 pl-5 text-muted-foreground">
         <li>Add this exact site domain in Truecaller Developer Console: <span className="font-mono text-foreground">{deployedOrigin}</span></li>
         <li>Register callback URL: <span className="font-mono text-foreground">{`${deployedOrigin}/auth/true-sdk`}</span></li>
-        <li>In Vercel, set <span className="font-mono text-foreground">SUPABASE_URL</span> and server-only <span className="font-mono text-foreground">SUPABASE_SERVICE_ROLE_KEY</span>.</li>
+        <li>In Vercel, set <span className="font-mono text-foreground">SUPABASE_URL</span> and a server-only key as <span className="font-mono text-foreground">SUPABASE_SECRET_KEY</span> (preferred) or <span className="font-mono text-foreground">SUPABASE_SERVICE_ROLE_KEY</span>.</li>
       </ul>
       <p className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">Lovable's <span className="font-mono">sb_publishable_...</span> key cannot create a verified Auth user or session. Open the same project in Supabase Dashboard, then copy the server <span className="font-mono">service_role</span> (legacy) or <span className="font-mono">sb_secret_...</span> key. Never put it in a <span className="font-mono">VITE_</span> variable.</p>
     </div>
