@@ -80,7 +80,7 @@ export default function ProjectDetail() {
     },
     enabled: !!baseProject?.id,
   });
-  const activeRelease = releases.find(release => release.version === selectedVersion);
+  const activeRelease = releases.find(release => release.version.replace(/^v/, '') === selectedVersion.replace(/^v/, ''));
   const project = baseProject && activeRelease ? { ...baseProject,
     version: activeRelease.version,
     short_desc: activeRelease.short_desc ?? baseProject.short_desc,
@@ -90,6 +90,8 @@ export default function ProjectDetail() {
     video_url: activeRelease.video_url ?? baseProject.video_url,
     preview_url: activeRelease.preview_url ?? baseProject.preview_url,
     source_code_url: activeRelease.source_code_url ?? baseProject.source_code_url,
+    price: activeRelease.price ?? baseProject.price,
+    discount_price: activeRelease.discount_price ?? baseProject.discount_price,
   } : baseProject;
   const id = project?.id;
 
@@ -145,7 +147,8 @@ export default function ProjectDetail() {
     enabled: !!id,
   });
 
-  const isFree = project?.price === 0;
+  const effectivePrice = project && project.discount_price != null && project.discount_price >= 0 && project.discount_price < project.price ? project.discount_price : project?.price;
+  const isFree = effectivePrice === 0;
   const purchased = !!purchase;
 
   const changelog: ChangelogEntry[] = (() => {
@@ -182,7 +185,7 @@ export default function ProjectDetail() {
 
   const handleBuy = async () => {
     if (!project) return;
-    navigate(`/checkout/${project.id}`);
+    navigate(`/checkout/${project.id}${selectedVersion ? `?version=${encodeURIComponent(selectedVersion)}` : ''}`);
   };
 
   const handleDownload = async () => {
@@ -547,7 +550,7 @@ export default function ProjectDetail() {
               )}
 
               <div className={`text-3xl font-display font-extrabold mb-6 ${isFree ? 'text-green-600' : 'text-fire'}`}>
-                {isFree ? 'FREE' : `₹${project.price.toLocaleString('en-IN')}`}
+                {isFree ? 'FREE' : `₹${(effectivePrice || 0).toLocaleString('en-IN')}`}
                 {project.discount_price && project.discount_price < project.price && (
                   <span className="text-sm text-muted-foreground line-through ml-2">₹{project.price.toLocaleString('en-IN')}</span>
                 )}
@@ -627,7 +630,7 @@ export default function ProjectDetail() {
               <div className="flex-1 min-w-0">
                 <p className="text-[11px] uppercase tracking-widest font-bold text-muted-foreground truncate">{project.title}</p>
                 <p className={`font-display font-extrabold text-lg leading-none ${isFree ? 'text-green-600' : 'text-fire'}`}>
-                  {isFree ? 'FREE' : `₹${project.price.toLocaleString('en-IN')}`}
+                  {isFree ? 'FREE' : `₹${(effectivePrice || 0).toLocaleString('en-IN')}`}
                 </p>
               </div>
               {project.preview_url && ((project as any).preview_enabled !== false || isAdmin) && (

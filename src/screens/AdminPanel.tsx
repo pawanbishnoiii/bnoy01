@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Package, PlusCircle, ShoppingBag, Users2, BarChart3,
   Pencil, Trash2, IndianRupee, TrendingUp, Eye, Settings2, Smartphone, Tags, Search, Globe2, Bell, ArrowLeft, ArrowRight, X, Lock as LockIcon,
-  Sparkles,
+  Sparkles, MessagesSquare,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
@@ -33,6 +33,7 @@ import AdminUsersPro from '@/components/admin/AdminUsersPro';
 import EditorStudio from '@/components/admin/EditorStudio';
 import AdminTruecaller from '@/components/admin/AdminTruecaller';
 import AdminLoginSecurity from '@/components/admin/AdminLoginSecurity';
+import AdminInquiries from '@/components/admin/AdminInquiries';
 import AdminAiDeploy from '@/components/admin/AdminAiDeploy';
 import AiListingGenerator from '@/components/admin/AiListingGenerator';
 import { aiProjectAssist } from '@/lib/ai-project.functions';
@@ -51,6 +52,7 @@ const sidebarItems = [
   { id: 'apps', label: 'Apps', icon: Smartphone },
   { id: 'categories', label: 'Categories', icon: Tags },
   { id: 'orders', label: 'Orders', icon: ShoppingBag },
+  { id: 'inquiries', label: 'Inquiries', icon: MessagesSquare },
   { id: 'users', label: 'Users', icon: Users2 },
   { id: 'emails', label: 'Emails & Bookings', icon: Bell },
   { id: 'team', label: 'Creative Team', icon: Users2 },
@@ -103,6 +105,7 @@ export default function AdminPanel() {
             {activeTab === 'editor' && <EditorStudio onCreate={(type) => { setEditingId(null); if (type === 'app' || type === 'windows') { setAppCreation(type === 'app' ? 'android' : 'windows'); setActiveTab('apps'); } else { setCreationType(type); setActiveTab('add'); } }} onGo={(t) => { setEditingId(null); setActiveTab(t); }} onEdit={goAdd} />}
             {activeTab === 'categories' && <AdminCategories />}
             {activeTab === 'orders' && <AdminOrders />}
+            {activeTab === 'inquiries' && <AdminInquiries />}
             {activeTab === 'users' && <AdminUsersPro />}
             {activeTab === 'emails' && <AdminEmails />}
             {activeTab === 'team' && <AdminTeam />}
@@ -226,7 +229,7 @@ function AdminProjects({ onEdit, onAdd }: { onEdit: (id: string) => void; onAdd:
             {filtered?.map((p: any) => (
               <tr key={p.id} className="border-b border-border/50">
                 <td className="p-4 text-sm font-semibold">{p.title}</td>
-                <td className="p-4 text-sm">{p.price === 0 ? 'Free' : `₹${p.price}`}{p.discount_price ? <span className="text-xs text-fire ml-1">(-₹{p.price - p.discount_price})</span> : null}</td>
+                <td className="p-4 text-sm">{p.price === 0 ? 'Free' : `₹${p.price}`}{p.discount_price != null && p.discount_price >= 0 && p.discount_price < p.price ? <span className="text-xs text-fire ml-1">(-₹{p.price - p.discount_price})</span> : null}</td>
                 <td className="p-4"><Badge variant={p.status === 'published' ? 'default' : 'outline'} className={p.status === 'published' ? 'bg-green-500/20 text-green-700 border-0' : ''}>{p.status}</Badge></td>
                 <td className="p-4 text-sm">{p.featured ? '⭐' : '—'}</td>
                 <td className="p-4 text-right space-x-2">
@@ -314,6 +317,17 @@ function AdminAddProject({ editingId, onDone, initialType = 'website' }: { editi
     queryFn: async () => editingId ? (await supabase.from('projects').select('*').eq('id', editingId).maybeSingle()).data : null,
     enabled: !!editingId,
   });
+  const { data: projectVersions = [], refetch: refetchProjectVersions } = useQuery({
+    queryKey: ['project-edit-versions', editingId],
+    queryFn: async () => {
+      if (!editingId) return [];
+      const { data, error } = await supabase.from('project_versions').select('*').eq('project_id', editingId).order('is_latest', { ascending: false }).order('released_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!editingId,
+  });
+  const [activeVersionId, setActiveVersionId] = useState('project');
 
   const [form, setForm] = useState<any>({
     title: '', slug: '', short_desc: '', full_desc: '', price: 0, discount_price: 0, version: 'v1.0',
@@ -325,7 +339,7 @@ function AdminAddProject({ editingId, onDone, initialType = 'website' }: { editi
     demo_admin_email: '', demo_admin_password: '', preview_watermark: '',
     project_type: initialType, seo_title: '', seo_description: '', seo_keywords: [] as string[], og_image_url: '', noindex: false,
   });
-  const [sec, setSec] = useState<'versions' | 'info' | 'media' | 'publish'>('info');
+  const [sec, setSec] = useState<'info' | 'media' | 'publish'>('info');
   const [aiBusy, setAiBusy] = useState('');
   const aiAssist = useServerFn(aiProjectAssist);
   const runAi = async (kind: 'short' | 'full' | 'tech' | 'seo') => {
@@ -369,6 +383,37 @@ function AdminAddProject({ editingId, onDone, initialType = 'website' }: { editi
       project_type: (existing as any).project_type || 'website', seo_title: (existing as any).seo_title || '', seo_description: (existing as any).seo_description || '', seo_keywords: (existing as any).seo_keywords || [], og_image_url: (existing as any).og_image_url || '', noindex: !!(existing as any).noindex,
     });
   }, [existing]);
+
+  useEffect(() => {
+    if (activeVersionId === 'project' && projectVersions.length) {
+      setActiveVersionId((projectVersions.find((version) => version.is_latest) || projectVersions[0]).id);
+    }
+  }, [activeVersionId, projectVersions]);
+
+  const resolvedActiveVersionId = activeVersionId === 'project' && projectVersions.length
+    ? (projectVersions.find((version) => version.is_latest) || projectVersions[0]).id
+    : activeVersionId;
+  const activeVersion = projectVersions.find((version) => version.id === resolvedActiveVersionId);
+  useEffect(() => {
+    if (!activeVersion) return;
+    setForm((current: any) => ({
+      ...current,
+      version: activeVersion.version,
+      short_desc: activeVersion.short_desc ?? existing?.short_desc ?? '',
+      full_desc: activeVersion.full_desc ?? existing?.full_desc ?? '',
+      price: activeVersion.price ?? existing?.price ?? 0,
+      discount_price: activeVersion.discount_price ?? existing?.discount_price ?? 0,
+      thumbnail_url: activeVersion.thumbnail_url ?? existing?.thumbnail_url ?? '',
+      screenshots: activeVersion.screenshots?.length ? activeVersion.screenshots : existing?.screenshots || [],
+      video_url: activeVersion.video_url ?? existing?.video_url ?? '',
+      preview_url: activeVersion.preview_url ?? existing?.preview_url ?? '',
+      source_code_url: activeVersion.source_code_url ?? existing?.source_code_url ?? '',
+      external_url_enabled: activeVersion.external_url_enabled,
+      seo_title: activeVersion.seo_title ?? existing?.seo_title ?? '',
+      seo_description: activeVersion.seo_description ?? existing?.seo_description ?? '',
+      changelog: JSON.stringify([{ version: activeVersion.version, date: activeVersion.released_at, notes: activeVersion.changelog || activeVersion.notes || '' }], null, 2),
+    }));
+  }, [activeVersion, existing]);
 
   const projectId = editingId || 'new';
 
@@ -490,8 +535,12 @@ function AdminAddProject({ editingId, onDone, initialType = 'website' }: { editi
     setLoading(true);
     try {
       let parsedChangelog: any = [];
-      try { parsedChangelog = form.changelog ? JSON.parse(form.changelog) : []; } catch { throw new Error('Changelog must be valid JSON. Fix it before saving.'); }
-      if (!Array.isArray(parsedChangelog)) throw new Error('Changelog must be an array of releases.');
+      try {
+        const parsed = form.changelog ? JSON.parse(form.changelog) : [];
+        parsedChangelog = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        parsedChangelog = [];
+      }
       if (form.short_desc.length > 160) throw new Error('Short description must be 160 characters or fewer.');
       if (form.price < 0 || form.discount_price < 0) throw new Error('Prices cannot be negative.');
       const slugAuto = slugify(form.slug || form.title);
@@ -514,62 +563,145 @@ function AdminAddProject({ editingId, onDone, initialType = 'website' }: { editi
         preview_watermark: form.preview_watermark || null,
         project_type: form.project_type, seo_title: form.seo_title || null, seo_description: form.seo_description || null, seo_keywords: form.seo_keywords || [], og_image_url: form.og_image_url || null, noindex: !!form.noindex,
       };
-      const { error } = isEdit
-        ? await supabase.from('projects').update(payload).eq('id', editingId || '')
-        : await supabase.from('projects').insert(payload);
-      if (error) throw error;
+      const releaseNote = parsedChangelog.find((entry: any) => entry?.version === form.version)?.notes || parsedChangelog[0]?.notes || '';
+      const releasePayload = {
+        version: String(form.version || '').replace(/^v/, ''),
+        short_desc: form.short_desc || null,
+        full_desc: form.full_desc || null,
+        price: Number(form.price) || 0,
+        discount_price: form.discount_price ? Number(form.discount_price) : null,
+        thumbnail_url: form.thumbnail_url || null,
+        screenshots: form.screenshots || [],
+        video_url: form.video_url || null,
+        preview_url: form.preview_url || null,
+        source_code_url: form.source_code_url || null,
+        external_url_enabled: !!form.external_url_enabled,
+        seo_title: form.seo_title || null,
+        seo_description: form.seo_description || null,
+        changelog: releaseNote,
+        notes: releaseNote,
+        released_at: activeVersionId === 'new' ? bumpForm.date : activeVersion?.released_at || new Date().toISOString().slice(0, 10),
+      };
+      if (!/^\d+\.\d+(\.\d+)?$/.test(releasePayload.version)) throw new Error('Use a version like 1.2.0.');
+
+      if (!isEdit) {
+        const { data: created, error } = await supabase.from('projects').insert({ ...payload, version: releasePayload.version }).select('id').single();
+        if (error || !created) throw error || new Error('Project could not be created.');
+        const { error: releaseError } = await supabase.from('project_versions').insert({ ...releasePayload, project_id: created.id, is_latest: true });
+        if (releaseError) throw releaseError;
+      } else {
+        const globalPayload = {
+          title: payload.title, slug: payload.slug, category: payload.category, tech_stack: payload.tech_stack,
+          featured: payload.featured, status: payload.status, views_count: payload.views_count,
+          lov_email: payload.lov_email, project_url: payload.project_url,
+          demo_admin_email: payload.demo_admin_email, demo_admin_password: payload.demo_admin_password,
+          preview_watermark: payload.preview_watermark, project_type: payload.project_type,
+          seo_keywords: payload.seo_keywords, og_image_url: payload.og_image_url, noindex: payload.noindex,
+        };
+        if (activeVersionId === 'new') {
+          if (projectVersions.some((version) => version.version.replace(/^v/, '') === releasePayload.version)) throw new Error('That version already exists.');
+          const { data: createdRelease, error: releaseError } = await supabase.from('project_versions').insert({ ...releasePayload, project_id: editingId!, is_latest: false }).select('id').single();
+          if (releaseError || !createdRelease) throw releaseError || new Error('Version could not be created.');
+          const { error: clearError } = await supabase.from('project_versions').update({ is_latest: false }).eq('project_id', editingId!).neq('id', createdRelease.id);
+          if (clearError) throw clearError;
+          const { error: latestError } = await supabase.from('project_versions').update({ is_latest: true }).eq('id', createdRelease.id);
+          if (latestError) throw latestError;
+          const { error } = await supabase.from('projects').update({ ...payload, version: releasePayload.version }).eq('id', editingId!);
+          if (error) throw error;
+        } else if (activeVersion) {
+          const { error: releaseError } = await supabase.from('project_versions').update(releasePayload).eq('id', activeVersion.id);
+          if (releaseError) throw releaseError;
+          const { error } = await supabase.from('projects').update(activeVersion.is_latest ? { ...payload, version: releasePayload.version } : globalPayload).eq('id', editingId!);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('projects').update({ ...payload, version: releasePayload.version }).eq('id', editingId!);
+          if (error) throw error;
+          const { error: releaseError } = await supabase.from('project_versions').insert({ ...releasePayload, project_id: editingId!, is_latest: true });
+          if (releaseError) throw releaseError;
+        }
+      }
       queryClient.invalidateQueries({ queryKey: ['admin-projects'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
-      toast({ title: isEdit ? 'Project updated!' : 'Project created!' });
-      onDone();
+      queryClient.invalidateQueries({ queryKey: ['project-versions', editingId] });
+      await refetchProjectVersions();
+      toast({ title: isEdit ? `Version ${releasePayload.version} saved` : 'Project and first version created' });
+      if (!isEdit) onDone();
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     } finally { setLoading(false); }
   };
 
   const shortLen = form.short_desc.length;
+  const changelogEntries: any[] = (() => {
+    try {
+      const parsed = form.changelog ? JSON.parse(form.changelog) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  })();
+  const latestReleaseNote = changelogEntries[0]?.notes || '';
+  const setLatestReleaseNote = (notes: string) => {
+    const version = form.version || '1.0';
+    const arr = [{ version, date: new Date().toISOString().slice(0, 10), notes }, ...changelogEntries.filter((x) => x.version !== version)];
+    setForm({ ...form, changelog: JSON.stringify(arr, null, 2) });
+  };
 
   return (
     <div className="space-y-6 max-w-3xl">
       <h1 className="font-display text-2xl font-bold">{isEdit ? 'Edit Project' : 'Add New Project'}</h1>
-      <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key !== 'Enter' || e.nativeEvent.isComposing || !(e.target instanceof HTMLInputElement) || ['file', 'checkbox', 'radio'].includes(e.target.type)) return; e.preventDefault(); if (!e.target.reportValidity()) return; const sections = ['info', 'versions', 'media', 'publish'] as const; const next = sections[sections.indexOf(sec) + 1]; if (next) setSec(next); }} className="space-y-6">
+      <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key !== 'Enter' || e.nativeEvent.isComposing || !(e.target instanceof HTMLInputElement) || ['file', 'checkbox', 'radio'].includes(e.target.type)) return; e.preventDefault(); if (!e.target.reportValidity()) return; const sections = ['info', 'media', 'publish'] as const; const next = sections[sections.indexOf(sec) + 1]; if (next) setSec(next); }} className="space-y-6">
         <div className="sticky top-20 z-10 -mx-1 flex gap-1 overflow-x-auto rounded-2xl border border-border bg-background/90 p-1 backdrop-blur">
-          {([['info','1 · Info'],['versions','2 · Versions'],['media','3 · Media'],['publish','4 · Publish & SEO']] as const).map(([k,l]) => <Button variant={sec === k ? 'default' : 'ghost'} type="button" key={k} onClick={() => setSec(k)} className="flex-1 whitespace-nowrap">{l}</Button>)}
-        </div>
-        <div hidden={sec !== 'versions'} className="space-y-6">
-        <div className="space-y-2"><Label>Project type</Label><div className="grid grid-cols-2 md:grid-cols-4 gap-2">{[['website','🌐 Website'],['app','📱 App'],['windows','🪟 Windows'],['automation','⚙️ Automation']].map(([v,l]) => <button type="button" key={v} onClick={() => setForm({ ...form, project_type: v })} className={`rounded-xl border p-3 text-sm font-semibold transition ${form.project_type === v ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/40'}`}>{l}</button>)}</div></div>
-        {/* Changelog + version-bump shortcut */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <Label>Changelog (JSON array)</Label>
-            <Button type="button" variant="outline" size="sm" onClick={() => setBumpOpen(o => !o)}>
-              {bumpOpen ? 'Close' : '＋ Add new version'}
-            </Button>
-          </div>
-          {bumpOpen && (
-            <div className="rounded-xl border border-fire/20 bg-fire/5 p-4 grid md:grid-cols-3 gap-3">
-              <Input placeholder="v1.2" value={bumpForm.version} onChange={e => setBumpForm({ ...bumpForm, version: e.target.value })} className="bg-white border-border" />
-              <Input type="date" value={bumpForm.date} onChange={e => setBumpForm({ ...bumpForm, date: e.target.value })} className="bg-white border-border" />
-              <div />
-              <Textarea placeholder="What's new in this version…" value={bumpForm.notes} onChange={e => setBumpForm({ ...bumpForm, notes: e.target.value })} rows={3} className="md:col-span-3 bg-white border-border" />
-              <Button type="button" className="gradient-fire-strong text-white md:col-span-3" onClick={() => {
-                if (!bumpForm.version || !bumpForm.notes) { toast({ title: 'Version and notes required', variant: 'destructive' }); return; }
-                let arr: any[] = [];
-                try { arr = form.changelog ? JSON.parse(form.changelog) : []; } catch { arr = []; }
-                arr = [{ version: bumpForm.version, date: bumpForm.date, notes: bumpForm.notes }, ...arr.filter((x: any) => x.version !== bumpForm.version)];
-                setForm({ ...form, changelog: JSON.stringify(arr, null, 2), version: bumpForm.version });
-                setBumpForm({ version: '', notes: '', date: new Date().toISOString().slice(0,10) });
-                setBumpOpen(false);
-                toast({ title: `Version ${bumpForm.version} added — also tip: upload fresh screenshots below.` });
-              }}>Save version & sync</Button>
-            </div>
-          )}
-          <Textarea value={form.changelog} onChange={(e) => setForm({ ...form, changelog: e.target.value })} rows={6} className="bg-warm-bg border-border font-mono text-xs"
-            placeholder={`[\n  { "version": "v1.1", "date": "2026-05-01", "notes": "Added X..." }\n]`} />
-        </div>
-
+          {([['info','1 · Versions & Info'],['media','2 · Media'],['publish','3 · Publish & SEO']] as const).map(([k,l]) => <Button variant={sec === k ? 'default' : 'ghost'} type="button" key={k} onClick={() => setSec(k)} className="flex-1 whitespace-nowrap">{l}</Button>)}
         </div>
         <div hidden={sec !== 'info'} className="space-y-6">
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-primary">Version control</p>
+              <p className="text-sm text-muted-foreground">One project, independent release snapshots. Switch versions here to edit their own price, content, files, screenshots, SEO, and notes.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {isEdit && projectVersions.length > 0 && <Select value={activeVersionId === 'new' ? undefined : resolvedActiveVersionId} onValueChange={(value) => { setActiveVersionId(value); setBumpOpen(false); }}>
+                <SelectTrigger className="w-52 bg-white"><SelectValue placeholder="Select a version" /></SelectTrigger>
+                <SelectContent>{projectVersions.map((version) => <SelectItem key={version.id} value={version.id}>v{version.version} {version.is_latest ? '· LIVE' : '· HISTORY'}</SelectItem>)}</SelectContent>
+              </Select>}
+              <Button type="button" variant="outline" size="sm" onClick={() => {
+                if (bumpOpen) return setBumpOpen(false);
+                const parts = String(form.version || '1.0.0').replace(/^v/, '').split('.').map((part: string) => Number(part) || 0);
+                while (parts.length < 3) parts.push(0);
+                parts[2] += 1;
+                setBumpForm({ version: parts.slice(0, 3).join('.'), notes: '', date: new Date().toISOString().slice(0, 10) });
+                setBumpOpen(true);
+              }}>{bumpOpen ? 'Close' : 'New version'}</Button>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 text-xs">
+            <span className={`rounded-full px-2.5 py-1 font-semibold ${activeVersionId === 'new' ? 'bg-amber-100 text-amber-800' : activeVersion?.is_latest || !projectVersions.length ? 'bg-emerald-100 text-emerald-800' : 'bg-muted text-muted-foreground'}`}>{activeVersionId === 'new' ? 'NEW DRAFT' : activeVersion?.is_latest || !projectVersions.length ? 'LIVE / LATEST' : 'HISTORICAL VERSION'}</span>
+            {projectVersions.length > 0 && <span className="rounded-full bg-muted px-2.5 py-1 text-muted-foreground">{projectVersions.length} saved release{projectVersions.length === 1 ? '' : 's'}</span>}
+          </div>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2"><Label>Version</Label><Input value={form.version} onChange={(e) => setForm({ ...form, version: e.target.value })} placeholder="1.0.0" className="bg-white border-border font-mono" /></div>
+            <div className="space-y-2"><Label>Project type</Label><div className="grid grid-cols-2 gap-2">{[['website','Website'],['app','App'],['windows','Windows'],['automation','Automation']].map(([v,l]) => <button type="button" key={v} onClick={() => setForm({ ...form, project_type: v })} className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${form.project_type === v ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-white hover:border-primary/40'}`}>{l}</button>)}</div></div>
+              <div className="space-y-2 md:col-span-2"><Label>Release notes</Label><Textarea value={latestReleaseNote} onChange={(e) => setLatestReleaseNote(e.target.value)} rows={3} placeholder="What changed in this version?" className="bg-white border-border" /></div>
+          </div>
+          {bumpOpen && (
+            <div className="rounded-xl border border-fire/20 bg-white p-4 grid md:grid-cols-3 gap-3">
+              <Input placeholder="1.2.0" value={bumpForm.version} onChange={e => setBumpForm({ ...bumpForm, version: e.target.value })} className="bg-white border-border" />
+              <Input type="date" value={bumpForm.date} onChange={e => setBumpForm({ ...bumpForm, date: e.target.value })} className="bg-white border-border" />
+              <div />
+              <Textarea placeholder="What changed in this version…" value={bumpForm.notes} onChange={e => setBumpForm({ ...bumpForm, notes: e.target.value })} rows={3} className="md:col-span-3 bg-white border-border" />
+              <Button type="button" className="gradient-fire-strong text-white md:col-span-3" onClick={() => {
+                if (!bumpForm.version || !bumpForm.notes) { toast({ title: 'Version and notes required', variant: 'destructive' }); return; }
+                const arr = [{ version: bumpForm.version, date: bumpForm.date, notes: bumpForm.notes }, ...changelogEntries.filter((x: any) => x.version !== bumpForm.version)];
+                setForm({ ...form, changelog: JSON.stringify(arr, null, 2), version: bumpForm.version });
+                setActiveVersionId('new');
+                setBumpOpen(false);
+                toast({ title: `Version ${bumpForm.version} ready`, description: 'Edit its independent fields, then save the project.' });
+              }}>Create editable snapshot</Button>
+            </div>
+          )}
+        </div>
         <div className="grid md:grid-cols-2 gap-4">
           <div className="space-y-2"><Label>Title *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required className="bg-warm-bg border-border" /></div>
           <div className="space-y-2">
@@ -931,28 +1063,54 @@ function AdminAnalytics() {
 function AdminSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: settings } = useQuery({
+  const { data: settings, isLoading: settingsLoading, error: settingsError } = useQuery({
     queryKey: ['site-settings'],
-    queryFn: async () => (await supabase.from('site_settings').select('*').limit(1).maybeSingle()).data,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('site_settings').select('*').limit(1).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
   });
   const [form, setForm] = useState<any>({});
   const [uploading, setUploading] = useState<string | null>(null);
-  if (settings && !form.id) setTimeout(() => setForm(settings), 0);
+  const [saving, setSaving] = useState(false);
+  useEffect(() => { if (settings && !form.id) setForm(settings); }, [settings, form.id]);
 
   const save = async () => {
-    const { error } = await supabase.from('site_settings').update({
-      whatsapp_number: form.whatsapp_number, support_email: form.support_email,
-      phone: form.phone, address: form.address, refund_policy: form.refund_policy,
-      social_github: form.social_github, social_twitter: form.social_twitter,
-      social_linkedin: form.social_linkedin, social_instagram: form.social_instagram,
-      social_youtube: form.social_youtube,
-      hero_video_url: form.hero_video_url, brand_name: form.brand_name, brand_tagline: form.brand_tagline,
-      logo_url: form.logo_url, banner_url: form.banner_url,
-      hero_lottie_url: form.hero_lottie_url, hero_bg_url: form.hero_bg_url, hero_badge: form.hero_badge,
-      hide_watermarks: !!form.hide_watermarks,
-    }).eq('id', settings!.id);
-    if (error) toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    else { toast({ title: 'Saved!' }); queryClient.invalidateQueries({ queryKey: ['site-settings'] }); }
+    setSaving(true);
+    try {
+      const whatsapp = String(form.whatsapp_number || '').replace(/[^\d+]/g, '');
+      if (whatsapp && !/^\+?\d{8,15}$/.test(whatsapp)) throw new Error('WhatsApp number must contain 8-15 digits, with an optional + country code.');
+      let siteUrl: string | null = null;
+      if (String(form.site_url || '').trim()) {
+        const parsed = new URL(String(form.site_url).trim());
+        if (parsed.protocol !== 'https:') throw new Error('Live site URL must use HTTPS.');
+        siteUrl = parsed.origin;
+      }
+      const payload = {
+        whatsapp_number: whatsapp || null, support_email: form.support_email || null,
+        phone: form.phone || null, address: form.address || null, refund_policy: form.refund_policy || null,
+        social_github: form.social_github || null, social_twitter: form.social_twitter || null,
+        social_linkedin: form.social_linkedin || null, social_instagram: form.social_instagram || null,
+        social_youtube: form.social_youtube || null,
+        hero_video_url: form.hero_video_url || null, brand_name: form.brand_name || null, brand_tagline: form.brand_tagline || null,
+        logo_url: form.logo_url || null, banner_url: form.banner_url || null,
+        hero_lottie_url: form.hero_lottie_url || null, hero_bg_url: form.hero_bg_url || null, hero_badge: form.hero_badge || null,
+        site_url: siteUrl,
+        hide_watermarks: !!form.hide_watermarks,
+      };
+      const result = settings?.id
+        ? await supabase.from('site_settings').update(payload).eq('id', settings.id).select().single()
+        : await supabase.from('site_settings').insert(payload).select().single();
+      if (result.error) throw result.error;
+      setForm(result.data);
+      await queryClient.invalidateQueries({ queryKey: ['site-settings'] });
+      toast({ title: 'Settings saved', description: 'Public contact and branding data is now up to date.' });
+    } catch (error) {
+      toast({ title: 'Settings not saved', description: error instanceof Error ? error.message : 'Please retry.', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
   };
   const f = (k: string) => ({ value: form[k] || '', onChange: (e: any) => setForm({ ...form, [k]: e.target.value }) });
 
@@ -988,6 +1146,8 @@ function AdminSettings() {
   return (
     <div className="space-y-6 max-w-3xl">
       <h1 className="font-display text-2xl font-bold">Site Settings</h1>
+      {settingsLoading && <p className="text-sm text-muted-foreground">Loading settings…</p>}
+      {settingsError && <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">Settings could not load. Check the admin policy in Supabase before editing.</p>}
 
       <div className="bg-white rounded-xl border border-border shadow-card p-6 space-y-4">
         <h3 className="font-display font-bold">Branding</h3>
@@ -1021,6 +1181,7 @@ function AdminSettings() {
           <div className="space-y-2"><Label>Support email</Label><Input {...f('support_email')} /></div>
           <div className="space-y-2"><Label>Phone</Label><Input {...f('phone')} /></div>
           <div className="space-y-2"><Label>Address</Label><Input {...f('address')} /></div>
+          <div className="space-y-2 sm:col-span-2"><Label>Live site URL</Label><Input {...f('site_url')} placeholder="https://bnoyservices.vercel.app" /></div>
         </div>
 
         <h3 className="font-display font-bold pt-4">Social Media URLs</h3>
@@ -1032,7 +1193,7 @@ function AdminSettings() {
           <div className="space-y-2 sm:col-span-2"><Label>YouTube</Label><Input {...f('social_youtube')} /></div>
         </div>
         <div className="space-y-2"><Label>Refund Policy</Label><Textarea rows={6} {...f('refund_policy')} /></div>
-        <Button onClick={save} className="gradient-fire-strong text-white">Save Settings</Button>
+        <Button onClick={save} disabled={saving || settingsLoading} className="gradient-fire-strong text-white">{saving ? 'Saving…' : 'Save Settings'}</Button>
       </div>
     </div>
   );

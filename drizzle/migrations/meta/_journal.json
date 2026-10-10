@@ -15,6 +15,20 @@
       "when": 1791639652334,
       "tag": "0001_flexible_booking_times",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791642000000,
+      "tag": "0002_booking_email_optional_and_truecaller_domains",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791643500000,
+      "tag": "0003_project_version_integrity",
+      "breakpoints": true
     }
   ]
 }

@@ -43,17 +43,25 @@ const getHeadSettings = createServerFn({ method: "GET" }).handler(async () => {
 function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
+  const chunkFailed = /dynamically imported module|loading chunk|chunkloaderror|importing a module script/i.test(error instanceof Error ? error.message : String(error));
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
+    if (!chunkFailed) return;
+    const key = `bnoy:chunk-reload:${window.location.pathname}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    const url = new URL(window.location.href);
+    url.searchParams.set("_deploy", Date.now().toString());
+    window.location.replace(url);
+  }, [chunkFailed, error]);
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">This page didn't load</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Something went wrong. Try again or head back home.</p>
+        <p className="mt-2 text-sm text-muted-foreground">{chunkFailed ? 'A new version was deployed. Refresh once to load the latest page.' : 'Something went wrong. Try again or head back home.'}</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
-            onClick={() => { router.invalidate(); reset(); }}
+            onClick={() => { if (chunkFailed) window.location.reload(); else { router.invalidate(); reset(); } }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
           >
             Try again
@@ -123,6 +131,17 @@ function ClientEffects() {
   useEffect(() => {
     injectGoogle(data?.ga_measurement_id, data?.gtm_id);
   }, [data?.ga_measurement_id, data?.gtm_id]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      sessionStorage.removeItem(`bnoy:chunk-reload:${window.location.pathname}`);
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('_deploy')) {
+        url.searchParams.delete('_deploy');
+        window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+      }
+    }, 5000);
+    return () => window.clearTimeout(timer);
+  }, []);
   return (
     <>
       <RouteTransition />

@@ -18,7 +18,6 @@ import bnoyLogo from '@/assets/bnoy-logo.png';
 import benefitTeam from '@/assets/benefit-team.png';
 import benefitSecure from '@/assets/benefit-secure.png';
 import benefitHandoff from '@/assets/benefit-handoff.png';
-import mobileHeroArt from '@/assets/mobile-hero.png';
 import workspacePhoto from '@/assets/studio-workspace.jpg';
 
 if (typeof window !== 'undefined') gsap.registerPlugin(ScrollTrigger);
@@ -221,12 +220,18 @@ export default function HeroSection() {
 
 function MobileHero({ brand, tagline, badge, isAdmin }: { brand: string; tagline: string; badge: string; isAdmin: boolean }) {
   return (
-    <section className="md:hidden border-b border-border bg-background pt-20">
-      <div className="relative min-h-[520px] overflow-hidden">
-        <img src={workspacePhoto} alt="Web and mobile software on a laptop and phone" width={1280} height={960} fetchPriority="high" className="absolute inset-0 h-full w-full object-cover object-bottom" />
-        <div className="relative px-5 pt-7"><p className="flex items-center gap-2 text-xs font-semibold text-primary"><Sparkles className="h-3.5 w-3.5" />Web · Apps · Windows</p><h1 className="mt-3 max-w-xs font-display text-4xl font-extrabold leading-tight text-foreground">{brand}</h1><p className="mt-3 max-w-xs text-sm text-foreground">{tagline}</p><div className="mt-5 flex flex-wrap gap-2"><Button asChild><Link to="/marketplace">Browse projects</Link></Button><Button asChild variant="outline"><Link to={isAdmin ? '/admin' : '/call'}>{isAdmin ? 'Studio workspace' : 'Book a call'}</Link></Button></div></div>
+    <section className="border-b border-border bg-background pt-16 md:hidden">
+      <div className="relative min-h-[calc(100svh-4rem)] overflow-hidden">
+        <img src={workspacePhoto} alt="Web and mobile software on a laptop and phone" width={1280} height={960} fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover object-[58%_bottom]" />
+        <div className="absolute inset-0 bg-white/70" />
+        <div className="relative px-5 pt-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <p className="flex items-center gap-2 text-xs font-semibold text-primary"><Sparkles className="h-3.5 w-3.5" />Web · Apps · Windows</p>
+          <h1 className="mt-3 max-w-[18rem] font-display text-4xl font-extrabold leading-[1.08] text-foreground">{brand}</h1>
+          <p className="mt-3 max-w-[19rem] text-sm leading-6 text-foreground/80">{tagline}</p>
+          <div className="mt-5 grid max-w-[20rem] grid-cols-2 gap-2"><Button asChild className="w-full"><Link to="/marketplace">Browse projects</Link></Button><Button asChild variant="outline" className="w-full bg-white/90"><Link to={isAdmin ? '/admin' : '/call'}>{isAdmin ? 'Workspace' : 'Book a call'}</Link></Button></div>
+        </div>
+        <div className="absolute inset-x-5 bottom-5 grid grid-cols-3 gap-2 rounded-lg border border-white/80 bg-white/90 p-3 text-center text-[11px] font-semibold shadow-sm backdrop-blur"><span>Web projects</span><span>Mobile apps</span><Link to="/windows" className="text-primary">Windows</Link></div>
       </div>
-      <div className="flex items-center justify-between gap-2 px-5 py-4 text-xs font-medium text-muted-foreground"><span className="flex items-center gap-1.5"><Globe className="h-4 w-4 text-primary" />Web projects</span><span>Mobile apps</span><Link to="/windows" className="text-primary">Windows software →</Link></div>
     </section>
   );
 }

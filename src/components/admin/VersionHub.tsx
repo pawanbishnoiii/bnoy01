@@ -73,18 +73,24 @@ export default function VersionHub() {
     if (versions.some(v => v.version.replace(/^v/, '') === draft.version.replace(/^v/, ''))) return toast.error('That version already exists');
     setBusy(true);
     try {
-      if (draft.makeLatest) await clearLatest();
       const version = draft.version.replace(/^v/, '');
       if (target.kind === 'project') {
-        const { error } = await supabase.from('project_versions').insert({ project_id: target.id, version, changelog: draft.changelog, is_latest: draft.makeLatest, released_at: new Date().toISOString().slice(0, 10) });
-        if (error) throw error;
+        const { data: base, error: baseError } = latest
+          ? await supabase.from('project_versions').select('*').eq('id', latest.id).single()
+          : await supabase.from('projects').select('short_desc,full_desc,price,discount_price,thumbnail_url,screenshots,video_url,preview_url,source_code_url,external_url_enabled,seo_title,seo_description').eq('id', target.id).single();
+        if (baseError || !base) throw baseError || new Error('Base release not found');
+        const { id: _id, created_at: _created, updated_at: _updated, project_id: _projectId, is_latest: _latest, released_at: _released, ...snapshot } = base as any;
+        const { data: created, error } = await supabase.from('project_versions').insert({ ...snapshot, project_id: target.id, version, changelog: draft.changelog, notes: draft.changelog, is_latest: false, released_at: new Date().toISOString().slice(0, 10) }).select('id').single();
+        if (error || !created) throw error || new Error('Version could not be created');
+        if (draft.makeLatest) { await clearLatest(); const { error: latestError } = await supabase.from('project_versions').update({ is_latest: true }).eq('id', created.id); if (latestError) throw latestError; }
         if (draft.makeLatest) await supabase.from('projects').update({ version }).eq('id', target.id);
       } else {
         const { data: base } = await supabase.from('apps').select('*').eq('id', latest!.id).single();
         if (!base) throw new Error('Base release not found');
         const { id: _id, created_at: _c, download_count: _d, ...rest } = base;
-        const { error } = await supabase.from('apps').insert({ ...rest, version, changelog: draft.changelog, is_latest: draft.makeLatest });
-        if (error) throw error;
+        const { data: created, error } = await supabase.from('apps').insert({ ...rest, version, changelog: draft.changelog, is_latest: false }).select('id').single();
+        if (error || !created) throw error || new Error('Version could not be created');
+        if (draft.makeLatest) { await clearLatest(); const { error: latestError } = await supabase.from('apps').update({ is_latest: true }).eq('id', created.id); if (latestError) throw latestError; }
       }
       setDraft({ open: false, version: '', changelog: '', makeLatest: true });
       done(`v${version} created`);
@@ -101,7 +107,6 @@ export default function VersionHub() {
 
   return (
     <section className="relative overflow-hidden rounded-2xl border border-primary/30 bg-card p-5 sm:p-6">
-      <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
       <div className="relative flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-primary"><GitBranch className="h-4 w-4" />Version control</p>

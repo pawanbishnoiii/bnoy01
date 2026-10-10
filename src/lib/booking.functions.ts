@@ -20,10 +20,16 @@ export const createBooking = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     validateBookingTime(data.booking_date, data.booking_time);
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-    const email = data.email.toLowerCase();
-    const { count, error: limitError } = await supabaseAdmin.from('bookings').select('id', { count: 'exact', head: true }).eq('email', email).gte('created_at', new Date(Date.now() - 3600000).toISOString());
+    const email = data.email ? data.email.toLowerCase() : null;
+    let count = 0;
+    let limitError: unknown = null;
+    if (email) {
+      const limited = await supabaseAdmin.from('bookings').select('id', { count: 'exact', head: true }).eq('email', email).gte('created_at', new Date(Date.now() - 3600000).toISOString());
+      count = limited.count ?? 0;
+      limitError = limited.error;
+    }
     if (limitError) throw new Error('Booking is temporarily unavailable. Please retry.');
-    if ((count ?? 0) >= 3) throw new Error('Too many booking requests. Please try again in an hour.');
+    if (count >= 3) throw new Error('Too many booking requests. Please try again in an hour.');
     const { data: row, error } = await supabaseAdmin.from('bookings').insert({ ...data, email, company: data.customer_type === 'company' ? data.company : '', phone: data.preferred_contact === 'call' ? parsePhoneNumberFromString(data.phone, 'IN')?.number : '', whatsapp: data.preferred_contact === 'whatsapp' ? parsePhoneNumberFromString(data.whatsapp, 'IN')?.number : '' }).select('id').single();
     if (error) throw new Error(error.code === '23505' ? 'That time was just booked. Please pick another slot.' : 'Booking could not be saved.');
     let emailed = false;
@@ -32,10 +38,12 @@ export const createBooking = createServerFn({ method: 'POST' })
     const theme = await getTheme();
     if (theme.booking_enabled) {
       const rows: [string, string][] = [['Date', data.booking_date], ['Time', `${data.booking_time} IST`], ['Project', data.project_type], ['Budget', data.budget || '—']];
-      const r = await sendMail(email, 'Welcome — your Bnoy Studios booking request', renderEmail(theme, { title: 'Thanks for your booking request', intro: `Hi ${data.name}, welcome to Bnoy Studios. Your request is saved. Our team will review it and confirm your appointment by email. Your preferred contact channel is ${data.preferred_contact}.`, rows }), 'booking-welcome');
-      emailed = r.sent;
+      if (email) {
+        const r = await sendMail(email, 'Welcome — your Bnoy Studios booking request', renderEmail(theme, { title: 'Thanks for your booking request', intro: `Hi ${data.name}, welcome to Bnoy Studios. Your request is saved. Our team will review it and confirm your appointment. Your preferred contact channel is ${data.preferred_contact}.`, rows }), 'booking-welcome');
+        emailed = r.sent;
+      }
       const admin = process.env['SMTP_USER'];
-      if (admin) await sendMail(admin, `New booking: ${data.name} (${data.booking_date} ${data.booking_time})`, renderEmail(theme, { title: 'New call booking', intro: data.details || 'No details given.', rows: [...rows, ['Name', data.name], ['Email', data.email], ['Phone', data.phone || '—'], ['WhatsApp', data.whatsapp || '—'], ['Age', data.age ? String(data.age) : '—'], ['Gender', data.gender || '—'], ['Address', [data.address, data.pincode].filter(Boolean).join(' ') || '—'], ['Company', data.company || '—'], ['Prefers', data.preferred_contact]] }), 'booking-admin');
+      if (admin) await sendMail(admin, `New booking: ${data.name} (${data.booking_date} ${data.booking_time})`, renderEmail(theme, { title: 'New call booking', intro: data.details || 'No details given.', rows: [...rows, ['Name', data.name], ['Email', data.email || '—'], ['Phone', data.phone || '—'], ['WhatsApp', data.whatsapp || '—'], ['Age', data.age ? String(data.age) : '—'], ['Gender', data.gender || '—'], ['Address', [data.address, data.pincode].filter(Boolean).join(' ') || '—'], ['Company', data.company || '—'], ['Prefers', data.preferred_contact]] }), 'booking-admin');
     }
     } catch { /* The booking remains saved even if the email service is unavailable. */ }
     return { id: row.id, emailed };
@@ -57,6 +65,7 @@ export const confirmBooking = createServerFn({ method: 'POST' })
     if (booking.confirmation_sent_at) return { sent: true, alreadySent: true };
     const { getTheme, renderEmail, sendMail } = await import('./mailer.server');
     const theme = await getTheme();
+    if (!booking.email) throw new Error('This booking has no secondary email. Confirm it through the selected contact channel.');
     const result = await sendMail(booking.email, 'Your Bnoy Studios appointment is confirmed', renderEmail(theme, { title: 'Your appointment is confirmed', intro: `Hi ${booking.name}, we have confirmed your appointment. We will reach you through ${booking.preferred_contact || 'your chosen contact channel'}.`, rows: [['Date', booking.booking_date], ['Time', `${booking.booking_time} IST`], ['Project', booking.project_type]] }), 'booking-confirmation');
     if (result.sent) {
       const { error: updateError } = await context.supabase.from('bookings').update({ status: 'confirmed', confirmation_sent_at: new Date().toISOString() }).eq('id', booking.id);

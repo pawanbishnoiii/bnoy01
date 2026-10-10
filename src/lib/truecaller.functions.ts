@@ -5,16 +5,39 @@ import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { normalizePhone } from '@/lib/identity';
 import { logTruecaller } from '@/lib/truecaller-log';
 
+function parseRegisteredDomains(value?: string | null) {
+  return (value || '')
+    .split(/[\n,]+/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      try {
+        const url = new URL(part);
+        return url.protocol === 'https:' && url.pathname === '/' ? url.origin : '';
+      } catch {
+        return '';
+      }
+    })
+    .filter(Boolean);
+}
+
 export const startTruecaller = createServerFn({ method: 'POST' }).handler(async () => {
   const request = getRequest();
+  const userAgent = request.headers.get('user-agent') || '';
+  if (!/Android/i.test(userAgent) || !/Mobile/i.test(userAgent)) {
+    throw new Error('Truecaller sign-in is available only on Android phones with the Truecaller app installed.');
+  }
   const { supabaseAdmin: db } = await import('@/integrations/supabase/client.server');
   const { data: settings, error: settingsError } = await db.from('truecaller_settings').select('*').eq('id', true).single();
   if (settingsError) throw new Error('Truecaller settings are unavailable. Please try another sign-in method.');
   if (!settings?.enabled || !settings.app_key) throw new Error('Truecaller is not configured.');
   const origin = new URL(request.url).origin;
-  if (origin !== settings.app_domain && !origin.startsWith('http://localhost:')) throw new Error(`Truecaller is registered only for ${settings.app_domain}. Please sign in with Google or email here, or ask the admin to register this site in Admin → Truecaller.`);
+  const domains = parseRegisteredDomains(settings.app_domain);
+  if (!domains.includes(origin) && !origin.startsWith('http://localhost:')) {
+    throw new Error(`Truecaller is not registered for ${origin}. Add this exact Vercel domain in Admin -> Truecaller and in the Truecaller developer account.`);
+  }
   const callback = new URL(settings.callback_url);
-  if (callback.protocol !== 'https:' || callback.origin !== settings.app_domain || !['/auth/true-sdk', '/api/public/truecaller'].includes(callback.pathname)) throw new Error('Ask the administrator to register /auth/true-sdk as the Truecaller callback on the app domain.');
+  if (callback.protocol !== 'https:' || !['/auth/true-sdk', '/api/public/truecaller'].includes(callback.pathname)) throw new Error('Ask the administrator to register /auth/true-sdk as the Truecaller callback on the app domain.');
   let userId: string | null = null;
   const token = request.headers.get('authorization')?.replace(/^Bearer /, '');
   if (token) { const { data, error } = await db.auth.getUser(token); if (error || !data.user) throw new Error('Your session expired. Sign in again before linking a phone.'); userId = data.user.id; }
@@ -22,7 +45,8 @@ export const startTruecaller = createServerFn({ method: 'POST' }).handler(async 
   const { createHash } = await import('node:crypto');
   const { data, error } = await db.from('truecaller_requests').insert({ proof_hash: createHash('sha256').update(proof).digest('hex'), user_id: userId }).select('id,expires_at').single();
   if (error || !data) throw new Error('Could not start verification.');
-  const params = new URLSearchParams({ requestNonce: data.id, partnerKey: settings.app_key, partnerName: 'Bnoy Studios', lang: 'en', privacyUrl: `${settings.app_domain}/refund`, termsUrl: `${settings.app_domain}/refund` });
+  const publicOrigin = origin.startsWith('http://localhost:') ? domains[0] || origin : origin;
+  const params = new URLSearchParams({ requestNonce: data.id, partnerKey: settings.app_key, partnerName: 'Bnoy Studios', lang: 'en', privacyUrl: `${publicOrigin}/refund`, termsUrl: `${publicOrigin}/refund` });
   return { requestId: data.id, proof, expiresAt: data.expires_at, deepLink: `truecallersdk://truesdk/web_verify?${params}` };
 });
 

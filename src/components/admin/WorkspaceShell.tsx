@@ -12,7 +12,7 @@ const groups = [
   { title: 'Overview', ids: ['dashboard', 'analytics'] },
   { title: 'Catalog & Studio', ids: ['editor', 'projects', 'add', 'apps', 'categories'] },
   { title: 'Media', ids: ['media-cloud'] },
-  { title: 'Customers', ids: ['orders', 'users', 'emails', 'notifications'] },
+  { title: 'Customers', ids: ['inquiries', 'orders', 'users', 'emails', 'notifications'] },
   { title: 'Security & Analytics', ids: ['login-security', 'visitors', 'truecaller'] },
   { title: 'Website & Settings', ids: ['team', 'google', 'ai-deploy', 'settings'] },
 ];

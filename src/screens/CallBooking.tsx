@@ -14,13 +14,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { createBooking } from '@/lib/booking.functions';
 import { supabase } from '@/integrations/supabase/client';
-import { bookingSchema, SLOTS } from '@/lib/booking-validation';
+import { bookingSchema, SLOTS, validateBookingTime } from '@/lib/booking-validation';
 import { useAuthStore } from '@/store/authStore';
 import webImage from '@/assets/studio-web.png';
 import appImage from '@/assets/studio-app.png';
 import windowsImage from '@/assets/studio-windows.png';
 import automationImage from '@/assets/studio-automation.png';
 import BookingStepMark from '@/components/BookingStepMark';
+import bookingStudioImage from '@/assets/booking-studio.webp';
 import { gsap } from 'gsap';
 import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
 
@@ -33,7 +34,7 @@ const TYPES = [
   { id: 'other', label: 'Something else', icon: Sparkles, image: automationImage },
 ] as const;
 const BUDGETS = ['Under ₹10k', '₹10k – ₹50k', '₹50k – ₹2L', '₹2L+', 'Not sure'];
-const TITLES = ['What do you want to build?', 'How should we reach you?', 'Your budget', 'About you', 'Location & your idea', 'Pick a date', 'Email & time'];
+const TITLES = ['What do you want to build?', 'How should we reach you?', 'Your budget', 'About you', 'Location & your idea', 'Pick date & time'];
 const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 type Contact = 'call' | 'whatsapp' | 'email';
 
@@ -63,6 +64,10 @@ export default function CallBooking() {
   useEffect(() => { supabase.from('site_settings').select('whatsapp_number').limit(1).maybeSingle().then(({ data }) => setWaNumber((data?.whatsapp_number || '').replace(/\D/g, ''))); }, []);
   const today = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
   const update = (key: keyof typeof form, value: string) => setForm(f => ({ ...f, [key]: value }));
+  const timeHasPassed = (slot: string) => {
+    if (!date) return false;
+    try { validateBookingTime(ymd(date), slot); return false; } catch { return true; }
+  };
   const go = (next: number) => { setDirection(next > step ? 1 : -1); setStep(next); };
   useEffect(() => { if (step === 0 || !section.current) return; section.current.focus({preventScroll:true}); if(reduced) {section.current.scrollIntoView({behavior:'instant',block:'start'}); return;} gsap.registerPlugin(ScrollToPlugin); const tween = gsap.to(window,{scrollTo:{y:section.current,offsetY:100,autoKill:true},duration:.4,ease:'power2.out'}); return () => {tween.kill();}; }, [step, reduced]);
   const next = (e: React.FormEvent<HTMLFormElement>) => {
@@ -71,8 +76,8 @@ export default function CallBooking() {
     if (step === 1 && !contact) return toast.error('Choose a contact channel.');
     if (step === 2 && !budget) return toast.error('Choose a budget or Not sure.');
     if (step === 3 && form.name.trim().length < 2) return toast.error('Enter your name.');
-    if (step === 5 && !date) return toast.error('Choose a date.');
-    if (step < 6) return go(step + 1);
+    if (step === 5 && (!date || !time)) return toast.error('Choose a future date and preferred time.');
+    if (step < 5) return go(step + 1);
     void submit();
   };
   const lookupPin = async () => {
@@ -93,12 +98,13 @@ export default function CallBooking() {
     finally { window.clearTimeout(timeout); if (controller === pinRequest.current) setPinBusy(false); }
   };
   const submit = async () => {
-    if (!date || !time) return toast.error('Choose a preferred time.');
+    if (!date || !time) return toast.error('Choose a future date and preferred time.');
+    try { validateBookingTime(ymd(date), time); } catch { return toast.error('That time has already passed. Choose a later time or another date.'); }
     const parsed = bookingSchema.safeParse({ ...form, age: form.age ? Number(form.age) : undefined, preferred_contact: contact, project_type: type, budget, booking_date: ymd(date), booking_time: time });
     if (!parsed.success) return toast.error(parsed.error.issues[0]?.message || 'Check your answers.');
     setBusy(true);
     const d = parsed.data;
-    const lines = ['Hi Bnoy Studios! I just requested a call.', `Project: ${TYPES.find(t => t.id === type)?.label}`, `Budget: ${budget}`, `Name: ${d.name}`, d.age ? `Age: ${d.age}` : '', d.gender ? `Gender: ${d.gender}` : '', `For: ${d.customer_type === 'company' ? `Company - ${d.company}` : 'Personal'}`, d.city ? `City: ${d.city}${d.pincode ? ` (${d.pincode})` : ''}` : '', `Contact via: ${contact}`, d.phone ? `Phone: ${d.phone}` : '', d.whatsapp ? `WhatsApp: ${d.whatsapp}` : '', `Email: ${d.email}`, `Preferred: ${date.toDateString()} ${time} IST`, d.details ? `Idea: ${d.details}` : ''].filter(Boolean).join('\n');
+    const lines = ['Hi Bnoy Studios! I just requested a call.', `Project: ${TYPES.find(t => t.id === type)?.label}`, `Budget: ${budget}`, `Name: ${d.name}`, d.age ? `Age: ${d.age}` : '', d.gender ? `Gender: ${d.gender}` : '', `For: ${d.customer_type === 'company' ? `Company - ${d.company}` : 'Personal'}`, d.city ? `City: ${d.city}${d.pincode ? ` (${d.pincode})` : ''}` : '', `Contact via: ${contact}`, d.phone ? `Phone: ${d.phone}` : '', d.whatsapp ? `WhatsApp: ${d.whatsapp}` : '', d.email ? `Email: ${d.email}` : '', `Preferred: ${date.toDateString()} ${time} IST`, d.details ? `Idea: ${d.details}` : ''].filter(Boolean).join('\n');
     const wa = `https://wa.me/${waNumber}?text=${encodeURIComponent(lines)}`;
     const popup = window.open('', '_blank');
     try { const result = await book({ data: parsed.data }); setDone({ emailed: result.emailed }); if (popup) popup.location.href = wa; else window.location.href = wa; }
@@ -108,12 +114,13 @@ export default function CallBooking() {
   return <div className="min-h-screen bg-background">
     <Navbar /><AuthModal />
     <main className="mx-auto max-w-5xl px-4 pb-20 pt-28 sm:px-6">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6">
-        <div><p className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary"><CalendarDays className="h-4 w-4" />Book a call</p><h1 className="font-display text-3xl font-bold sm:text-4xl">Bnoy Studios</h1></div>
-        {!done && <p className="text-sm text-muted-foreground">{String(step + 1).padStart(2, '0')} / 07</p>}
+      <header className="mb-8 grid items-center gap-5 overflow-hidden border-b border-border pb-6 sm:grid-cols-[1fr_220px]">
+        <div><p className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary"><CalendarDays className="h-4 w-4" />Book a call</p><h1 className="font-display text-3xl font-bold sm:text-4xl">Bnoy Studios</h1><p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">Tell us what you are building, choose how to connect, and request a time that works for you.</p></div>
+        <img src={bookingStudioImage} alt="Appointment calendar and call interface" width={640} height={480} fetchPriority="high" className="h-36 w-full rounded-lg object-cover object-center sm:h-32" />
+        {!done && <p className="text-sm text-muted-foreground">{String(step + 1).padStart(2, '0')} / 06</p>}
       </header>
       {done ? <div className="py-16 text-center"><CheckCircle2 className="mx-auto h-14 w-14 text-primary" /><h2 className="mt-5 text-3xl font-bold">Your request is saved</h2><p className="mt-3 text-muted-foreground">{date?.toDateString()} · {time} IST</p><p className="mt-2 text-sm text-muted-foreground">{done.emailed ? 'Your welcome email has been sent. Our team will confirm your appointment separately.' : 'Our team will review your request and contact you. The welcome email could not be sent.'}</p><Button variant="outline" className="mt-6" onClick={() => { setDone(null); setDate(undefined); setTime(''); go(0); }}>Book another call</Button></div> : <>
-        <div className="mb-8 grid grid-cols-7 gap-2" aria-label={`Step ${step + 1} of 7`}>{TITLES.map((title, i) => <div key={title} className={`h-1 rounded-full ${i <= step ? 'bg-primary' : 'bg-muted'}`} />)}</div>
+        <div className="mb-8 grid grid-cols-6 gap-2" aria-label={`Step ${step + 1} of 6`}>{TITLES.map((title, i) => <div key={title} className={`h-1 rounded-full ${i <= step ? 'bg-primary' : 'bg-muted'}`} />)}</div>
         <div ref={section} tabIndex={-1} className="scroll-mt-24 outline-none">
           <AnimatePresence mode="wait" initial={false}><motion.form key={step} initial={reduced ? false : { opacity: 0, x: direction * 18 }} animate={{ opacity: 1, x: 0 }} exit={reduced ? {} : { opacity: 0, x: -direction * 18 }} transition={{ duration: .2 }} onSubmit={next} className="space-y-7">
             <div className="flex items-center gap-3"><BookingStepMark step={step} /><h2 className="font-display text-2xl font-bold sm:text-3xl">{TITLES[step]}</h2></div>
@@ -122,9 +129,15 @@ export default function CallBooking() {
             {step === 2 && <div className="grid max-w-2xl gap-3 sm:grid-cols-2">{BUDGETS.map(b => <Button key={b} type="button" variant="outline" aria-pressed={budget === b} className={`h-16 justify-start ${budget === b ? 'border-primary bg-primary/5 text-primary' : ''}`} onClick={() => setBudget(b)}>{b}</Button>)}</div>}
             {step === 3 && <div className="grid max-w-2xl gap-5 sm:grid-cols-2"><div className="space-y-2 sm:col-span-2"><Label htmlFor="booking-name">Name</Label><Input id="booking-name" required minLength={2} maxLength={80} autoComplete="name" value={form.name} onChange={e => update('name',e.target.value)} /></div><div className="space-y-2"><Label htmlFor="booking-gender">Gender (optional)</Label><Select value={form.gender || 'unspecified'} onValueChange={v => update('gender',v === 'unspecified' ? '' : v)}><SelectTrigger id="booking-gender"><SelectValue /></SelectTrigger><SelectContent>{['unspecified','Male','Female','Other','Prefer not to say'].map(g => <SelectItem key={g} value={g}>{g === 'unspecified' ? 'Not specified' : g}</SelectItem>)}</SelectContent></Select></div><div className="space-y-2"><Label htmlFor="booking-age">Age (optional)</Label><Input id="booking-age" type="number" min={10} max={110} value={form.age} onChange={e => update('age', e.target.value)} /></div><div className="flex gap-3 sm:col-span-2">{['personal','company'].map(c => <Button key={c} type="button" variant="outline" aria-pressed={form.customer_type === c} className={`capitalize ${form.customer_type === c ? 'border-primary text-primary' : ''}`} onClick={() => update('customer_type',c)}>{c}</Button>)}</div>{form.customer_type === 'company' && <div className="space-y-2 sm:col-span-2"><Label htmlFor="booking-company">Company name</Label><Input id="booking-company" required maxLength={120} value={form.company} onChange={e => update('company',e.target.value)} /></div>}</div>}
             {step === 4 && <div className="max-w-2xl space-y-5"><div className="space-y-2"><Label htmlFor="booking-pin">PIN code (optional)</Label><div className="flex gap-2"><Input id="booking-pin" inputMode="numeric" maxLength={6} pattern="[0-9]{6}" value={form.pincode} onChange={e => { pinRequest.current?.abort(); setPinBusy(false); setCities([]); setPinMessage(''); update('pincode',e.target.value); }} /><Button type="button" variant="outline" disabled={pinBusy} onClick={lookupPin}>{pinBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="mr-2 h-4 w-4" />}Find city</Button></div><p aria-live="polite" className="text-xs text-muted-foreground">{pinMessage}</p></div><div className="space-y-2"><Label htmlFor="booking-city">City (optional)</Label><Input id="booking-city" list="booking-cities" value={form.city} maxLength={120} onChange={e => update('city',e.target.value)} /><datalist id="booking-cities">{cities.map(c => <option key={c} value={c} />)}</datalist></div><div className="space-y-2"><Label htmlFor="booking-idea">Describe your idea (optional)</Label><Textarea id="booking-idea" rows={5} maxLength={2000} value={form.details} onChange={e => update('details',e.target.value)} /></div></div>}
-            {step === 5 && <Calendar mode="single" selected={date} onSelect={setDate} disabled={d => d < today || d.getDay() === 0} className="w-fit rounded-lg border border-border" />}
-            {step === 6 && <div className="max-w-2xl space-y-6"><div className="space-y-2"><Label htmlFor="secondary-email">{contact === 'email' ? 'Email address' : 'Secondary contact email'}</Label><Input id="secondary-email" required type="email" autoComplete="email" maxLength={160} value={form.email} onChange={e => update('email',e.target.value)} /></div><div><p className="mb-3 text-sm font-semibold">{date?.toDateString()} · Time (IST)</p><div className="grid grid-cols-4 gap-2">{SLOTS.map(s => <Button key={s} type="button" variant="outline" aria-pressed={time === s} className={time === s ? 'border-primary bg-primary/5 text-primary' : ''} onClick={() => setTime(s)}>{s}</Button>)}</div><div className="mt-3 flex items-center gap-3"><Label htmlFor="custom-time" className="shrink-0 text-sm">Or any time</Label><Input id="custom-time" type="time" className="max-w-40" value={time} onChange={e => setTime(e.target.value)} /></div><p className="mt-2 text-xs text-muted-foreground">This is your preferred time — we'll confirm the exact slot on WhatsApp.</p></div><dl className="grid grid-cols-2 gap-x-5 gap-y-3 border-y border-border py-5 text-sm">{[['Project',TYPES.find(t => t.id === type)?.label],['Contact',contact],['Budget',budget],['Name',form.name],['For',form.customer_type === 'company' ? form.company : 'Personal'],['City',form.city || 'Not specified']].map(([k,v]) => <div key={k}><dt className="text-muted-foreground">{k}</dt><dd className="mt-1 break-words font-medium capitalize">{v}</dd></div>)}</dl></div>}
-            <div className="flex items-center justify-between gap-3 border-t border-border pt-6"><Button type="button" variant="ghost" disabled={step === 0 || busy} onClick={() => go(step - 1)}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button><Button type="submit" disabled={busy || (step === 6 && !time)}>{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}{step === 6 ? 'Request & open WhatsApp' : step === 4 && !form.details ? 'Skip idea & continue' : 'Continue'}{step < 6 && <ArrowRight className="ml-2 h-4 w-4" />}</Button></div>
+            {step === 5 && <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+              <Calendar mode="single" selected={date} onSelect={setDate} disabled={d => d < today || d.getDay() === 0} className="w-fit rounded-lg border border-border" />
+              <div className="space-y-6">
+                <div className="space-y-2"><Label htmlFor="secondary-email">{contact === 'email' ? 'Email address' : 'Secondary contact email (optional)'}</Label><Input id="secondary-email" required={contact === 'email'} type="email" autoComplete="email" maxLength={160} value={form.email} onChange={e => update('email',e.target.value)} placeholder={contact === 'email' ? 'you@example.com' : 'optional@example.com'} /></div>
+                <div><p className="mb-3 text-sm font-semibold">{date ? `${date.toDateString()} · ` : ''}Time (IST)</p><div className="grid grid-cols-4 gap-2">{SLOTS.map(s => <Button key={s} type="button" variant="outline" disabled={timeHasPassed(s)} aria-pressed={time === s} className={time === s ? 'border-primary bg-primary/5 text-primary' : ''} onClick={() => setTime(s)}>{s}</Button>)}</div><div className="mt-3 flex items-center gap-3"><Label htmlFor="custom-time" className="shrink-0 text-sm">Or any time</Label><Input id="custom-time" type="time" className="max-w-40" value={time} onChange={e => setTime(e.target.value)} /></div>{time && timeHasPassed(time) && <p role="alert" className="mt-2 text-xs text-destructive">That time has passed. Pick a later time or another date.</p>}<p className="mt-2 text-xs text-muted-foreground">Pick a future date and preferred time together. We'll confirm the exact slot on WhatsApp.</p></div>
+                <dl className="grid grid-cols-2 gap-x-5 gap-y-3 border-y border-border py-5 text-sm">{[['Project',TYPES.find(t => t.id === type)?.label],['Contact',contact],['Budget',budget],['Name',form.name],['For',form.customer_type === 'company' ? form.company : 'Personal'],['City',form.city || 'Not specified']].map(([k,v]) => <div key={k}><dt className="text-muted-foreground">{k}</dt><dd className="mt-1 break-words font-medium capitalize">{v}</dd></div>)}</dl>
+              </div>
+            </div>}
+            <div className="flex items-center justify-between gap-3 border-t border-border pt-6"><Button type="button" variant="ghost" disabled={step === 0 || busy} onClick={() => go(step - 1)}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button><Button type="submit" disabled={busy || (step === 5 && (!date || !time))}>{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}{step === 5 ? 'Request & open WhatsApp' : step === 4 && !form.details ? 'Skip idea & continue' : 'Continue'}{step < 5 && <ArrowRight className="ml-2 h-4 w-4" />}</Button></div>
           </motion.form></AnimatePresence>
         </div>
       </>}

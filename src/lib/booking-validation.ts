@@ -4,7 +4,7 @@ import { parsePhoneNumberFromString } from 'libphonenumber-js';
 export const SLOTS = ['10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00', '18:00'] as const;
 export const bookingSchema = z.object({
   name: z.string().trim().min(2).max(80),
-  email: z.string().trim().email().max(160),
+  email: z.string().trim().max(160).optional().default(''),
   phone: z.string().trim().max(30).optional().default(''),
   whatsapp: z.string().trim().max(30).optional().default(''),
   age: z.number().int().min(10).max(110).optional(),
@@ -25,6 +25,12 @@ export const bookingSchema = z.object({
   if (v.preferred_contact !== 'email') {
     const key = v.preferred_contact === 'call' ? 'phone' : 'whatsapp';
     if (!parsePhoneNumberFromString(v[key], 'IN')?.isValid()) ctx.addIssue({ code: 'custom', path: [key], message: `Enter a valid ${key === 'phone' ? 'phone' : 'WhatsApp'} number.` });
+  }
+  if (v.preferred_contact === 'email' && !z.string().email().safeParse(v.email).success) {
+    ctx.addIssue({ code: 'custom', path: ['email'], message: 'Enter a valid email address.' });
+  }
+  if (v.preferred_contact !== 'email' && v.email && !z.string().email().safeParse(v.email).success) {
+    ctx.addIssue({ code: 'custom', path: ['email'], message: 'Enter a valid secondary email, or leave it blank.' });
   }
 });
 

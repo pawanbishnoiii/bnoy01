@@ -10,6 +10,7 @@ import webImage from '@/assets/studio-web.png';
 import appImage from '@/assets/studio-app.png';
 import windowsImage from '@/assets/studio-windows.png';
 import automationImage from '@/assets/studio-automation.png';
+import versionControlImage from '@/assets/studio-version-control.webp';
 import VersionHub from './VersionHub';
 
 type Kind = 'all' | 'web' | 'android' | 'windows';
@@ -41,8 +42,9 @@ export default function EditorStudio({ onGo, onEdit, onCreate }: { onGo: (tab: s
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div><h1 className="font-display text-2xl font-bold flex items-center gap-2"><Sparkles className="h-6 w-6 text-primary" />Editor Studio</h1><p className="text-sm text-muted-foreground">Create, edit and version every product from one place.</p></div>
+        <img src={versionControlImage} alt="" width={960} height={600} className="hidden h-24 w-44 object-contain lg:block" />
         <Button variant="outline" onClick={() => onGo('projects')}><GitBranch className="mr-2 h-4 w-4" />Manage projects</Button>
       </div>
 

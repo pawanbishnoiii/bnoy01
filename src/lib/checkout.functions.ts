@@ -2,18 +2,25 @@ import { createServerFn } from '@tanstack/react-start';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { z } from 'zod';
 
-const itemSchema = z.object({ projectId: z.string().uuid() });
+const itemSchema = z.object({ projectId: z.string().uuid(), version: z.string().trim().max(40).optional() });
 export const prepareCheckout = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).inputValidator(input => itemSchema.parse(input)).handler(async ({ data, context }) => {
-  const { data: project, error } = await context.supabase.from('projects').select('id,title,price,discount_price,status').eq('id', data.projectId).eq('status', 'published').single();
+  const { data: project, error } = await context.supabase.from('projects').select('id,title,price,discount_price,status,version').eq('id', data.projectId).eq('status', 'published').single();
   if (error || !project) throw new Error('Project unavailable.');
-  const amount = project.discount_price !== null && project.discount_price >= 0 && project.discount_price < project.price ? project.discount_price : project.price;
+  let pricedItem = project;
+  if (data.version && data.version.replace(/^v/, '') !== String(project.version || '').replace(/^v/, '')) {
+    const { data: release, error: releaseError } = await context.supabase.from('project_versions').select('version,price,discount_price').eq('project_id', project.id).eq('version', data.version.replace(/^v/, '')).maybeSingle();
+    if (releaseError || !release) throw new Error('Selected project version is unavailable.');
+    pricedItem = { ...project, price: release.price ?? project.price, discount_price: release.discount_price };
+  }
+  const amount = pricedItem.discount_price !== null && pricedItem.discount_price >= 0 && pricedItem.discount_price < pricedItem.price ? pricedItem.discount_price : pricedItem.price;
+  const title = data.version ? `${project.title} v${data.version.replace(/^v/, '')}` : project.title;
   const { supabaseAdmin: db } = await import('@/integrations/supabase/client.server');
   const { data: purchase } = await context.supabase.from('purchases').select('id').eq('user_id', context.userId).eq('project_id', project.id).eq('status','completed').maybeSingle();
-  if (purchase) return { owned: true, amount, title: project.title };
+  if (purchase) return { owned: true, amount, title };
   if (amount === 0) {
     const { error } = await db.from('purchases').insert({ user_id: context.userId, project_id: project.id, amount: 0, status: 'completed' });
     if (error) throw new Error('Could not unlock this project.');
-    return { owned: true, amount: 0, title: project.title };
+    return { owned: true, amount: 0, title };
   }
   const keyId = process.env['RAZORPAY_KEY_ID']; const secret = process.env['RAZORPAY_KEY_SECRET'];
   if (!keyId || !secret) {
@@ -22,14 +29,14 @@ export const prepareCheckout = createServerFn({ method: 'POST' }).middleware([re
     await db.from('checkout_orders').insert({ user_id: context.userId, project_id: project.id, amount, provider_order_id: demoId, status: 'completed' });
     const { error: demoError } = await db.from('purchases').insert({ user_id: context.userId, project_id: project.id, amount, razorpay_payment_id: demoId, status: 'completed' });
     if (demoError && demoError.code !== '23505') throw new Error('Demo payment could not finish.');
-    return { owned: true, demo: true, amount, title: project.title };
+    return { owned: true, demo: true, amount, title };
   }
   const result = await fetch('https://api.razorpay.com/v1/orders', { method: 'POST', headers: { Authorization: `Basic ${btoa(`${keyId}:${secret}`)}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: amount * 100, currency: 'INR', receipt: crypto.randomUUID() }), signal: AbortSignal.timeout(10000) });
   if (!result.ok) throw new Error('Payment service unavailable. No charge was made.');
   const provider = await result.json() as { id: string };
   const { data: order, error: orderError } = await db.from('checkout_orders').insert({ user_id: context.userId, project_id: project.id, amount, provider_order_id: provider.id }).select('id').single();
   if (orderError || !order) throw new Error('Could not create checkout. No charge was made.');
-  return { owned: false, amount, title: project.title, orderId: order.id, providerOrderId: provider.id, keyId };
+  return { owned: false, amount, title, orderId: order.id, providerOrderId: provider.id, keyId };
 });
 
 export const verifyCheckout = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).inputValidator(input => z.object({ orderId: z.string().uuid(), paymentId: z.string().regex(/^pay_[A-Za-z0-9]+$/), signature: z.string().regex(/^[a-f0-9]{64}$/) }).parse(input)).handler(async ({ data, context }) => {

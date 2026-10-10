@@ -38,7 +38,7 @@ function createSupabaseAdminClient() {
       ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
       ...(!SUPABASE_SERVICE_ROLE_KEY ? ['SUPABASE_SERVICE_ROLE_KEY'] : []),
     ];
-    const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Connect Supabase in Lovable Cloud.`;
+    const message = `Missing server credential: ${missing.join(', ')}. Trusted server features, including Truecaller verified sign-in, cannot use the public publishable key. Get the service_role or sb_secret key from Supabase Dashboard -> Project Settings -> API, then add it only to the Vercel server environment as SUPABASE_SERVICE_ROLE_KEY.`;
     console.error(`[Supabase] ${message}`);
     throw new Error(message);
   }
