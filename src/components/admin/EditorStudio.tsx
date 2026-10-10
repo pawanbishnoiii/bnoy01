@@ -10,6 +10,7 @@ import webImage from '@/assets/studio-web.png';
 import appImage from '@/assets/studio-app.png';
 import windowsImage from '@/assets/studio-windows.png';
 import automationImage from '@/assets/studio-automation.png';
+import VersionHub from './VersionHub';
 
 type Kind = 'all' | 'web' | 'android' | 'windows';
 type Release = { id: string; kind: Exclude<Kind, 'all'>; title: string; version: string; date: string; latest: boolean; meta?: string; projectId?: string };
@@ -45,6 +46,9 @@ export default function EditorStudio({ onGo, onEdit, onCreate }: { onGo: (tab: s
         <Button variant="outline" onClick={() => onGo('projects')}><GitBranch className="mr-2 h-4 w-4" />Manage projects</Button>
       </div>
 
+      <VersionHub />
+
+      <h2 className="font-display text-lg font-bold">Start something new</h2>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {modes.map((m, i) => (
           <motion.div key={m.title} initial={false} whileHover={{ y: -4 }} className="overflow-hidden rounded-lg border border-border bg-card p-5">
