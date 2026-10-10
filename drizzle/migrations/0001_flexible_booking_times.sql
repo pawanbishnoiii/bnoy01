@@ -1,0 +1,2 @@
+ALTER TABLE public.bookings DROP CONSTRAINT IF EXISTS bookings_booking_date_booking_time_key;
+DROP INDEX IF EXISTS public.bookings_booking_date_booking_time_key;
