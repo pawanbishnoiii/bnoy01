@@ -19,7 +19,7 @@ export const bookingSchema = z.object({
   budget: z.string().max(40).optional().default(''),
   details: z.string().trim().max(2000).optional().default(''),
   booking_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  booking_time: z.enum(SLOTS),
+  booking_time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Pick a valid time.'),
 }).superRefine((v, ctx) => {
   if (v.customer_type === 'company' && !v.company) ctx.addIssue({ code: 'custom', path: ['company'], message: 'Enter your company name.' });
   if (v.preferred_contact !== 'email') {
