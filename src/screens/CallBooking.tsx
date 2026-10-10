@@ -1,42 +1,72 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useServerFn } from '@tanstack/react-start';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ArrowLeft, ArrowRight, CalendarDays, CheckCircle2, Globe, Smartphone, Bot, Cpu, Monitor, Sparkles, Phone, MessageCircle, Mail, MapPin, Loader2 } from 'lucide-react';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import AuthModal from '@/components/AuthModal';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Calendar } from '@/components/ui/calendar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
-import { createBooking } from '@/lib/booking.functions';
-import { supabase } from '@/integrations/supabase/client';
-import { bookingSchema, SLOTS, validateBookingTime } from '@/lib/booking-validation';
-import { useAuthStore } from '@/store/authStore';
-import webImage from '@/assets/studio-web.png';
-import appImage from '@/assets/studio-app.png';
-import windowsImage from '@/assets/studio-windows.png';
-import automationImage from '@/assets/studio-automation.png';
-import BookingStepMark from '@/components/BookingStepMark';
-import bookingStudioImage from '@/assets/booking-studio.webp';
-import { gsap } from 'gsap';
-import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CalendarDays,
+  CheckCircle2,
+  Globe,
+  Smartphone,
+  Bot,
+  Cpu,
+  Monitor,
+  Sparkles,
+  Phone,
+  MessageCircle,
+  Mail,
+  MapPin,
+  Loader2,
+} from "lucide-react";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import AuthModal from "@/components/AuthModal";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
+import { createBooking } from "@/lib/booking.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { bookingSchema, SLOTS, validateBookingTime } from "@/lib/booking-validation";
+import { useAuthStore } from "@/store/authStore";
+import webImage from "@/assets/studio-web.png";
+import appImage from "@/assets/studio-app.png";
+import windowsImage from "@/assets/studio-windows.png";
+import automationImage from "@/assets/studio-automation.png";
+import BookingStepMark from "@/components/BookingStepMark";
+import callConsultationImage from "@/assets/call-consultation.webp";
+import { gsap } from "gsap";
+import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 
 const TYPES = [
-  { id: 'web', label: 'Website / Web app', icon: Globe, image: webImage },
-  { id: 'app', label: 'Mobile app', icon: Smartphone, image: appImage },
-  { id: 'automation', label: 'AI & Automation', icon: Bot, image: automationImage },
-  { id: 'software', label: 'Custom software', icon: Cpu, image: windowsImage },
-  { id: 'windows', label: 'Windows software', icon: Monitor, image: windowsImage },
-  { id: 'other', label: 'Something else', icon: Sparkles, image: automationImage },
+  { id: "web", label: "Website / Web app", icon: Globe, image: webImage },
+  { id: "app", label: "Mobile app", icon: Smartphone, image: appImage },
+  { id: "automation", label: "AI & Automation", icon: Bot, image: automationImage },
+  { id: "software", label: "Custom software", icon: Cpu, image: windowsImage },
+  { id: "windows", label: "Windows software", icon: Monitor, image: windowsImage },
+  { id: "other", label: "Something else", icon: Sparkles, image: automationImage },
 ] as const;
-const BUDGETS = ['Under ₹10k', '₹10k – ₹50k', '₹50k – ₹2L', '₹2L+', 'Not sure'];
-const TITLES = ['What do you want to build?', 'How should we reach you?', 'Your budget', 'About you', 'Location & your idea', 'Pick date & time'];
-const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-type Contact = 'call' | 'whatsapp' | 'email';
+const BUDGETS = ["Under ₹10k", "₹10k – ₹50k", "₹50k – ₹2L", "₹2L+", "Not sure"];
+const TITLES = [
+  "What do you want to build?",
+  "How should we reach you?",
+  "Your budget",
+  "About you",
+  "Location & your idea",
+  "Pick date & time",
+];
+const ymd = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+type Contact = "call" | "whatsapp" | "email";
 
 export default function CallBooking() {
   const { user } = useAuthStore();
@@ -45,102 +75,632 @@ export default function CallBooking() {
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [date, setDate] = useState<Date>();
-  const [time, setTime] = useState('');
-  const [type, setType] = useState<(typeof TYPES)[number]['id']>();
-  const [budget, setBudget] = useState('');
+  const [time, setTime] = useState("");
+  const [type, setType] = useState<(typeof TYPES)[number]["id"]>();
+  const [budget, setBudget] = useState("");
   const [contact, setContact] = useState<Contact>();
-  const [form, setForm] = useState({ name: '', email: '', phone: '', whatsapp: '', age: '', gender: '', pincode: '', city: '', company: '', customer_type: 'personal', details: '' });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    whatsapp: "",
+    age: "",
+    gender: "",
+    pincode: "",
+    city: "",
+    company: "",
+    customer_type: "personal",
+    details: "",
+  });
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ emailed: boolean } | null>(null);
   const [pinBusy, setPinBusy] = useState(false);
-  const [pinMessage, setPinMessage] = useState('');
+  const [pinMessage, setPinMessage] = useState("");
   const [cities, setCities] = useState<string[]>([]);
   const section = useRef<HTMLDivElement>(null);
   const pinRequest = useRef<AbortController | null>(null);
   useEffect(() => () => pinRequest.current?.abort(), []);
-  useEffect(() => { if (user) setForm(f => ({ ...f, email: f.email || (user.email?.endsWith('.invalid') ? '' : user.email || ''), name: f.name || user.user_metadata?.name || '' })); }, [user]);
-  const [waNumber, setWaNumber] = useState('');
-  useEffect(() => { setTime(''); }, [date]);
-  useEffect(() => { supabase.from('site_settings').select('whatsapp_number').limit(1).maybeSingle().then(({ data }) => setWaNumber((data?.whatsapp_number || '').replace(/\D/g, ''))); }, []);
-  const today = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
-  const update = (key: keyof typeof form, value: string) => setForm(f => ({ ...f, [key]: value }));
+  useEffect(() => {
+    if (user)
+      setForm((f) => ({
+        ...f,
+        email: f.email || (user.email?.endsWith(".invalid") ? "" : user.email || ""),
+        name: f.name || user.user_metadata?.name || "",
+      }));
+  }, [user]);
+  const [waNumber, setWaNumber] = useState("");
+  useEffect(() => {
+    setTime("");
+  }, [date]);
+  useEffect(() => {
+    supabase
+      .from("site_settings")
+      .select("whatsapp_number")
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => setWaNumber((data?.whatsapp_number || "").replace(/\D/g, "")));
+  }, []);
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+  const update = (key: keyof typeof form, value: string) =>
+    setForm((f) => ({ ...f, [key]: value }));
   const timeHasPassed = (slot: string) => {
     if (!date) return false;
-    try { validateBookingTime(ymd(date), slot); return false; } catch { return true; }
+    try {
+      validateBookingTime(ymd(date), slot);
+      return false;
+    } catch {
+      return true;
+    }
   };
-  const go = (next: number) => { setDirection(next > step ? 1 : -1); setStep(next); };
-  useEffect(() => { if (step === 0 || !section.current) return; section.current.focus({preventScroll:true}); if(reduced) {section.current.scrollIntoView({behavior:'instant',block:'start'}); return;} gsap.registerPlugin(ScrollToPlugin); const tween = gsap.to(window,{scrollTo:{y:section.current,offsetY:100,autoKill:true},duration:.4,ease:'power2.out'}); return () => {tween.kill();}; }, [step, reduced]);
+  const go = (next: number) => {
+    setDirection(next > step ? 1 : -1);
+    setStep(next);
+  };
+  useEffect(() => {
+    if (step === 0 || !section.current) return;
+    section.current.focus({ preventScroll: true });
+    if (reduced) {
+      section.current.scrollIntoView({ behavior: "instant", block: "start" });
+      return;
+    }
+    gsap.registerPlugin(ScrollToPlugin);
+    const tween = gsap.to(window, {
+      scrollTo: { y: section.current, offsetY: 100, autoKill: true },
+      duration: 0.4,
+      ease: "power2.out",
+    });
+    return () => {
+      tween.kill();
+    };
+  }, [step, reduced]);
   const next = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (step === 0 && !type) return toast.error('Choose what you want to build.');
-    if (step === 1 && !contact) return toast.error('Choose a contact channel.');
-    if (step === 2 && !budget) return toast.error('Choose a budget or Not sure.');
-    if (step === 3 && form.name.trim().length < 2) return toast.error('Enter your name.');
-    if (step === 5 && (!date || !time)) return toast.error('Choose a future date and preferred time.');
+    if (step === 0 && !type) return toast.error("Choose what you want to build.");
+    if (step === 1 && !contact) return toast.error("Choose a contact channel.");
+    if (step === 2 && !budget) return toast.error("Choose a budget or Not sure.");
+    if (step === 3 && form.name.trim().length < 2) return toast.error("Enter your name.");
+    if (step === 5 && (!date || !time))
+      return toast.error("Choose a future date and preferred time.");
     if (step < 5) return go(step + 1);
     void submit();
   };
   const lookupPin = async () => {
-    if (!/^\d{6}$/.test(form.pincode)) return setPinMessage('Enter a six-digit Indian PIN code, or enter your city manually.');
+    if (!/^\d{6}$/.test(form.pincode))
+      return setPinMessage("Enter a six-digit Indian PIN code, or enter your city manually.");
     pinRequest.current?.abort();
-    const controller = new AbortController(); pinRequest.current = controller;
+    const controller = new AbortController();
+    pinRequest.current = controller;
     const timeout = window.setTimeout(() => controller.abort(), 8000);
-    setPinBusy(true); setPinMessage(''); setCities([]);
+    setPinBusy(true);
+    setPinMessage("");
+    setCities([]);
     try {
-      const response = await fetch(`https://api.postalpincode.in/pincode/${encodeURIComponent(form.pincode)}`, { signal: controller.signal });
+      const response = await fetch(
+        `https://api.postalpincode.in/pincode/${encodeURIComponent(form.pincode)}`,
+        { signal: controller.signal },
+      );
       if (!response.ok) throw new Error();
-      const data = await response.json() as { Status: string; PostOffice?: { District: string }[] }[];
-      const names = [...new Set((data[0]?.PostOffice || []).map(p => p.District).filter(Boolean))];
-      if (data[0]?.Status !== 'Success' || !names.length) throw new Error();
+      const data = (await response.json()) as {
+        Status: string;
+        PostOffice?: { District: string }[];
+      }[];
+      const names = [
+        ...new Set((data[0]?.PostOffice || []).map((p) => p.District).filter(Boolean)),
+      ];
+      if (data[0]?.Status !== "Success" || !names.length) throw new Error();
       if (controller !== pinRequest.current) return;
-      setCities(names); update('city', names[0]); setPinMessage('Location found. You can edit the city.');
-    } catch { if (controller === pinRequest.current) setPinMessage('Location could not be found. Enter your city manually.'); }
-    finally { window.clearTimeout(timeout); if (controller === pinRequest.current) setPinBusy(false); }
+      setCities(names);
+      update("city", names[0]);
+      setPinMessage("Location found. You can edit the city.");
+    } catch {
+      if (controller === pinRequest.current)
+        setPinMessage("Location could not be found. Enter your city manually.");
+    } finally {
+      window.clearTimeout(timeout);
+      if (controller === pinRequest.current) setPinBusy(false);
+    }
   };
   const submit = async () => {
-    if (!date || !time) return toast.error('Choose a future date and preferred time.');
-    try { validateBookingTime(ymd(date), time); } catch { return toast.error('That time has already passed. Choose a later time or another date.'); }
-    const parsed = bookingSchema.safeParse({ ...form, age: form.age ? Number(form.age) : undefined, preferred_contact: contact, project_type: type, budget, booking_date: ymd(date), booking_time: time });
-    if (!parsed.success) return toast.error(parsed.error.issues[0]?.message || 'Check your answers.');
+    if (!date || !time) return toast.error("Choose a future date and preferred time.");
+    try {
+      validateBookingTime(ymd(date), time);
+    } catch {
+      return toast.error("That time has already passed. Choose a later time or another date.");
+    }
+    const parsed = bookingSchema.safeParse({
+      ...form,
+      age: form.age ? Number(form.age) : undefined,
+      preferred_contact: contact,
+      project_type: type,
+      budget,
+      booking_date: ymd(date),
+      booking_time: time,
+    });
+    if (!parsed.success)
+      return toast.error(parsed.error.issues[0]?.message || "Check your answers.");
     setBusy(true);
     const d = parsed.data;
-    const lines = ['Hi Bnoy Studios! I just requested a call.', `Project: ${TYPES.find(t => t.id === type)?.label}`, `Budget: ${budget}`, `Name: ${d.name}`, d.age ? `Age: ${d.age}` : '', d.gender ? `Gender: ${d.gender}` : '', `For: ${d.customer_type === 'company' ? `Company - ${d.company}` : 'Personal'}`, d.city ? `City: ${d.city}${d.pincode ? ` (${d.pincode})` : ''}` : '', `Contact via: ${contact}`, d.phone ? `Phone: ${d.phone}` : '', d.whatsapp ? `WhatsApp: ${d.whatsapp}` : '', d.email ? `Email: ${d.email}` : '', `Preferred: ${date.toDateString()} ${time} IST`, d.details ? `Idea: ${d.details}` : ''].filter(Boolean).join('\n');
+    const lines = [
+      "Hi Bnoy Studios! I just requested a call.",
+      `Project: ${TYPES.find((t) => t.id === type)?.label}`,
+      `Budget: ${budget}`,
+      `Name: ${d.name}`,
+      d.age ? `Age: ${d.age}` : "",
+      d.gender ? `Gender: ${d.gender}` : "",
+      `For: ${d.customer_type === "company" ? `Company - ${d.company}` : "Personal"}`,
+      d.city ? `City: ${d.city}${d.pincode ? ` (${d.pincode})` : ""}` : "",
+      `Contact via: ${contact}`,
+      d.phone ? `Phone: ${d.phone}` : "",
+      d.whatsapp ? `WhatsApp: ${d.whatsapp}` : "",
+      d.email ? `Email: ${d.email}` : "",
+      `Preferred: ${date.toDateString()} ${time} IST`,
+      d.details ? `Idea: ${d.details}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
     const wa = `https://wa.me/${waNumber}?text=${encodeURIComponent(lines)}`;
-    const popup = window.open('', '_blank');
-    try { const result = await book({ data: parsed.data }); setDone({ emailed: result.emailed }); if (popup) popup.location.href = wa; else window.location.href = wa; }
-    catch (error) { popup?.close(); toast.error(error instanceof Error ? error.message : 'Booking could not be saved.'); }
-    finally { setBusy(false); }
+    const popup = window.open("", "_blank");
+    try {
+      const result = await book({ data: parsed.data });
+      setDone({ emailed: result.emailed });
+      if (popup) popup.location.href = wa;
+      else window.location.href = wa;
+    } catch (error) {
+      popup?.close();
+      toast.error(error instanceof Error ? error.message : "Booking could not be saved.");
+    } finally {
+      setBusy(false);
+    }
   };
-  return <div className="min-h-screen bg-background">
-    <Navbar /><AuthModal />
-    <main className="mx-auto max-w-6xl px-4 pb-20 pt-24 sm:px-6 sm:pt-28">
-      <header className="mb-8 grid items-center gap-5 overflow-hidden border-b border-border pb-6 sm:grid-cols-[1fr_220px]">
-        <div><p className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary"><CalendarDays className="h-4 w-4" />Free discovery session</p><h1 className="font-display text-3xl font-bold sm:text-4xl">Book a call with Bnoy Studios</h1><p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">Share your idea and choose the best way and time to connect.</p><div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs font-medium text-muted-foreground"><span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-600" />No payment</span><span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-600" />15-30 minutes</span><span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-600" />IST timezone</span></div></div>
-        <img src={bookingStudioImage} alt="Appointment calendar and call interface" width={640} height={480} fetchPriority="high" className="h-36 w-full rounded-lg object-cover object-center sm:h-32" />
-        {!done && <p className="text-sm text-muted-foreground">{String(step + 1).padStart(2, '0')} / 06</p>}
-      </header>
-      {done ? <div className="py-16 text-center"><CheckCircle2 className="mx-auto h-14 w-14 text-primary" /><h2 className="mt-5 text-3xl font-bold">Your request is saved</h2><p className="mt-3 text-muted-foreground">{date?.toDateString()} · {time} IST</p><p className="mt-2 text-sm text-muted-foreground">{done.emailed ? 'Your welcome email has been sent. Our team will confirm your appointment separately.' : 'Our team will review your request and contact you. The welcome email could not be sent.'}</p><Button variant="outline" className="mt-6" onClick={() => { setDone(null); setDate(undefined); setTime(''); go(0); }}>Book another call</Button></div> : <>
-        <div className="mb-8" aria-label={`Step ${step + 1} of 6`}><div className="grid grid-cols-6 gap-2">{TITLES.map((title, i) => <div key={title} className={`h-1 rounded-full transition-colors ${i <= step ? 'bg-primary' : 'bg-muted'}`} />)}</div><div className="mt-3 flex items-center justify-between text-xs"><span className="font-semibold text-primary">Step {step + 1}</span><span className="max-w-[70%] truncate text-muted-foreground">{TITLES[step]}</span></div></div>
-        <div ref={section} tabIndex={-1} className="scroll-mt-24 outline-none">
-          <AnimatePresence mode="wait" initial={false}><motion.form key={step} initial={reduced ? false : { opacity: 0, x: direction * 18 }} animate={{ opacity: 1, x: 0 }} exit={reduced ? {} : { opacity: 0, x: -direction * 18 }} transition={{ duration: .2 }} onSubmit={next} className="space-y-7">
-            <div className="flex items-center gap-3"><BookingStepMark step={step} /><h2 className="font-display text-2xl font-bold sm:text-3xl">{TITLES[step]}</h2></div>
-            {step === 0 && <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{TYPES.map(t => <Button type="button" key={t.id} variant="outline" aria-pressed={type === t.id} onClick={() => setType(t.id)} className={`h-auto min-h-44 flex-col items-start gap-3 whitespace-normal rounded-lg p-4 text-left ${type === t.id ? 'border-primary bg-primary/5' : ''}`}><img src={t.image} alt="" width={384} height={512} className="h-24 w-full object-contain" /><span className="flex items-center gap-2"><t.icon className="h-4 w-4 shrink-0" />{t.label}</span></Button>)}</div>}
-            {step === 1 && <div className="max-w-xl space-y-6"><div className="grid grid-cols-3 gap-3">{([{ id: 'call', title: 'Call', icon: Phone }, { id: 'whatsapp', title: 'WhatsApp', icon: MessageCircle }, { id: 'email', title: 'Email', icon: Mail }] as const).map(c => <Button type="button" key={c.id} variant="outline" aria-pressed={contact === c.id} onClick={() => setContact(c.id)} className={`h-24 flex-col gap-3 ${contact === c.id ? 'border-primary bg-primary/5 text-primary' : ''}`}><c.icon className="h-6 w-6" />{c.title}</Button>)}</div>{contact && <div className="space-y-2"><Label htmlFor="primary-contact">{contact === 'email' ? 'Email address' : contact === 'call' ? 'Phone number' : 'WhatsApp number'}</Label><Input id="primary-contact" required type={contact === 'email' ? 'email' : 'tel'} autoComplete={contact === 'email' ? 'email' : 'tel'} value={form[contact === 'call' ? 'phone' : contact]} onChange={e => update(contact === 'call' ? 'phone' : contact, e.target.value)} placeholder={contact === 'email' ? 'you@example.com' : '+91'} maxLength={contact === 'email' ? 160 : 30} /></div>}</div>}
-            {step === 2 && <div className="grid max-w-2xl gap-3 sm:grid-cols-2">{BUDGETS.map(b => <Button key={b} type="button" variant="outline" aria-pressed={budget === b} className={`h-16 justify-start ${budget === b ? 'border-primary bg-primary/5 text-primary' : ''}`} onClick={() => setBudget(b)}>{b}</Button>)}</div>}
-            {step === 3 && <div className="grid max-w-2xl gap-5 sm:grid-cols-2"><div className="space-y-2 sm:col-span-2"><Label htmlFor="booking-name">Name</Label><Input id="booking-name" required minLength={2} maxLength={80} autoComplete="name" value={form.name} onChange={e => update('name',e.target.value)} /></div><div className="space-y-2"><Label htmlFor="booking-gender">Gender (optional)</Label><Select value={form.gender || 'unspecified'} onValueChange={v => update('gender',v === 'unspecified' ? '' : v)}><SelectTrigger id="booking-gender"><SelectValue /></SelectTrigger><SelectContent>{['unspecified','Male','Female','Other','Prefer not to say'].map(g => <SelectItem key={g} value={g}>{g === 'unspecified' ? 'Not specified' : g}</SelectItem>)}</SelectContent></Select></div><div className="space-y-2"><Label htmlFor="booking-age">Age (optional)</Label><Input id="booking-age" type="number" min={10} max={110} value={form.age} onChange={e => update('age', e.target.value)} /></div><div className="flex gap-3 sm:col-span-2">{['personal','company'].map(c => <Button key={c} type="button" variant="outline" aria-pressed={form.customer_type === c} className={`capitalize ${form.customer_type === c ? 'border-primary text-primary' : ''}`} onClick={() => update('customer_type',c)}>{c}</Button>)}</div>{form.customer_type === 'company' && <div className="space-y-2 sm:col-span-2"><Label htmlFor="booking-company">Company name</Label><Input id="booking-company" required maxLength={120} value={form.company} onChange={e => update('company',e.target.value)} /></div>}</div>}
-            {step === 4 && <div className="max-w-2xl space-y-5"><div className="space-y-2"><Label htmlFor="booking-pin">PIN code (optional)</Label><div className="flex gap-2"><Input id="booking-pin" inputMode="numeric" maxLength={6} pattern="[0-9]{6}" value={form.pincode} onChange={e => { pinRequest.current?.abort(); setPinBusy(false); setCities([]); setPinMessage(''); update('pincode',e.target.value); }} /><Button type="button" variant="outline" disabled={pinBusy} onClick={lookupPin}>{pinBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="mr-2 h-4 w-4" />}Find city</Button></div><p aria-live="polite" className="text-xs text-muted-foreground">{pinMessage}</p></div><div className="space-y-2"><Label htmlFor="booking-city">City (optional)</Label><Input id="booking-city" list="booking-cities" value={form.city} maxLength={120} onChange={e => update('city',e.target.value)} /><datalist id="booking-cities">{cities.map(c => <option key={c} value={c} />)}</datalist></div><div className="space-y-2"><Label htmlFor="booking-idea">Describe your idea (optional)</Label><Textarea id="booking-idea" rows={5} maxLength={2000} value={form.details} onChange={e => update('details',e.target.value)} /></div></div>}
-            {step === 5 && <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-              <Calendar mode="single" selected={date} onSelect={setDate} disabled={d => d < today || d.getDay() === 0} className="w-fit rounded-lg border border-border" />
-              <div className="space-y-6">
-                <div className="space-y-2"><Label htmlFor="secondary-email">{contact === 'email' ? 'Email address' : 'Secondary contact email (optional)'}</Label><Input id="secondary-email" required={contact === 'email'} type="email" autoComplete="email" maxLength={160} value={form.email} onChange={e => update('email',e.target.value)} placeholder={contact === 'email' ? 'you@example.com' : 'optional@example.com'} /></div>
-                <div><p className="mb-3 text-sm font-semibold">{date ? `${date.toDateString()} · ` : ''}Time (IST)</p><div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{SLOTS.map(s => <Button key={s} type="button" variant="outline" disabled={timeHasPassed(s)} aria-pressed={time === s} className={time === s ? 'border-primary bg-primary/5 text-primary' : ''} onClick={() => setTime(s)}>{s}</Button>)}</div><div className="mt-4 grid grid-cols-[auto_minmax(0,160px)] items-center gap-3"><Label htmlFor="custom-time" className="text-sm">Custom time</Label><Input id="custom-time" type="time" value={time} onChange={e => setTime(e.target.value)} /></div>{time && timeHasPassed(time) && <p role="alert" className="mt-2 text-xs text-destructive">That time has passed. Pick a later time or another date.</p>}<p className="mt-2 text-xs text-muted-foreground">Choose the date and time together. We'll confirm the final slot through your preferred contact.</p></div>
-                <dl className="grid grid-cols-2 gap-x-5 gap-y-3 border-y border-border py-5 text-sm">{[['Project',TYPES.find(t => t.id === type)?.label],['Contact',contact],['Budget',budget],['Name',form.name],['For',form.customer_type === 'company' ? form.company : 'Personal'],['City',form.city || 'Not specified']].map(([k,v]) => <div key={k}><dt className="text-muted-foreground">{k}</dt><dd className="mt-1 break-words font-medium capitalize">{v}</dd></div>)}</dl>
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <AuthModal />
+      <main className="mx-auto max-w-6xl px-4 pb-20 pt-24 sm:px-6 sm:pt-28">
+        <header className="mb-8 grid items-center gap-5 overflow-hidden border-b border-border pb-6 sm:grid-cols-[1fr_220px]">
+          <div>
+            <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary">
+              <CalendarDays className="h-4 w-4" />
+              Free discovery session
+            </p>
+            <h1 className="font-display text-3xl font-bold sm:text-4xl">
+              Book a call with Bnoy Studios
+            </h1>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
+              Share your idea and choose the best way and time to connect.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs font-medium text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                No payment
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                15-30 minutes
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                IST timezone
+              </span>
+            </div>
+          </div>
+          <img
+            src={callConsultationImage}
+            alt="Founder and product designer in a video consultation"
+            width={900}
+            height={1125}
+            fetchPriority="high"
+            className="h-44 w-full rounded-lg object-cover object-[center_42%] sm:h-36"
+          />
+          {!done && (
+            <p className="text-sm text-muted-foreground">
+              {String(step + 1).padStart(2, "0")} / 06
+            </p>
+          )}
+        </header>
+        {done ? (
+          <div className="py-16 text-center">
+            <CheckCircle2 className="mx-auto h-14 w-14 text-primary" />
+            <h2 className="mt-5 text-3xl font-bold">Your request is saved</h2>
+            <p className="mt-3 text-muted-foreground">
+              {date?.toDateString()} · {time} IST
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {done.emailed
+                ? "Your welcome email has been sent. Our team will confirm your appointment separately."
+                : "Our team will review your request and contact you. The welcome email could not be sent."}
+            </p>
+            <Button
+              variant="outline"
+              className="mt-6"
+              onClick={() => {
+                setDone(null);
+                setDate(undefined);
+                setTime("");
+                go(0);
+              }}
+            >
+              Book another call
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="mb-8" aria-label={`Step ${step + 1} of 6`}>
+              <div className="grid grid-cols-6 gap-2">
+                {TITLES.map((title, i) => (
+                  <div
+                    key={title}
+                    className={`h-1 rounded-full transition-colors ${i <= step ? "bg-primary" : "bg-muted"}`}
+                  />
+                ))}
               </div>
-            </div>}
-            <div className="flex items-center justify-between gap-3 border-t border-border pt-6"><Button type="button" variant="ghost" disabled={step === 0 || busy} onClick={() => go(step - 1)}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button><Button type="submit" disabled={busy || (step === 5 && (!date || !time))}>{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}{step === 5 ? 'Request & open WhatsApp' : step === 4 && !form.details ? 'Skip idea & continue' : 'Continue'}{step < 5 && <ArrowRight className="ml-2 h-4 w-4" />}</Button></div>
-          </motion.form></AnimatePresence>
-        </div>
-      </>}
-    </main><Footer />
-  </div>;
+              <div className="mt-3 flex items-center justify-between text-xs">
+                <span className="font-semibold text-primary">Step {step + 1}</span>
+                <span className="max-w-[70%] truncate text-muted-foreground">{TITLES[step]}</span>
+              </div>
+            </div>
+            <div ref={section} tabIndex={-1} className="scroll-mt-24 outline-none">
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.form
+                  key={step}
+                  initial={reduced ? false : { opacity: 0, x: direction * 18 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={reduced ? {} : { opacity: 0, x: -direction * 18 }}
+                  transition={{ duration: 0.2 }}
+                  onSubmit={next}
+                  className="space-y-7"
+                >
+                  <div className="flex items-center gap-3">
+                    <BookingStepMark step={step} />
+                    <h2 className="font-display text-2xl font-bold sm:text-3xl">{TITLES[step]}</h2>
+                  </div>
+                  {step === 0 && (
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                      {TYPES.map((t) => (
+                        <Button
+                          type="button"
+                          key={t.id}
+                          variant="outline"
+                          aria-pressed={type === t.id}
+                          onClick={() => setType(t.id)}
+                          className={`h-auto min-h-44 flex-col items-start gap-3 whitespace-normal rounded-lg p-4 text-left ${type === t.id ? "border-primary bg-primary/5" : ""}`}
+                        >
+                          <img
+                            src={t.image}
+                            alt=""
+                            width={384}
+                            height={512}
+                            className="h-24 w-full object-contain"
+                          />
+                          <span className="flex items-center gap-2">
+                            <t.icon className="h-4 w-4 shrink-0" />
+                            {t.label}
+                          </span>
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                  {step === 1 && (
+                    <div className="max-w-xl space-y-6">
+                      <div className="grid grid-cols-3 gap-3">
+                        {(
+                          [
+                            { id: "call", title: "Call", icon: Phone },
+                            { id: "whatsapp", title: "WhatsApp", icon: MessageCircle },
+                            { id: "email", title: "Email", icon: Mail },
+                          ] as const
+                        ).map((c) => (
+                          <Button
+                            type="button"
+                            key={c.id}
+                            variant="outline"
+                            aria-pressed={contact === c.id}
+                            onClick={() => setContact(c.id)}
+                            className={`h-24 flex-col gap-3 ${contact === c.id ? "border-primary bg-primary/5 text-primary" : ""}`}
+                          >
+                            <c.icon className="h-6 w-6" />
+                            {c.title}
+                          </Button>
+                        ))}
+                      </div>
+                      {contact && (
+                        <div className="space-y-2">
+                          <Label htmlFor="primary-contact">
+                            {contact === "email"
+                              ? "Email address"
+                              : contact === "call"
+                                ? "Phone number"
+                                : "WhatsApp number"}
+                          </Label>
+                          <Input
+                            id="primary-contact"
+                            required
+                            type={contact === "email" ? "email" : "tel"}
+                            autoComplete={contact === "email" ? "email" : "tel"}
+                            value={form[contact === "call" ? "phone" : contact]}
+                            onChange={(e) =>
+                              update(contact === "call" ? "phone" : contact, e.target.value)
+                            }
+                            placeholder={contact === "email" ? "you@example.com" : "+91"}
+                            maxLength={contact === "email" ? 160 : 30}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {step === 2 && (
+                    <div className="grid max-w-2xl gap-3 sm:grid-cols-2">
+                      {BUDGETS.map((b) => (
+                        <Button
+                          key={b}
+                          type="button"
+                          variant="outline"
+                          aria-pressed={budget === b}
+                          className={`h-16 justify-start ${budget === b ? "border-primary bg-primary/5 text-primary" : ""}`}
+                          onClick={() => setBudget(b)}
+                        >
+                          {b}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                  {step === 3 && (
+                    <div className="grid max-w-2xl gap-5 sm:grid-cols-2">
+                      <div className="space-y-2 sm:col-span-2">
+                        <Label htmlFor="booking-name">Name</Label>
+                        <Input
+                          id="booking-name"
+                          required
+                          minLength={2}
+                          maxLength={80}
+                          autoComplete="name"
+                          value={form.name}
+                          onChange={(e) => update("name", e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="booking-gender">Gender (optional)</Label>
+                        <Select
+                          value={form.gender || "unspecified"}
+                          onValueChange={(v) => update("gender", v === "unspecified" ? "" : v)}
+                        >
+                          <SelectTrigger id="booking-gender">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["unspecified", "Male", "Female", "Other", "Prefer not to say"].map(
+                              (g) => (
+                                <SelectItem key={g} value={g}>
+                                  {g === "unspecified" ? "Not specified" : g}
+                                </SelectItem>
+                              ),
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="booking-age">Age (optional)</Label>
+                        <Input
+                          id="booking-age"
+                          type="number"
+                          min={10}
+                          max={110}
+                          value={form.age}
+                          onChange={(e) => update("age", e.target.value)}
+                        />
+                      </div>
+                      <div className="flex gap-3 sm:col-span-2">
+                        {["personal", "company"].map((c) => (
+                          <Button
+                            key={c}
+                            type="button"
+                            variant="outline"
+                            aria-pressed={form.customer_type === c}
+                            className={`capitalize ${form.customer_type === c ? "border-primary text-primary" : ""}`}
+                            onClick={() => update("customer_type", c)}
+                          >
+                            {c}
+                          </Button>
+                        ))}
+                      </div>
+                      {form.customer_type === "company" && (
+                        <div className="space-y-2 sm:col-span-2">
+                          <Label htmlFor="booking-company">Company name</Label>
+                          <Input
+                            id="booking-company"
+                            required
+                            maxLength={120}
+                            value={form.company}
+                            onChange={(e) => update("company", e.target.value)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {step === 4 && (
+                    <div className="max-w-2xl space-y-5">
+                      <div className="space-y-2">
+                        <Label htmlFor="booking-pin">PIN code (optional)</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="booking-pin"
+                            inputMode="numeric"
+                            maxLength={6}
+                            pattern="[0-9]{6}"
+                            value={form.pincode}
+                            onChange={(e) => {
+                              pinRequest.current?.abort();
+                              setPinBusy(false);
+                              setCities([]);
+                              setPinMessage("");
+                              update("pincode", e.target.value);
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            disabled={pinBusy}
+                            onClick={lookupPin}
+                          >
+                            {pinBusy ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <MapPin className="mr-2 h-4 w-4" />
+                            )}
+                            Find city
+                          </Button>
+                        </div>
+                        <p aria-live="polite" className="text-xs text-muted-foreground">
+                          {pinMessage}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="booking-city">City (optional)</Label>
+                        <Input
+                          id="booking-city"
+                          list="booking-cities"
+                          value={form.city}
+                          maxLength={120}
+                          onChange={(e) => update("city", e.target.value)}
+                        />
+                        <datalist id="booking-cities">
+                          {cities.map((c) => (
+                            <option key={c} value={c} />
+                          ))}
+                        </datalist>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="booking-idea">Describe your idea (optional)</Label>
+                        <Textarea
+                          id="booking-idea"
+                          rows={5}
+                          maxLength={2000}
+                          value={form.details}
+                          onChange={(e) => update("details", e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {step === 5 && (
+                    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                      <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={setDate}
+                        disabled={(d) => d < today || d.getDay() === 0}
+                        className="w-fit rounded-lg border border-border"
+                      />
+                      <div className="space-y-6">
+                        <div className="space-y-2">
+                          <Label htmlFor="secondary-email">
+                            {contact === "email"
+                              ? "Email address"
+                              : "Secondary contact email (optional)"}
+                          </Label>
+                          <Input
+                            id="secondary-email"
+                            required={contact === "email"}
+                            type="email"
+                            autoComplete="email"
+                            maxLength={160}
+                            value={form.email}
+                            onChange={(e) => update("email", e.target.value)}
+                            placeholder={
+                              contact === "email" ? "you@example.com" : "optional@example.com"
+                            }
+                          />
+                        </div>
+                        <div>
+                          <p className="mb-3 text-sm font-semibold">
+                            {date ? `${date.toDateString()} · ` : ""}Time (IST)
+                          </p>
+                          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                            {SLOTS.map((s) => (
+                              <Button
+                                key={s}
+                                type="button"
+                                variant="outline"
+                                disabled={timeHasPassed(s)}
+                                aria-pressed={time === s}
+                                className={
+                                  time === s ? "border-primary bg-primary/5 text-primary" : ""
+                                }
+                                onClick={() => setTime(s)}
+                              >
+                                {s}
+                              </Button>
+                            ))}
+                          </div>
+                          <div className="mt-4 grid grid-cols-[auto_minmax(0,160px)] items-center gap-3">
+                            <Label htmlFor="custom-time" className="text-sm">
+                              Custom time
+                            </Label>
+                            <Input
+                              id="custom-time"
+                              type="time"
+                              value={time}
+                              onChange={(e) => setTime(e.target.value)}
+                            />
+                          </div>
+                          {time && timeHasPassed(time) && (
+                            <p role="alert" className="mt-2 text-xs text-destructive">
+                              That time has passed. Pick a later time or another date.
+                            </p>
+                          )}
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            Choose the date and time together. We'll confirm the final slot through
+                            your preferred contact.
+                          </p>
+                        </div>
+                        <dl className="grid grid-cols-2 gap-x-5 gap-y-3 border-y border-border py-5 text-sm">
+                          {[
+                            ["Project", TYPES.find((t) => t.id === type)?.label],
+                            ["Contact", contact],
+                            ["Budget", budget],
+                            ["Name", form.name],
+                            ["For", form.customer_type === "company" ? form.company : "Personal"],
+                            ["City", form.city || "Not specified"],
+                          ].map(([k, v]) => (
+                            <div key={k}>
+                              <dt className="text-muted-foreground">{k}</dt>
+                              <dd className="mt-1 break-words font-medium capitalize">{v}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between gap-3 border-t border-border pt-6">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      disabled={step === 0 || busy}
+                      onClick={() => go(step - 1)}
+                    >
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Back
+                    </Button>
+                    <Button type="submit" disabled={busy || (step === 5 && (!date || !time))}>
+                      {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      {step === 5
+                        ? "Request & open WhatsApp"
+                        : step === 4 && !form.details
+                          ? "Skip idea & continue"
+                          : "Continue"}
+                      {step < 5 && <ArrowRight className="ml-2 h-4 w-4" />}
+                    </Button>
+                  </div>
+                </motion.form>
+              </AnimatePresence>
+            </div>
+          </>
+        )}
+      </main>
+      <Footer />
+    </div>
+  );
 }
