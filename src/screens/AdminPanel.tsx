@@ -1,3 +1,4 @@
+import { publicMedia } from '@/lib/media-url';
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { Navigate, useNavigate } from '@/lib/router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -467,7 +468,7 @@ function AdminAddProject({ editingId, onDone, initialType = 'website' }: { editi
       xhr.upload.onprogress = (e) => { if (e.lengthComputable) onPct(Math.round((e.loaded / e.total) * 100)); };
       xhr.onload = () => {
         if (xhr.status >= 200 && xhr.status < 300) {
-          const { data: pub } = supabase.storage.from(bucket).getPublicUrl(path);
+          const { data: pub } = publicMedia(bucket, path);
           resolve(pub.publicUrl);
         } else reject(new Error(`Upload failed (${xhr.status})`));
       };
@@ -1137,7 +1138,7 @@ function AdminSettings() {
       const path = `branding/${key}-${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
       const { error } = await supabase.storage.from('project-assets').upload(path, file, { upsert: true });
       if (error) throw error;
-      const { data } = supabase.storage.from('project-assets').getPublicUrl(path);
+      const { data } = publicMedia('project-assets', path);
       setForm((prev: any) => ({ ...prev, [key]: data.publicUrl }));
       toast({ title: 'Uploaded', description: 'Click Save Settings to apply.' });
     } catch (e: any) {

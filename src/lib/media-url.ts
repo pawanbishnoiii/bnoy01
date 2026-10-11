@@ -12,3 +12,8 @@ export function fixMediaUrl(url?: string | null) {
   const m = url.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)$/);
   return m && (PUBLIC_MEDIA_BUCKETS as readonly string[]).includes(m[1]) ? `/api/public/media/${m[1]}/${m[2]}` : url;
 }
+
+/** Drop-in for storage getPublicUrl() that works with private picture buckets. */
+export function publicMedia(bucket: string, path: string) {
+  return { data: { publicUrl: mediaUrl(bucket, path) } };
+}
