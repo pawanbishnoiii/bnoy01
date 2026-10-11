@@ -2,7 +2,9 @@ import { Badge } from '@/components/ui/badge';
 import { Globe } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
+import { useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { fixMediaUrl } from '@/lib/media-url';
 
 const LinkedinIcon = ({ size = 16 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -38,6 +40,13 @@ const Team = () => {
     },
   });
   const members = data && data.length ? data : teamData;
+  const rail = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
+  const onScroll = () => {
+    const el = rail.current; const first = el?.firstElementChild as HTMLElement | null;
+    if (!el || !first) return;
+    setActive(Math.min(members.length - 1, Math.round(el.scrollLeft / (first.offsetWidth + 16))));
+  };
 
   return (
     <section id="team">
@@ -47,22 +56,27 @@ const Team = () => {
             <Badge variant="outline" className="px-3 py-1 h-auto text-sm">Team</Badge>
             <h2 className="text-3xl md:text-5xl font-medium text-foreground">Meet the creative minds behind our success</h2>
           </motion.div>
-          <div className="grid w-full grid-flow-col auto-cols-[230px] gap-6 overflow-x-auto pb-4 snap-x snap-mandatory lg:grid-flow-row lg:auto-cols-auto lg:grid-cols-4 lg:overflow-visible">
+          <div ref={rail} onScroll={onScroll} className="-mx-4 grid w-[calc(100%+2rem)] grid-flow-col auto-cols-[76%] gap-4 overflow-x-auto px-4 pb-2 snap-x snap-mandatory [scrollbar-width:none] sm:auto-cols-[45%] lg:mx-0 lg:w-full lg:grid-flow-row lg:auto-cols-auto lg:grid-cols-4 lg:gap-6 lg:overflow-visible lg:px-0">
             {members.map((value, index) => (
-              <motion.div key={index} initial={{ y: 40, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: index * 0.1, ease }} className="group snap-start flex flex-col items-center justify-center gap-6">
-                <img className="aspect-[4/5] w-full object-contain group-hover:grayscale transition-all duration-300" src={value.image} alt={value.name} loading="lazy" />
-                <div className="w-full flex flex-col gap-4 items-center justify-center">
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <h3 className="text-2xl font-medium text-foreground">{value.name}</h3>
-                    <p className="text-sm font-normal text-muted-foreground">{value.role}</p>
+              <motion.div key={index} initial={{ y: 40, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: index * 0.1, ease }} className="group snap-center flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                <div className="aspect-[4/5] w-full overflow-hidden bg-muted">
+                  <img className="h-full w-full object-cover transition-all duration-500 group-hover:scale-105 group-hover:grayscale" src={fixMediaUrl(value.image)} alt={value.name} loading="lazy" />
+                </div>
+                <div className="flex flex-col items-center gap-3 p-4 text-center">
+                  <div>
+                    <h3 className="text-xl font-semibold text-foreground sm:text-2xl">{value.name}</h3>
+                    <p className="text-sm text-muted-foreground">{value.role}</p>
                   </div>
                   <div className="flex gap-2">
-                    <a href={value.socials.website} aria-label={`${value.name} website`} className="p-2 hover:bg-accent/80 rounded-full" target="_blank" rel="noopener noreferrer"><Globe size={16} /></a>
-                    <a href={value.socials.linkedin} aria-label={`${value.name} LinkedIn`} className="p-2 hover:bg-accent/80 rounded-full" target="_blank" rel="noopener noreferrer"><LinkedinIcon size={16} /></a>
+                    <a href={value.socials.website} aria-label={`${value.name} website`} className="rounded-full border border-border p-2.5 hover:bg-accent/80" target="_blank" rel="noopener noreferrer"><Globe size={16} /></a>
+                    <a href={value.socials.linkedin} aria-label={`${value.name} LinkedIn`} className="rounded-full border border-border p-2.5 hover:bg-accent/80" target="_blank" rel="noopener noreferrer"><LinkedinIcon size={16} /></a>
                   </div>
                 </div>
               </motion.div>
             ))}
+          </div>
+          <div className="flex gap-2 lg:hidden" aria-hidden="true">
+            {members.map((_, i) => <span key={i} className={`h-1.5 rounded-full transition-all ${i === active ? 'w-6 bg-primary' : 'w-1.5 bg-muted-foreground/30'}`} />)}
           </div>
         </div>
       </div>
