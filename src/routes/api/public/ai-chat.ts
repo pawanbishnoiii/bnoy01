@@ -29,7 +29,7 @@ export const Route = createFileRoute("/api/public/ai-chat")({
           method: "POST",
           headers: { "Lovable-API-Key": key, Authorization: `Bearer ${key}`, "Content-Type": "application/json", "X-Lovable-AIG-SDK": "fetch" },
           body: JSON.stringify({
-            model: "google/gemini-3-flash-preview",
+            model: "openai/gpt-6-astra",
             stream: true,
             store: false,
             reasoning: { effort: "low" },
