@@ -63,8 +63,7 @@ function Onboarding() {
     const { error: e } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, cacheControl: '3600' });
     if (e) setError(e.message);
     else {
-      const s = null as { signedUrl?: string } | null;
-      const url = s?.signedUrl ?? publicMedia('avatars', path).data.publicUrl;
+      const url = publicMedia('avatars', path).data.publicUrl;
       setAvatar(url); await supabase.from('profiles').update({ avatar_url: url }).eq('id', user.id);
     }
     setBusy(false);
