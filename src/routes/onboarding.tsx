@@ -1,3 +1,4 @@
+import { publicMedia } from '@/lib/media-url';
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import { useServerFn } from '@tanstack/react-start';
@@ -62,8 +63,7 @@ function Onboarding() {
     const { error: e } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, cacheControl: '3600' });
     if (e) setError(e.message);
     else {
-      const { data: s } = await supabase.storage.from('avatars').createSignedUrl(path, 60 * 60 * 24 * 365);
-      const url = s?.signedUrl ?? supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+      const url = publicMedia('avatars', path).data.publicUrl;
       setAvatar(url); await supabase.from('profiles').update({ avatar_url: url }).eq('id', user.id);
     }
     setBusy(false);

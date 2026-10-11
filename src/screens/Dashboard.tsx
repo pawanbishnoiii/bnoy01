@@ -1,3 +1,4 @@
+import { publicMedia } from '@/lib/media-url';
 import { useEffect, useState } from 'react';
 import { Navigate, Link, useSearchParams } from '@/lib/router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -106,7 +107,7 @@ export default function Dashboard() {
       const path = `${user.id}/avatar.${ext}`;
       const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, cacheControl: '3600' });
       if (error) throw error;
-      const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path);
+      const { data: pub } = publicMedia('avatars', path);
       const url = `${pub.publicUrl}?t=${Date.now()}`;
       await supabase.from('profiles').update({ avatar_url: url }).eq('id', user.id);
       qc.invalidateQueries({ queryKey: ['profile'] });

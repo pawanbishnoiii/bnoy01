@@ -1,3 +1,4 @@
+import { publicMedia } from '@/lib/media-url';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -67,7 +68,7 @@ export default function AdminNotifications() {
       const path = `notifications/${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
       const { error } = await supabase.storage.from('project-assets').upload(path, file, { upsert: true });
       if (error) throw error;
-      const { data } = supabase.storage.from('project-assets').getPublicUrl(path);
+      const { data } = publicMedia('project-assets', path);
       set('banner_url', data.publicUrl);
       toast({ title: 'Banner uploaded' });
     } catch (e) {

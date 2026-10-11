@@ -1,3 +1,4 @@
+import { publicMedia } from '@/lib/media-url';
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Pencil, Trash2, PlusCircle, Smartphone } from 'lucide-react';
@@ -112,7 +113,7 @@ function AppForm({ editingId, onDone, initialPlatform = 'android' }: { editingId
     const path = `${appId}/icon.${ext}`;
     const { error } = await supabase.storage.from('app-assets').upload(path, file, { upsert: true });
     if (error) { toast({ title: 'Icon upload failed', description: error.message, variant: 'destructive' }); setIconProgress(0); return; }
-    const { data } = supabase.storage.from('app-assets').getPublicUrl(path);
+    const { data } = publicMedia('app-assets', path);
     setForm((f: any) => ({ ...f, icon_url: data.publicUrl }));
     setIconProgress(100); setTimeout(() => setIconProgress(0), 600);
   };
@@ -123,7 +124,7 @@ function AppForm({ editingId, onDone, initialPlatform = 'android' }: { editingId
       const path = `${appId}/screenshots/${Date.now()}-${i}-${file.name}`;
       const { error } = await supabase.storage.from('app-assets').upload(path, file, { upsert: true });
       if (!error) {
-        const { data } = supabase.storage.from('app-assets').getPublicUrl(path);
+        const { data } = publicMedia('app-assets', path);
         urls.push(data.publicUrl);
       }
     }
