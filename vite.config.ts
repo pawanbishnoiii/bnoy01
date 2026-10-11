@@ -15,8 +15,9 @@ export default defineConfig({
   vite: {
     build: {
       rolldownOptions: {
-        // Server-only mail libs (SMTP needs Node/worker sockets); they never run in the browser.
-        external: ["nodemailer", "worker-mailer"],
+        // nodemailer is dev-only (Node). worker-mailer must be bundled for the Worker;
+        // only its runtime socket module stays external.
+        external: ["nodemailer", /^cloudflare:/],
       },
     },
   },
