@@ -30,8 +30,9 @@ ${o.cta ? `<tr><td style="padding:20px 32px 8px"><a href="${esc(o.cta.url)}" sty
 }
 
 export async function sendMail(to: string, subject: string, html: string, template: string) {
-  const user = process.env['SMTP_USER'];
-  const pass = process.env['SMTP_PASS'];
+  const user = process.env['SMTP_USER']?.trim();
+  // Gmail shows app passwords in groups of four; the SMTP login needs them without spaces.
+  const pass = process.env['SMTP_PASS']?.replace(/\s+/g, '');
   const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
   const theme = await getTheme();
   let error: string | null = null;
