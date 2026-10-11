@@ -38,7 +38,9 @@ export const Route = createFileRoute("/api/public/ai-chat")({
           }),
         });
         if (!res.ok || !res.body) {
-          return Response.json({ error: await res.text() }, { status: res.status });
+          const msg = res.status === 402 ? "AI credits are used up. Please top up in workspace settings." : res.status === 429 ? "Too many requests — try again shortly." : "Assistant is unavailable right now.";
+          console.error("[ai-chat]", res.status, (await res.text()).slice(0, 300));
+          return Response.json({ error: msg }, { status: res.status });
         }
         // Re-emit Responses deltas in the chat-completions SSE shape the chat widget reads.
         const enc = new TextEncoder();

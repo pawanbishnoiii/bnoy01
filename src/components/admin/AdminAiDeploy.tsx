@@ -19,10 +19,10 @@ export default function AdminAiDeploy() {
   useEffect(() => { if (s) { setEnabled(s.ai_section_enabled); setPrompt(s.ai_system_prompt || ''); } }, [s]);
 
   const saveAi = async () => {
-    if (!s) return;
-    const { error } = await supabase.from('site_settings').update({ ai_section_enabled: enabled, ai_system_prompt: prompt }).eq('id', s.id);
+    const id = s?.id ?? '00000000-0000-0000-0000-000000000001';
+    const { error } = await supabase.from('site_settings').upsert({ id, ai_section_enabled: enabled, ai_system_prompt: prompt });
     error ? toast.error(error.message) : toast.success('AI settings saved');
-    qc.invalidateQueries();
+    qc.invalidateQueries({ queryKey: ['ai-settings'] }); qc.invalidateQueries({ queryKey: ['site-settings'] });
   };
   const unlock = async (e: React.FormEvent) => {
     e.preventDefault(); setBusy(true);
