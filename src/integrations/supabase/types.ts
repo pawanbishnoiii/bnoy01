@@ -1372,7 +1372,9 @@ export type Database = {
     Functions: {
       get_taken_booking_slots: {
         Args: { requested_date: string }
-        Returns: { booking_time: string }[]
+        Returns: {
+          booking_time: string
+        }[]
       }
       has_role: {
         Args: {
@@ -1385,10 +1387,7 @@ export type Database = {
         Args: { _project_id: string }
         Returns: undefined
       }
-      submit_booking: {
-        Args: { payload: Json }
-        Returns: string
-      }
+      submit_booking: { Args: { payload: Json }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "user"
