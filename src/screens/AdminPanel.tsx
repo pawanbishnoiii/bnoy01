@@ -692,6 +692,8 @@ function AdminAddProject({ editingId, onDone, initialType = 'website' }: { editi
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2"><Label>Version</Label><Input value={form.version} onChange={(e) => setForm({ ...form, version: e.target.value })} placeholder="1.0.0" className="bg-white border-border font-mono" /></div>
             <div className="space-y-2"><Label>Project type</Label><div className="grid grid-cols-2 gap-2">{[['website','Website'],['app','App'],['windows','Windows'],['automation','Automation']].map(([v,l]) => <button type="button" key={v} onClick={() => setForm({ ...form, project_type: v })} className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${form.project_type === v ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-white hover:border-primary/40'}`}>{l}</button>)}</div></div>
+            <div className="space-y-2"><Label>Price for this version (₹)</Label><Input type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) || 0 })} className="bg-white border-border" /></div>
+            <div className="space-y-2"><Label>Discount price for this version (₹)</Label><Input type="number" min={0} value={form.discount_price || 0} onChange={(e) => setForm({ ...form, discount_price: parseInt(e.target.value) || 0 })} className="bg-white border-border" /></div>
               <div className="space-y-2 md:col-span-2"><Label>Release notes</Label><Textarea value={latestReleaseNote} onChange={(e) => setLatestReleaseNote(e.target.value)} rows={3} placeholder="What changed in this version?" className="bg-white border-border" /></div>
           </div>
           {bumpOpen && (
