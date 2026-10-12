@@ -1,3 +1,5 @@
+import AdminBackup from '@/components/admin/AdminBackup';
+import { Archive } from 'lucide-react';
 import { publicMedia } from '@/lib/media-url';
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { Navigate, useNavigate } from '@/lib/router';
@@ -65,6 +67,7 @@ const sidebarItems = [
   { id: 'google', label: 'Google', icon: Search },
   { id: 'ai-deploy', label: 'AI & Deploy', icon: Sparkles },
   { id: 'settings', label: 'Site Settings', icon: Settings2 },
+  { id: 'backup', label: 'Backup', icon: Archive },
 ];
 
 const COLORS = ['#FF5722', '#FFC107', '#E64A19', '#FFD54F', '#FF8A65'];
@@ -119,6 +122,7 @@ export default function AdminPanel() {
             {activeTab === 'google' && <AdminGoogle />}
             {activeTab === 'ai-deploy' && <AdminAiDeploy />}
             {activeTab === 'settings' && <AdminSettings />}
+            {activeTab === 'backup' && <AdminBackup />}
           </motion.div>
     </WorkspaceShell>
   );
@@ -458,23 +462,15 @@ function AdminAddProject({ editingId, onDone, initialType = 'website' }: { editi
     onXhr?: (xhr: XMLHttpRequest) => void,
   ) =>
     new Promise<string>(async (resolve, reject) => {
-      const { data: signed, error: signErr } = await supabase.storage.from(bucket).createSignedUploadUrl(path);
-      if (signErr || !signed) return reject(signErr || new Error('Could not get signed URL'));
-      const xhr = new XMLHttpRequest();
-      onXhr?.(xhr);
-      xhr.open('PUT', signed.signedUrl);
-      xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
-      xhr.setRequestHeader('x-upsert', 'true');
-      xhr.upload.onprogress = (e) => { if (e.lengthComputable) onPct(Math.round((e.loaded / e.total) * 100)); };
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          const { data: pub } = publicMedia(bucket, path);
-          resolve(pub.publicUrl);
-        } else reject(new Error(`Upload failed (${xhr.status})`));
-      };
-      xhr.onerror = () => reject(new Error('Network error'));
-      xhr.onabort = () => reject(Object.assign(new Error('Cancelled'), { aborted: true }));
-      xhr.send(file);
+      // Direct authenticated upload (admin storage policy). Progress is shown in steps.
+      void onXhr;
+      onPct(10);
+      const tick = window.setInterval(() => onPct(Math.min(90, Math.round(10 + Math.random() * 70))), 400);
+      const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true, contentType: file.type || 'application/octet-stream' });
+      window.clearInterval(tick);
+      if (error) return reject(new Error(`Upload failed: ${error.message}`));
+      onPct(100);
+      resolve(publicMedia(bucket, path).data.publicUrl);
     });
 
   const uploadThumb = async (file: File) => {
@@ -700,6 +696,8 @@ function AdminAddProject({ editingId, onDone, initialType = 'website' }: { editi
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2"><Label>Version</Label><Input value={form.version} onChange={(e) => setForm({ ...form, version: e.target.value })} placeholder="1.0.0" className="bg-white border-border font-mono" /></div>
             <div className="space-y-2"><Label>Project type</Label><div className="grid grid-cols-2 gap-2">{[['website','Website'],['app','App'],['windows','Windows'],['automation','Automation']].map(([v,l]) => <button type="button" key={v} onClick={() => setForm({ ...form, project_type: v })} className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${form.project_type === v ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-white hover:border-primary/40'}`}>{l}</button>)}</div></div>
+            <div className="space-y-2"><Label>Price for this version (₹)</Label><Input type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) || 0 })} className="bg-white border-border" /></div>
+            <div className="space-y-2"><Label>Discount price for this version (₹)</Label><Input type="number" min={0} value={form.discount_price || 0} onChange={(e) => setForm({ ...form, discount_price: parseInt(e.target.value) || 0 })} className="bg-white border-border" /></div>
               <div className="space-y-2 md:col-span-2"><Label>Release notes</Label><Textarea value={latestReleaseNote} onChange={(e) => setLatestReleaseNote(e.target.value)} rows={3} placeholder="What changed in this version?" className="bg-white border-border" /></div>
           </div>
           {bumpOpen && (
