@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Pencil, Trash2, Save, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Save, X, Upload } from 'lucide-react';
+import { fixMediaUrl, mediaUrl } from '@/lib/media-url';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +17,7 @@ export default function AdminTeam() {
   const { toast } = useToast();
   const [form, setForm] = useState<typeof empty & { id?: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const { data: members = [], error } = useQuery({ queryKey: ['admin-team'], queryFn: async () => {
     const { data, error } = await supabase.from('team_members').select('*').order('sort_order');
     if (error) throw error;
@@ -39,7 +41,22 @@ export default function AdminTeam() {
       else { refresh(); setForm(null); toast({ title: 'Team member saved' }); }
     }}>
       <div className="grid sm:grid-cols-2 gap-4">
-        {(['name', 'expertise', 'image_url', 'website_url', 'linkedin_url', 'instagram_url', 'github_url', 'x_url'] as const).map(key => <div key={key} className="space-y-2"><Label htmlFor={`team-${key}`}>{key.replace(/_/g, ' ')}</Label><Input id={`team-${key}`} type={key.endsWith('url') && key !== 'image_url' ? 'url' : 'text'} required={key === 'name' || key === 'expertise'} value={form[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} /></div>)}
+        <div className="space-y-2 sm:col-span-2"><Label>Photo</Label><div className="flex items-center gap-4">
+          {form.image_url ? <img src={fixMediaUrl(form.image_url)} alt="" className="h-20 w-16 rounded-md object-cover border border-border" /> : <div className="h-20 w-16 rounded-md bg-muted" />}
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted"><Upload className="h-4 w-4" />{uploading ? 'Uploading…' : 'Upload photo'}
+            <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={async e => {
+              const file = e.target.files?.[0]; e.target.value = ''; if (!file) return;
+              if (file.size > 5 * 1024 * 1024) return toast({ title: 'Photo must be under 5 MB', variant: 'destructive' });
+              setUploading(true);
+              const path = `team/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '-')}`;
+              const { error } = await supabase.storage.from('project-assets').upload(path, file, { upsert: true, contentType: file.type });
+              setUploading(false);
+              if (error) toast({ title: 'Upload failed', description: error.message, variant: 'destructive' });
+              else setForm(f => f && ({ ...f, image_url: mediaUrl('project-assets', path) }));
+            }} />
+          </label>
+        </div></div>
+        {(['name', 'expertise', 'website_url', 'linkedin_url', 'instagram_url', 'github_url', 'x_url'] as const).map(key => <div key={key} className="space-y-2"><Label htmlFor={`team-${key}`}>{key.replace(/_/g, ' ')}</Label><Input id={`team-${key}`} type={key.endsWith('url') ? 'url' : 'text'} required={key === 'name' || key === 'expertise'} value={form[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} /></div>)}
         <div className="space-y-2"><Label htmlFor="team-order">Display order</Label><Input id="team-order" type="number" value={form.sort_order} onChange={e => setForm({ ...form, sort_order: Number(e.target.value) })} /></div>
         <div className="flex items-center gap-3"><Switch id="team-published" checked={form.published} onCheckedChange={published => setForm({ ...form, published })} /><Label htmlFor="team-published">Published</Label></div>
       </div>
