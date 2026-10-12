@@ -458,23 +458,15 @@ function AdminAddProject({ editingId, onDone, initialType = 'website' }: { editi
     onXhr?: (xhr: XMLHttpRequest) => void,
   ) =>
     new Promise<string>(async (resolve, reject) => {
-      const { data: signed, error: signErr } = await supabase.storage.from(bucket).createSignedUploadUrl(path);
-      if (signErr || !signed) return reject(signErr || new Error('Could not get signed URL'));
-      const xhr = new XMLHttpRequest();
-      onXhr?.(xhr);
-      xhr.open('PUT', signed.signedUrl);
-      xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
-      xhr.setRequestHeader('x-upsert', 'true');
-      xhr.upload.onprogress = (e) => { if (e.lengthComputable) onPct(Math.round((e.loaded / e.total) * 100)); };
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          const { data: pub } = publicMedia(bucket, path);
-          resolve(pub.publicUrl);
-        } else reject(new Error(`Upload failed (${xhr.status})`));
-      };
-      xhr.onerror = () => reject(new Error('Network error'));
-      xhr.onabort = () => reject(Object.assign(new Error('Cancelled'), { aborted: true }));
-      xhr.send(file);
+      // Direct authenticated upload (admin storage policy). Progress is shown in steps.
+      void onXhr;
+      onPct(10);
+      const tick = window.setInterval(() => onPct(Math.min(90, Math.round(10 + Math.random() * 70))), 400);
+      const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true, contentType: file.type || 'application/octet-stream' });
+      window.clearInterval(tick);
+      if (error) return reject(new Error(`Upload failed: ${error.message}`));
+      onPct(100);
+      resolve(publicMedia(bucket, path).data.publicUrl);
     });
 
   const uploadThumb = async (file: File) => {
