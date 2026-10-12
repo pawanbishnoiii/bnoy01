@@ -14,7 +14,7 @@ const groups = [
   { title: 'Media', ids: ['media-cloud'] },
   { title: 'Customers', ids: ['inquiries', 'orders', 'users', 'emails', 'notifications'] },
   { title: 'Security & Analytics', ids: ['login-security', 'visitors', 'truecaller'] },
-  { title: 'Website & Settings', ids: ['team', 'google', 'ai-deploy', 'settings'] },
+  { title: 'Website & Settings', ids: ['team', 'google', 'ai-deploy', 'settings', 'backup'] },
 ];
 
 export default function WorkspaceShell({ items, active, onSelect, children }: { items: Item[]; active: string; onSelect: (id: string) => void; children: ReactNode }) {

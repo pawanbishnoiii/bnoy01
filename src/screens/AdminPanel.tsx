@@ -1,3 +1,5 @@
+import AdminBackup from '@/components/admin/AdminBackup';
+import { Archive } from 'lucide-react';
 import { publicMedia } from '@/lib/media-url';
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { Navigate, useNavigate } from '@/lib/router';
@@ -65,6 +67,7 @@ const sidebarItems = [
   { id: 'google', label: 'Google', icon: Search },
   { id: 'ai-deploy', label: 'AI & Deploy', icon: Sparkles },
   { id: 'settings', label: 'Site Settings', icon: Settings2 },
+  { id: 'backup', label: 'Backup', icon: Archive },
 ];
 
 const COLORS = ['#FF5722', '#FFC107', '#E64A19', '#FFD54F', '#FF8A65'];
@@ -119,6 +122,7 @@ export default function AdminPanel() {
             {activeTab === 'google' && <AdminGoogle />}
             {activeTab === 'ai-deploy' && <AdminAiDeploy />}
             {activeTab === 'settings' && <AdminSettings />}
+            {activeTab === 'backup' && <AdminBackup />}
           </motion.div>
     </WorkspaceShell>
   );
