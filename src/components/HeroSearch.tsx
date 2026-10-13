@@ -68,7 +68,7 @@ export default function HeroSearch({ className = '' }: { className?: string }) {
             {results.length === 0 ? (
               <p className="px-2 py-3 text-sm text-muted-foreground">No matches — press Search to browse all.</p>
             ) : results.map((p: any) => (
-              <button key={p.id} type="button" onClick={() => { setOpen(false); navigate(`/p/${p.slug || p.id}`); }}
+              <button key={p.id} type="button" onClick={() => { setOpen(false); navigate(p.slug ? `/p/${p.slug}` : `/project/${p.id}`); }}
                 className="flex w-full items-center gap-3 rounded-xl p-2 text-left hover:bg-muted">
                 <div className="h-10 w-14 shrink-0 overflow-hidden rounded-lg bg-muted">
                   {p.thumbnail_url && <img src={p.thumbnail_url} alt="" draggable={false} className="h-full w-full object-cover" />}

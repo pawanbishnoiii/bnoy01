@@ -19,6 +19,7 @@ import benefitTeam from '@/assets/benefit-team.png';
 import benefitSecure from '@/assets/benefit-secure.png';
 import benefitHandoff from '@/assets/benefit-handoff.png';
 import mobileHero from '@/assets/mobile-hero.jpg';
+import HeroSearch from '@/components/HeroSearch';
 
 if (typeof window !== 'undefined') gsap.registerPlugin(ScrollTrigger);
 
@@ -132,6 +133,7 @@ export default function HeroSection() {
             </h1>
 
             <p className="bnoy-hero-fade mt-6 text-lg text-muted-foreground max-w-xl">{tagline}</p>
+            <div className="bnoy-hero-fade mt-6 max-w-xl"><HeroSearch /></div>
 
             <div className="bnoy-hero-fade mt-8 flex flex-wrap items-center gap-3">
               <ArrowCTA label="Browse Projects" href="/marketplace" />
@@ -219,23 +221,29 @@ export default function HeroSection() {
 }
 
 function MobileHero({ brand, tagline, badge, isAdmin }: { brand: string; tagline: string; badge: string; isAdmin: boolean }) {
+  const item = { hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as any } } };
   return (
     <section className="relative overflow-hidden bg-background pt-16 md:hidden">
       <div className="relative min-h-[calc(100svh-4rem)]">
-        <img src={mobileHero} alt="Bnoy Studios web and mobile software on phone and laptop" width={864} height={1280} fetchPriority="high" decoding="async" draggable={false} className="absolute inset-0 h-full w-full select-none object-cover object-bottom" />
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-transparent" style={{ height: '62%' }} />
-        <div className="relative px-5 pt-8 animate-in fade-in slide-in-from-bottom-3 duration-700">
-          <p className="inline-flex max-w-full items-center gap-2 truncate rounded-full border border-primary/20 bg-background/80 px-3 py-1.5 text-[11px] font-semibold text-primary shadow-sm backdrop-blur"><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" /><span className="relative inline-flex h-2 w-2 rounded-full bg-primary" /></span>{badge}</p>
-          <h1 className="mt-4 font-display text-[2.6rem] font-extrabold leading-[1.02] tracking-tight text-foreground">Ship-ready<br /><span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">software.</span></h1>
-          <p className="mt-3 max-w-[20rem] text-[15px] leading-6 text-muted-foreground">{tagline} <span className="font-semibold text-foreground">{brand}</span></p>
-          <div className="mt-6 flex gap-2.5"><Button asChild size="lg" className="flex-1 rounded-full shadow-lg shadow-primary/25"><Link to="/marketplace">Explore projects</Link></Button><Button asChild size="lg" variant="outline" className="flex-1 rounded-full bg-background/80 backdrop-blur"><Link to={isAdmin ? '/admin' : '/call'}>{isAdmin ? 'Workspace' : 'Book a call'}</Link></Button></div>
-          <div className="mt-4 flex items-center gap-3 text-[11px] font-medium text-muted-foreground"><span className="flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5 text-primary" />Secure checkout</span><span className="h-3 w-px bg-border" /><span className="flex items-center gap-1"><Zap className="h-3.5 w-3.5 text-primary" />Instant access</span><span className="h-3 w-px bg-border" /><span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-primary" />4.9</span></div>
-        </div>
-        <nav aria-label="Browse" className="absolute inset-x-4 bottom-5 grid grid-cols-3 gap-1 rounded-2xl border border-border/60 bg-background/85 p-1.5 text-center text-xs font-semibold shadow-xl backdrop-blur-md">
+        <motion.img initial={{ scale: 1.12, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 1.4, ease: 'easeOut' }}
+          src={mobileHero} alt="Bnoy Studios apps on phone and laptop" width={864} height={1280} fetchPriority="high" decoding="async" draggable={false}
+          className="absolute inset-0 h-full w-full select-none object-cover object-bottom" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[58%] bg-gradient-to-b from-background via-background/85 to-transparent" />
+        <motion.div aria-hidden animate={{ scale: [1, 1.2, 1], opacity: [0.35, 0.6, 0.35] }} transition={{ repeat: Infinity, duration: 7 }}
+          className="pointer-events-none absolute -right-20 top-10 h-64 w-64 rounded-full bg-primary/25 blur-3xl" />
+        <motion.div initial="hidden" animate="show" variants={{ show: { transition: { staggerChildren: 0.09, delayChildren: 0.1 } } }} className="relative z-10 px-5 pt-7">
+          <motion.p variants={item} className="inline-flex max-w-full items-center gap-2 truncate rounded-full border border-primary/20 bg-background/80 px-3 py-1.5 text-[11px] font-semibold text-primary shadow-sm backdrop-blur"><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" /><span className="relative inline-flex h-2 w-2 rounded-full bg-primary" /></span>{badge}</motion.p>
+          <motion.h1 variants={item} className="mt-4 font-display text-[2.55rem] font-extrabold leading-[1.02] tracking-tight text-foreground">Ship-ready<br /><span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">software.</span></motion.h1>
+          <motion.p variants={item} className="mt-3 max-w-[21rem] text-[15px] leading-6 text-muted-foreground">{tagline} <span className="font-semibold text-foreground">{brand}</span></motion.p>
+          <motion.div variants={item} className="mt-5"><HeroSearch /></motion.div>
+          <motion.div variants={item} className="mt-4 flex gap-2.5"><Button asChild size="lg" className="flex-1 rounded-full shadow-lg shadow-primary/25 active:scale-95 transition-transform"><Link to="/marketplace">Explore projects</Link></Button><Button asChild size="lg" variant="outline" className="flex-1 rounded-full bg-background/80 backdrop-blur active:scale-95 transition-transform"><Link to={isAdmin ? '/admin' : '/call'}>{isAdmin ? 'Workspace' : 'Book a call'}</Link></Button></motion.div>
+          <motion.div variants={item} className="mt-4 flex items-center gap-3 text-[11px] font-medium text-muted-foreground"><span className="flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5 text-primary" />Secure checkout</span><span className="h-3 w-px bg-border" /><span className="flex items-center gap-1"><Zap className="h-3.5 w-3.5 text-primary" />Instant access</span><span className="h-3 w-px bg-border" /><span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-primary" />4.9</span></motion.div>
+        </motion.div>
+        <motion.nav initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, duration: 0.6 }} aria-label="Browse" className="absolute inset-x-4 bottom-5 grid grid-cols-3 gap-1 rounded-2xl border border-border/60 bg-background/85 p-1.5 text-center text-xs font-semibold shadow-xl backdrop-blur-md">
           <Link to="/marketplace" className="flex flex-col items-center gap-1 rounded-xl py-2.5 active:bg-muted"><Globe className="h-4 w-4 text-primary" />Websites</Link>
           <Link to="/apps" className="flex flex-col items-center gap-1 rounded-xl py-2.5 active:bg-muted"><Sparkles className="h-4 w-4 text-primary" />Mobile apps</Link>
           <Link to="/windows" className="flex flex-col items-center gap-1 rounded-xl py-2.5 active:bg-muted"><Zap className="h-4 w-4 text-primary" />Windows</Link>
-        </nav>
+        </motion.nav>
       </div>
     </section>
   );
