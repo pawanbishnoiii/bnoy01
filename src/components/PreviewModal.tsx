@@ -48,12 +48,13 @@ export default function PreviewModal({ url, onClose, watermark, title }: Preview
     return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onKey); };
   }, [url, onClose]);
 
-  // Try native fullscreen for a truly immersive preview (best-effort).
+  // Reset loader per URL and never leave visitors stuck on a spinner.
   useEffect(() => {
-    if (!url || !shellRef.current) return;
-    shellRef.current.requestFullscreen?.().catch(() => {});
-    return () => { if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {}); };
-  }, [url]);
+    if (!url) return;
+    setLoading(true);
+    const t = window.setTimeout(() => setLoading(false), 8000);
+    return () => window.clearTimeout(t);
+  }, [url, reloadKey]);
 
   if (!url) return null;
   const size = SIZES[device];
@@ -80,10 +81,11 @@ export default function PreviewModal({ url, onClose, watermark, title }: Preview
         ref={shellRef}
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         transition={{ duration: reduced ? 0 : 0.25 }}
-        className="fixed inset-0 z-[100] bg-ink flex items-center justify-center overflow-hidden"
+        className="fixed inset-0 z-[100] bg-ink flex items-center justify-center overflow-hidden select-none"
+        onContextMenu={(e) => e.preventDefault()}
       >
         <div
-          className="relative bg-white overflow-hidden transition-[width,height] duration-300 ease-out max-w-full max-h-full"
+          className="relative bg-white overflow-hidden transition-[width,height,border-radius] duration-500 ease-out max-w-full max-h-full"
           style={{ ...frameStyle, borderRadius: isFull ? 0 : 24 }}
         >
           {loading && (
@@ -93,12 +95,15 @@ export default function PreviewModal({ url, onClose, watermark, title }: Preview
             </div>
           )}
           <iframe
-            key={`${reloadKey}-${device}`}
+            key={reloadKey}
             src={url}
             className="w-full h-full border-0 block"
             onLoad={() => setLoading(false)}
             title={title || 'Project preview'}
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+            referrerPolicy="no-referrer"
+            loading="eager"
+            allow="fullscreen"
           />
           {watermark && !hideWatermarks && (
             <>
