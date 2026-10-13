@@ -131,6 +131,15 @@ function ClientEffects() {
   useEffect(() => {
     injectGoogle(data?.ga_measurement_id, data?.gtm_id);
   }, [data?.ga_measurement_id, data?.gtm_id]);
+  // Block right-click "copy image address" on public pictures (admin workspace excluded).
+  useEffect(() => {
+    const block = (e: MouseEvent) => {
+      if (window.location.pathname.startsWith('/admin')) return;
+      if ((e.target as HTMLElement)?.closest?.('img, video, iframe')) e.preventDefault();
+    };
+    document.addEventListener('contextmenu', block);
+    return () => document.removeEventListener('contextmenu', block);
+  }, []);
   useEffect(() => {
     const timer = window.setTimeout(() => {
       sessionStorage.removeItem(`bnoy:chunk-reload:${window.location.pathname}`);
