@@ -62,9 +62,7 @@ export default function FeaturedProducts({ limit, showFilters = true }: Featured
     return p.category?.includes(category) || p.tech_stack?.includes(category);
   });
 
-  const [visible, setVisible] = useState(limit || 0);
-  const displayed = limit ? filtered?.slice(0, visible) : filtered;
-  const hasMore = !!limit && filtered.length > visible;
+  const displayed = limit ? filtered?.slice(0, limit) : filtered;
 
   const handleBuy = async (project: any) => { navigate(`/checkout/${project.id}`); };
 
@@ -118,22 +116,10 @@ export default function FeaturedProducts({ limit, showFilters = true }: Featured
             <motion.div key={category} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               {displayed.map((project, i) => (
-                <motion.div key={project.id} layout initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: (i % 6) * 0.06 }}>
-                  <ProjectCard project={project as any} index={i} onPreview={setPreviewUrl} onBuy={handleBuy} />
-                </motion.div>
+                <ProjectCard key={project.id} project={project as any} index={i} onPreview={setPreviewUrl} onBuy={handleBuy} />
               ))}
             </motion.div>
           </AnimatePresence>
-          {limit && (
-            <div className="mt-10 flex flex-wrap justify-center gap-3">
-              {hasMore && (
-                <Button size="lg" onClick={() => setVisible((v) => v + 6)} className="rounded-full gradient-fire-strong text-white border-0 shadow-card px-8">
-                  See more projects ({filtered.length - visible})
-                </Button>
-              )}
-              <Button size="lg" variant="outline" onClick={() => navigate('/marketplace')} className="rounded-full px-8">Open marketplace</Button>
-            </div>
-          )}
         ) : (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
             <p className="text-muted-foreground text-lg">No projects in <span className="font-bold text-fire">{category}</span> yet.</p>

@@ -48,8 +48,8 @@ export default function Index() {
       <HeroSection />
       <TechMarquee />
 
-      {/* Scanner — desktop above featured */}
-      <section className="relative hidden md:block py-20 bg-ink overflow-hidden">
+      {/* Scanner Card Stream — interactive showcase */}
+      <section className="relative py-20 bg-ink overflow-hidden">
         <div className="container mx-auto px-4 mb-10 text-center">
           <span className="inline-flex items-center gap-2 text-[11px] font-bold tracking-[0.3em] text-fire uppercase mb-4">⚡ Live Scanner</span>
           <h2 className="font-display text-4xl md:text-5xl font-extrabold text-white leading-tight">Decoding the <span className="gradient-text">marketplace</span></h2>
@@ -58,18 +58,7 @@ export default function Index() {
         <ScannerCardStream cardImages={scanImages.length > 0 ? scanImages : undefined} height={260} />
       </section>
 
-      <FeaturedProducts limit={6} showFilters={false} />
-
-      {/* Scanner — mobile, below featured */}
-      <motion.section initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.6 }}
-        className="relative md:hidden py-12 bg-ink overflow-hidden">
-        <div className="px-5 mb-6 text-center">
-          <span className="inline-flex items-center gap-2 text-[10px] font-bold tracking-[0.3em] text-fire uppercase mb-2">⚡ Live Scanner</span>
-          <h2 className="font-display text-2xl font-extrabold text-white leading-tight">Decoding the <span className="gradient-text">marketplace</span></h2>
-          <p className="text-white/60 mt-2 text-xs">Swipe to scan real production builds.</p>
-        </div>
-        <ScannerCardStream cardImages={scanImages.length > 0 ? scanImages : undefined} height={180} />
-      </motion.section>
+      <FeaturedProducts limit={6} />
 
       {/* Magnified bento — interactive workflow lens */}
       <MagnifiedBento />
