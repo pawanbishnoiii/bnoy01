@@ -63,7 +63,7 @@ export default function AdminTeam() {
       <div className="flex gap-2"><Button disabled={busy} type="submit"><Save className="h-4 w-4" />{busy ? 'Saving…' : 'Save member'}</Button><Button type="button" variant="outline" onClick={() => setForm(null)}><X className="h-4 w-4" />Cancel</Button></div>
     </form>}
     <div className="divide-y divide-border">{members.map(member => <div key={member.id} className="flex items-center gap-4 py-4">
-      {member.image_url && <img src={member.image_url} alt={member.name} className="w-14 h-16 object-cover rounded-md" />}
+      {member.image_url && <img src={fixMediaUrl(member.image_url)} loading="lazy" alt={member.name} className="w-14 h-16 object-cover rounded-md" />}
       <div className="flex-1 min-w-0"><h2 className="font-semibold break-words">{member.name}</h2><p className="text-sm text-muted-foreground">{member.expertise} · {member.published ? 'Published' : 'Draft'}</p></div>
       <Button variant="ghost" size="icon" aria-label={`Edit ${member.name}`} onClick={() => setForm(member)}><Pencil className="h-4 w-4" /></Button><Button variant="ghost" size="icon" aria-label={`Delete ${member.name}`} onClick={() => remove(member)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
     </div>)}</div>
