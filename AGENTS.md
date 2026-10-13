@@ -26,5 +26,5 @@
 - Keep booking validation in a browser-safe shared module; persist requests before email, use the selected contact channel, and send admin confirmations only for a stored booking so client and server rules stay consistent.
 - Rank public recommendations through one browser-safe utility using product affinity and public aggregate signals, excluding unpublished and incompatible records so catalog views share consistent relevance rules.
 - Serve independent software details at /app/$id and derive public project/software metadata from narrow published-only server reads so individual products can be shared and discovered without exposing private fields.
-- Serve picture-bucket files through /api/public/media (allowlisted buckets only) because the workspace blocks public buckets.
+- Store picture URLs as direct public-storage URLs (via media-url helpers) so images render on every deployed domain; private buckets stay private.
 - Admin backups run through admin-verified server functions with an allowlist of tables; auth secrets are never exported and identity/settings tables cannot be deleted.
