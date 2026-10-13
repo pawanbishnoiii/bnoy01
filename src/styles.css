@@ -260,3 +260,6 @@
   .auth-form-panel { padding: 24px 22px; }
   .auth-embedded { padding: 0; }
 }
+
+/* Discourage casual copying/dragging of product pictures */
+img { -webkit-user-drag: none; user-select: none; -webkit-touch-callout: none; }

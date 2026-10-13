@@ -18,7 +18,7 @@ import bnoyLogo from '@/assets/bnoy-logo.png';
 import benefitTeam from '@/assets/benefit-team.png';
 import benefitSecure from '@/assets/benefit-secure.png';
 import benefitHandoff from '@/assets/benefit-handoff.png';
-import workspacePhoto from '@/assets/studio-workspace.jpg';
+import mobileHero from '@/assets/mobile-hero.jpg';
 
 if (typeof window !== 'undefined') gsap.registerPlugin(ScrollTrigger);
 
@@ -220,17 +220,22 @@ export default function HeroSection() {
 
 function MobileHero({ brand, tagline, badge, isAdmin }: { brand: string; tagline: string; badge: string; isAdmin: boolean }) {
   return (
-    <section className="border-b border-border bg-background pt-16 md:hidden">
-      <div className="relative min-h-[calc(100svh-4rem)] overflow-hidden bg-[#f7f8fa]">
-        <img src={workspacePhoto} alt="Web and mobile software on a laptop and phone" width={1280} height={960} fetchPriority="high" decoding="async" className="absolute inset-x-0 bottom-0 h-[62%] w-full object-cover object-[58%_bottom]" />
-        <div className="relative px-5 pt-7 animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <p className="inline-flex max-w-full items-center gap-2 truncate border-l-2 border-primary pl-2 text-xs font-semibold text-primary"><Sparkles className="h-3.5 w-3.5 shrink-0" />{badge}</p>
-          <h1 className="mt-3 max-w-[18rem] font-display text-4xl font-extrabold leading-[1.08] text-foreground">{brand}</h1>
-          <p className="mt-3 max-w-[19rem] text-sm leading-6 text-foreground/80">{tagline}</p>
-          <div className="mt-5 grid max-w-[20rem] grid-cols-2 gap-2"><Button asChild className="w-full"><Link to="/marketplace">Browse projects</Link></Button><Button asChild variant="outline" className="w-full bg-white/90"><Link to={isAdmin ? '/admin' : '/call'}>{isAdmin ? 'Workspace' : 'Book a call'}</Link></Button></div>
-          <div className="mt-4 flex max-w-[21rem] items-center gap-3 text-[11px] font-medium text-muted-foreground"><span className="flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />Secure</span><span className="h-3 w-px bg-border" /><span className="flex items-center gap-1"><Zap className="h-3.5 w-3.5 text-primary" />Ready to ship</span><span className="h-3 w-px bg-border" /><span>Made in India</span></div>
+    <section className="relative overflow-hidden bg-background pt-16 md:hidden">
+      <div className="relative min-h-[calc(100svh-4rem)]">
+        <img src={mobileHero} alt="Bnoy Studios web and mobile software on phone and laptop" width={864} height={1280} fetchPriority="high" decoding="async" draggable={false} className="absolute inset-0 h-full w-full select-none object-cover object-bottom" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-transparent" style={{ height: '62%' }} />
+        <div className="relative px-5 pt-8 animate-in fade-in slide-in-from-bottom-3 duration-700">
+          <p className="inline-flex max-w-full items-center gap-2 truncate rounded-full border border-primary/20 bg-background/80 px-3 py-1.5 text-[11px] font-semibold text-primary shadow-sm backdrop-blur"><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" /><span className="relative inline-flex h-2 w-2 rounded-full bg-primary" /></span>{badge}</p>
+          <h1 className="mt-4 font-display text-[2.6rem] font-extrabold leading-[1.02] tracking-tight text-foreground">Ship-ready<br /><span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">software.</span></h1>
+          <p className="mt-3 max-w-[20rem] text-[15px] leading-6 text-muted-foreground">{tagline} <span className="font-semibold text-foreground">{brand}</span></p>
+          <div className="mt-6 flex gap-2.5"><Button asChild size="lg" className="flex-1 rounded-full shadow-lg shadow-primary/25"><Link to="/marketplace">Explore projects</Link></Button><Button asChild size="lg" variant="outline" className="flex-1 rounded-full bg-background/80 backdrop-blur"><Link to={isAdmin ? '/admin' : '/call'}>{isAdmin ? 'Workspace' : 'Book a call'}</Link></Button></div>
+          <div className="mt-4 flex items-center gap-3 text-[11px] font-medium text-muted-foreground"><span className="flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5 text-primary" />Secure checkout</span><span className="h-3 w-px bg-border" /><span className="flex items-center gap-1"><Zap className="h-3.5 w-3.5 text-primary" />Instant access</span><span className="h-3 w-px bg-border" /><span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-primary" />4.9</span></div>
         </div>
-        <div className="absolute inset-x-4 bottom-4 grid grid-cols-3 gap-1 rounded-lg border border-white bg-white/95 p-2 text-center text-[11px] font-semibold shadow-sm backdrop-blur"><Link to="/marketplace" className="rounded-md py-2">Web projects</Link><Link to="/apps" className="rounded-md py-2">Mobile apps</Link><Link to="/windows" className="rounded-md bg-primary/10 py-2 text-primary">Windows</Link></div>
+        <nav aria-label="Browse" className="absolute inset-x-4 bottom-5 grid grid-cols-3 gap-1 rounded-2xl border border-border/60 bg-background/85 p-1.5 text-center text-xs font-semibold shadow-xl backdrop-blur-md">
+          <Link to="/marketplace" className="flex flex-col items-center gap-1 rounded-xl py-2.5 active:bg-muted"><Globe className="h-4 w-4 text-primary" />Websites</Link>
+          <Link to="/apps" className="flex flex-col items-center gap-1 rounded-xl py-2.5 active:bg-muted"><Sparkles className="h-4 w-4 text-primary" />Mobile apps</Link>
+          <Link to="/windows" className="flex flex-col items-center gap-1 rounded-xl py-2.5 active:bg-muted"><Zap className="h-4 w-4 text-primary" />Windows</Link>
+        </nav>
       </div>
     </section>
   );

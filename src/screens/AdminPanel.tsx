@@ -1,6 +1,6 @@
 import AdminBackup from '@/components/admin/AdminBackup';
 import { Archive } from 'lucide-react';
-import { publicMedia } from '@/lib/media-url';
+import { publicMedia, fixMediaUrl } from '@/lib/media-url';
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { Navigate, useNavigate } from '@/lib/router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -1144,17 +1144,18 @@ function AdminSettings() {
     } finally { setUploading(null); }
   };
 
+  // Plain render helper (not a component) so inputs keep focus while typing.
   const FileField = ({ k, label, accept = 'image/*' }: { k: string; label: string; accept?: string }) => (
-    <div className="space-y-2">
+    <div className="space-y-2" key={k}>
       <Label>{label}</Label>
       <div className="flex flex-col sm:flex-row gap-2">
         <Input {...f(k)} placeholder="https://… or upload" className="flex-1" />
-        <label className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-border bg-white text-sm font-medium cursor-pointer hover:bg-warm-bg shrink-0">
+        <label className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-border bg-background text-sm font-medium cursor-pointer hover:bg-muted shrink-0">
           {uploading === k ? 'Uploading…' : 'Upload'}
-          <input type="file" accept={accept} className="hidden" onChange={(e) => e.target.files?.[0] && uploadTo(k, e.target.files[0])} />
+          <input type="file" accept={accept} className="hidden" onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ''; if (file) uploadTo(k, file); }} />
         </label>
       </div>
-      {form[k] && <img src={form[k]} alt="" className="h-12 rounded border border-border object-contain bg-warm-bg/40 p-1" onError={(e) => ((e.currentTarget as HTMLImageElement).style.display = 'none')} />}
+      {form[k] && <img src={fixMediaUrl(form[k])} alt="" className="h-12 rounded border border-border object-contain bg-muted/40 p-1" onError={(e) => ((e.currentTarget as HTMLImageElement).style.display = 'none')} />}
     </div>
   );
 
