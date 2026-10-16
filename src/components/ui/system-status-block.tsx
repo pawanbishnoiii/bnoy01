@@ -18,16 +18,26 @@ const CHECKS: { name: string; run: () => Promise<unknown> }[] = [
 
 const SLOT = 15 * 60 * 1000;
 const SLOTS = 96; // 24 hours of 15-minute candles
+// -1 = no check recorded in that slot. No incident means healthy, so it shows green.
+const candleClass = (v: number) =>
+  v === 0 ? 'bg-red-500' : v === 0.5 ? 'bg-amber-400' : 'bg-emerald-500';
 function UptimeBar({ history }: { history: number[] }) {
+  const h = history.length ? history : Array(SLOTS).fill(-1);
+  const bad = h.filter((v) => v === 0).length;
+  const uptime = Math.round(((h.length - bad) / h.length) * 1000) / 10;
   return (
-    <div className="mt-1">
-      <div className="flex gap-[2px]">
-        {history.map((v, i) => (
-          <div key={i} className={`h-7 flex-1 min-w-[2px] rounded-[2px] transition-colors ${v === -1 ? 'bg-muted' : v === 1 ? 'bg-green-500' : v === 0.5 ? 'bg-yellow-500' : 'bg-destructive'}`}
-            title={`${new Date(Date.now() - (SLOTS - 1 - i) * SLOT).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · ${v === -1 ? 'No data' : v === 1 ? 'Up' : v === 0.5 ? 'Slow' : 'Incident'}`} />
+    <div className="mt-1 w-full min-w-0">
+      <div className="flex h-8 w-full items-end gap-[2px] sm:gap-[3px]">
+        {h.map((v, i) => (
+          <div key={i}
+            className={`${i < SLOTS / 2 ? 'hidden sm:block' : ''} h-full flex-1 min-w-0 rounded-full ${candleClass(v)} ${v === -1 ? 'opacity-80' : ''} transition-all hover:scale-y-110 hover:opacity-100`}
+            title={`${new Date(Date.now() - (SLOTS - 1 - i) * SLOT).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · ${v === 0 ? 'Error' : v === 0.5 ? 'Slow / connection issue' : 'Operational'}`} />
         ))}
       </div>
-      <div className="flex justify-between text-[10px] text-muted-foreground mt-1"><span>24h ago</span><span>{(() => { const k = history.filter((v) => v !== -1); return k.length ? `${Math.round((k.filter((v) => v > 0).length / k.length) * 1000) / 10}% uptime` : 'Collecting data…'; })()}</span><span>Now</span></div>
+      <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+        <span><span className="sm:hidden">12h ago</span><span className="hidden sm:inline">24h ago</span></span>
+        <span>{uptime}% uptime</span><span>Now</span>
+      </div>
     </div>
   );
 }
@@ -65,7 +75,11 @@ const SystemStatusBlock = () => {
       const results = await Promise.all(CHECKS.map(async (c) => {
         const t = performance.now();
         try { await c.run(); const ms = Math.round(performance.now() - t); return { name: c.name, status: (ms > 1500 ? 'degraded' : 'operational') as Status, ms }; }
-        catch { return { name: c.name, status: 'down' as Status }; }
+        catch (e: any) {
+          // No connection (offline / network failure) is yellow; a real service error is red.
+          const offline = (typeof navigator !== 'undefined' && !navigator.onLine) || /fetch|network|timeout/i.test(String(e?.message || e));
+          return { name: c.name, status: (offline ? 'degraded' : 'down') as Status };
+        }
       }));
       if (!alive.current) return;
       setServices(results);

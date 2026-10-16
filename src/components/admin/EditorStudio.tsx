@@ -23,7 +23,6 @@ import windowsImage from "@/assets/studio-windows.png";
 import automationImage from "@/assets/studio-automation.png";
 import workspaceImage from "@/assets/editor-studio-workspace.webp";
 import VersionHub from "./VersionHub";
-import CreativeAssetWorkbench from "./CreativeAssetWorkbench";
 
 type Kind = "all" | "web" | "android" | "windows";
 type Release = {
@@ -176,7 +175,6 @@ export default function EditorStudio({
         />
       </div>
 
-      <CreativeAssetWorkbench onOpenMedia={() => onGo("media-cloud")} />
 
       <VersionHub />
 

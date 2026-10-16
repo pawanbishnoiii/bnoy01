@@ -61,3 +61,6 @@
 - [ ] Admin media cloud (Drive-like).
 - [ ] Link Google identity to Truecaller account (fetch email from Google).
 - [ ] Phone hero second redesign.
+- [x] System Status candles: responsive, green by default, yellow on connection issues, red on errors.
+- [x] Remove Creative Workbench from Editor Studio.
+- [ ] Deferred: earlier homepage/settings/team/GSAP plan (user asked to do later).
