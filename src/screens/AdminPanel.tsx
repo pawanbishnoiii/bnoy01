@@ -43,6 +43,7 @@ import { aiProjectAssist } from '@/lib/ai-project.functions';
 import { useServerFn } from '@tanstack/react-start';
 import SystemStatusBlock from '@/components/ui/system-status-block';
 import { TECH_SUGGESTIONS, techIcon } from '@/lib/techIcons';
+import { normalizeSiteUrl, normalizeWhatsapp, normalizeOptionalLink } from '@/lib/settings-normalize';
 
 const DescriptionEditor = lazy(() => import('@/components/admin/DescriptionEditor'));
 
@@ -1089,36 +1090,36 @@ function AdminSettings() {
   const [form, setForm] = useState<any>({});
   const [uploading, setUploading] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
   useEffect(() => { if (settings && !form.id) setForm(settings); }, [settings, form.id]);
 
   const save = async () => {
     setSaving(true);
     try {
-      const whatsapp = String(form.whatsapp_number || '').replace(/[^\d+]/g, '');
-      if (whatsapp && !/^\+?\d{8,15}$/.test(whatsapp)) throw new Error('WhatsApp number must contain 8-15 digits, with an optional + country code.');
-      let siteUrl: string | null = null;
-      if (String(form.site_url || '').trim()) {
-        const parsed = new URL(String(form.site_url).trim());
-        if (parsed.protocol !== 'https:') throw new Error('Live site URL must use HTTPS.');
-        siteUrl = parsed.origin;
-      }
+      const whatsapp = normalizeWhatsapp(form.whatsapp_number);
+      const siteUrl = normalizeSiteUrl(form.site_url);
+      const t = (k: string) => (String(form[k] ?? '').trim() || null);
+      const link = (k: string) => normalizeOptionalLink(form[k]);
       const payload = {
-        whatsapp_number: whatsapp || null, support_email: form.support_email || null,
-        phone: form.phone || null, address: form.address || null, refund_policy: form.refund_policy || null,
-        social_github: form.social_github || null, social_twitter: form.social_twitter || null,
-        social_linkedin: form.social_linkedin || null, social_instagram: form.social_instagram || null,
-        social_youtube: form.social_youtube || null,
-        hero_video_url: form.hero_video_url || null, brand_name: form.brand_name || null, brand_tagline: form.brand_tagline || null,
-        logo_url: form.logo_url || null, banner_url: form.banner_url || null,
-        hero_lottie_url: form.hero_lottie_url || null, hero_bg_url: form.hero_bg_url || null, hero_badge: form.hero_badge || null,
+        whatsapp_number: whatsapp, support_email: t('support_email'),
+        phone: t('phone'), address: t('address'), refund_policy: t('refund_policy'),
+        social_github: link('social_github'), social_twitter: link('social_twitter'),
+        social_linkedin: link('social_linkedin'), social_instagram: link('social_instagram'),
+        social_youtube: link('social_youtube'),
+        hero_video_url: link('hero_video_url'), brand_name: t('brand_name'), brand_tagline: t('brand_tagline'),
+        logo_url: link('logo_url'), banner_url: link('banner_url'),
+        hero_lottie_url: link('hero_lottie_url'), hero_bg_url: link('hero_bg_url'), hero_badge: t('hero_badge'),
         site_url: siteUrl,
         hide_watermarks: !!form.hide_watermarks,
       };
-      const result = settings?.id
-        ? await supabase.from('site_settings').update(payload).eq('id', settings.id).select().single()
+      const id = form.id || settings?.id;
+      const result = id
+        ? await supabase.from('site_settings').update(payload).eq('id', id).select().maybeSingle()
         : await supabase.from('site_settings').insert(payload).select().single();
       if (result.error) throw result.error;
+      if (!result.data) throw new Error('Nothing was saved. Your account may not have admin rights for settings.');
       setForm(result.data);
+      setSavedAt(new Date());
       await queryClient.invalidateQueries({ queryKey: ['site-settings'] });
       toast({ title: 'Settings saved', description: 'Public contact and branding data is now up to date.' });
     } catch (error) {
@@ -1134,7 +1135,8 @@ function AdminSettings() {
     setUploading(key);
     try {
       const path = `branding/${key}-${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
-      const { error } = await supabase.storage.from('project-assets').upload(path, file, { upsert: true });
+      if (file.size > 10 * 1024 * 1024) throw new Error('File is larger than 10 MB.');
+      const { error } = await supabase.storage.from('project-assets').upload(path, file, { upsert: true, contentType: file.type || undefined });
       if (error) throw error;
       const { data } = publicMedia('project-assets', path);
       setForm((prev: any) => ({ ...prev, [key]: data.publicUrl }));
@@ -1155,7 +1157,13 @@ function AdminSettings() {
           <input type="file" accept={accept} className="hidden" onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ''; if (file) uploadTo(k, file); }} />
         </label>
       </div>
-      {form[k] && <img src={fixMediaUrl(form[k])} alt="" className="h-12 rounded border border-border object-contain bg-muted/40 p-1" onError={(e) => ((e.currentTarget as HTMLImageElement).style.display = 'none')} />}
+      {form[k] ? (
+        <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-2">
+          <img key={form[k]} src={fixMediaUrl(form[k])} alt={`${label} preview`} className="h-14 w-20 rounded object-contain bg-background" onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = '0.2'; }} />
+          <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">{form[k]}</span>
+          <Button type="button" size="sm" variant="ghost" onClick={() => setForm((p: any) => ({ ...p, [k]: '' }))}>Remove</Button>
+        </div>
+      ) : <p className="text-xs text-muted-foreground">No picture yet.</p>}
     </div>
   );
 
@@ -1209,7 +1217,10 @@ function AdminSettings() {
           <div className="space-y-2 sm:col-span-2"><Label>YouTube</Label><Input {...f('social_youtube')} /></div>
         </div>
         <div className="space-y-2"><Label>Refund Policy</Label><Textarea rows={6} {...f('refund_policy')} /></div>
-        <Button onClick={save} disabled={saving || settingsLoading} className="gradient-fire-strong text-white">{saving ? 'Saving…' : 'Save Settings'}</Button>
+        <div className="sticky bottom-3 z-10 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-background/95 p-3 shadow-card backdrop-blur">
+          <Button onClick={save} disabled={saving || settingsLoading || !!uploading} className="gradient-fire-strong text-primary-foreground">{saving ? 'Saving…' : uploading ? 'Uploading…' : 'Save Settings'}</Button>
+          <p className="text-xs text-muted-foreground">{savedAt ? `Saved at ${savedAt.toLocaleTimeString()}` : 'Links without https:// are fixed automatically.'}</p>
+        </div>
       </div>
     </div>
   );
