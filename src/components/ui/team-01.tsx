@@ -2,7 +2,10 @@ import { Badge } from '@/components/ui/badge';
 import { Globe } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { prefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { supabase } from '@/integrations/supabase/client';
 import { fixMediaUrl } from '@/lib/media-url';
 
@@ -40,13 +43,15 @@ const Team = () => {
     },
   });
   const members = data && data.length ? data : teamData;
-  const rail = useRef<HTMLDivElement>(null);
-  const [active, setActive] = useState(0);
-  const onScroll = () => {
-    const el = rail.current; const first = el?.firstElementChild as HTMLElement | null;
-    if (!el || !first) return;
-    setActive(Math.min(members.length - 1, Math.round(el.scrollLeft / (first.offsetWidth + 16))));
-  };
+  const grid = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!grid.current || prefersReducedMotion()) return;
+    gsap.registerPlugin(ScrollTrigger);
+    const ctx = gsap.context(() => {
+      gsap.from('.team-card', { y: 40, opacity: 0, scale: 0.94, duration: 0.7, ease: 'power3.out', stagger: 0.1, clearProps: 'all', scrollTrigger: { trigger: grid.current, start: 'top 85%', once: true } });
+    }, grid);
+    return () => ctx.revert();
+  }, [members.length]);
 
   return (
     <section id="team">
@@ -54,29 +59,26 @@ const Team = () => {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-16 flex flex-col items-center justify-center gap-8 md:gap-16">
           <motion.div initial={{ y: -40, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.8, ease }} className="max-w-xl mx-auto flex flex-col items-center justify-center text-center gap-4">
             <Badge variant="outline" className="px-3 py-1 h-auto text-sm">Team</Badge>
-            <h2 className="text-3xl md:text-5xl font-medium text-foreground">Meet the creative minds behind our success</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-medium text-foreground">Meet the creative minds behind our success</h2>
           </motion.div>
-          <div ref={rail} onScroll={onScroll} className="-mx-4 grid w-[calc(100%+2rem)] grid-flow-col auto-cols-[76%] gap-4 overflow-x-auto px-4 pb-2 snap-x snap-mandatory [scrollbar-width:none] sm:auto-cols-[45%] lg:mx-0 lg:w-full lg:grid-flow-row lg:auto-cols-auto lg:grid-cols-4 lg:gap-6 lg:overflow-visible lg:px-0">
+          <div ref={grid} className="grid w-full grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
             {members.map((value, index) => (
-              <motion.div key={index} initial={{ y: 40, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: index * 0.1, ease }} className="group snap-center flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-                <div className="aspect-[4/5] w-full overflow-hidden bg-muted">
+              <div key={index} className="team-card group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow hover:shadow-card-hover">
+                <div className="aspect-square w-full overflow-hidden bg-muted lg:aspect-[4/5]">
                   <img className="h-full w-full object-cover transition-all duration-500 group-hover:scale-105 group-hover:grayscale" src={fixMediaUrl(value.image)} alt={value.name} loading="lazy" />
                 </div>
-                <div className="flex flex-col items-center gap-3 p-4 text-center">
-                  <div>
-                    <h3 className="text-xl font-semibold text-foreground sm:text-2xl">{value.name}</h3>
-                    <p className="text-sm text-muted-foreground">{value.role}</p>
+                <div className="flex flex-col items-center gap-2 p-2.5 text-center sm:gap-3 sm:p-4">
+                  <div className="min-w-0 w-full">
+                    <h3 className="truncate text-sm font-semibold text-foreground sm:text-xl lg:text-2xl">{value.name}</h3>
+                    <p className="truncate text-[11px] text-muted-foreground sm:text-sm">{value.role}</p>
                   </div>
-                  <div className="flex gap-2">
-                    <a href={value.socials.website} aria-label={`${value.name} website`} className="rounded-full border border-border p-2.5 hover:bg-accent/80" target="_blank" rel="noopener noreferrer"><Globe size={16} /></a>
-                    <a href={value.socials.linkedin} aria-label={`${value.name} LinkedIn`} className="rounded-full border border-border p-2.5 hover:bg-accent/80" target="_blank" rel="noopener noreferrer"><LinkedinIcon size={16} /></a>
+                  <div className="flex gap-1.5 sm:gap-2">
+                    <a href={value.socials.website} aria-label={`${value.name} website`} className="rounded-full border border-border p-2 hover:bg-accent/80 sm:p-2.5" target="_blank" rel="noopener noreferrer"><Globe size={14} /></a>
+                    <a href={value.socials.linkedin} aria-label={`${value.name} LinkedIn`} className="rounded-full border border-border p-2 hover:bg-accent/80 sm:p-2.5" target="_blank" rel="noopener noreferrer"><LinkedinIcon size={14} /></a>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             ))}
-          </div>
-          <div className="flex gap-2 lg:hidden" aria-hidden="true">
-            {members.map((_, i) => <span key={i} className={`h-1.5 rounded-full transition-all ${i === active ? 'w-6 bg-primary' : 'w-1.5 bg-muted-foreground/30'}`} />)}
           </div>
         </div>
       </div>

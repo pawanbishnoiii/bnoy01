@@ -58,6 +58,22 @@ export default function VersionHub() {
   const latest = versions.find(v => v.latest) || versions[0];
   const [draft, setDraft] = useState({ open: false, version: '', changelog: '', makeLatest: true });
   const [busy, setBusy] = useState(false);
+  const openDraft = () => target && setDraft({ open: true, version: bump(latest?.version || '0.9.0', 2), changelog: '', makeLatest: true });
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const typing = /INPUT|TEXTAREA|SELECT/.test((e.target as HTMLElement)?.tagName) || (e.target as HTMLElement)?.isContentEditable;
+      if (e.key === 'Escape' && draft.open) setDraft(d => ({ ...d, open: false }));
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && draft.open && !busy) { e.preventDefault(); create(); }
+      if (!typing && e.key.toLowerCase() === 'n' && !e.metaKey && !e.ctrlKey && !draft.open) openDraft();
+      if (!typing && (e.key === 'ArrowDown' || e.key === 'ArrowUp') && versions.length) {
+        const i = Math.max(0, versions.findIndex(v => v.id === current?.id));
+        const n = versions[Math.min(versions.length - 1, Math.max(0, i + (e.key === 'ArrowDown' ? 1 : -1)))];
+        if (n) { e.preventDefault(); setActive(n.id); }
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
 
   const done = (msg: string) => { toast.success(msg); refetch(); qc.invalidateQueries({ queryKey: ['studio-versions'] }); qc.invalidateQueries({ queryKey: ['studio-apps'] }); };
   const table = target?.kind === 'project' ? 'project_versions' : 'apps';
@@ -115,10 +131,10 @@ export default function VersionHub() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Select value={sel} onValueChange={v => { setSel(v); setActive(''); }}>
-            <SelectTrigger className="w-64"><SelectValue placeholder="Choose a product" /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-64"><SelectValue placeholder="Choose a product" /></SelectTrigger>
             <SelectContent>{targets.map(t => <SelectItem key={t.key} value={t.key}>{t.label}{t.kind === 'app' ? ` · ${t.platform}` : ''}</SelectItem>)}</SelectContent>
           </Select>
-          <Button disabled={!target} onClick={() => setDraft({ open: true, version: bump(latest?.version || '0.9.0', 2), changelog: '', makeLatest: true })}><Plus className="mr-2 h-4 w-4" />New version</Button>
+          <Button disabled={!target} onClick={openDraft} title="Shortcut: N"><Plus className="mr-2 h-4 w-4" />New version<kbd className="ml-2 hidden rounded bg-primary-foreground/20 px-1.5 text-[10px] sm:inline">N</kbd></Button>
         </div>
       </div>
 
@@ -136,7 +152,7 @@ export default function VersionHub() {
           <label className="ml-auto flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.makeLatest} onChange={e => setDraft(d => ({ ...d, makeLatest: e.target.checked }))} />Make it live</label>
         </div>
         <Textarea className="mt-3" rows={4} placeholder="What changed in this version?" value={draft.changelog} onChange={e => setDraft(d => ({ ...d, changelog: e.target.value }))} />
-        <div className="mt-3 flex justify-end gap-2"><Button variant="ghost" onClick={() => setDraft(d => ({ ...d, open: false }))}>Cancel</Button><Button disabled={busy} onClick={create}><Rocket className="mr-2 h-4 w-4" />Publish version</Button></div>
+        <div className="mt-3 flex flex-wrap items-center justify-end gap-2"><span className="mr-auto text-xs text-muted-foreground">Ctrl/⌘ + Enter to publish · Esc to cancel</span><Button variant="ghost" onClick={() => setDraft(d => ({ ...d, open: false }))}>Cancel</Button><Button disabled={busy} onClick={create}><Rocket className="mr-2 h-4 w-4" />{busy ? 'Publishing…' : 'Publish version'}</Button></div>
       </motion.div>}</AnimatePresence>
 
       <div className="relative mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
