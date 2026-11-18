@@ -34,7 +34,7 @@ export default function PreviewModal({ url, onClose, watermark, title }: Preview
 
   const { data: settings } = useQuery({
     queryKey: ['site-settings'],
-    queryFn: async () => (await supabase.from('site_settings').select('*').limit(1).maybeSingle()).data,
+    queryFn: async () => (await supabase.from('site_settings_public').select('*').limit(1).maybeSingle()).data,
   });
   const hideWatermarks = (settings as any)?.hide_watermarks === true;
 

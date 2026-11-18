@@ -11,7 +11,7 @@ export function brokerAvailable(hostname: string) {
 }
 
 async function getMode(): Promise<string> {
-  const { data } = await supabase.from("site_settings").select("google_auth_mode").limit(1).maybeSingle();
+  const { data } = await supabase.from("site_settings_public").select("google_auth_mode").limit(1).maybeSingle();
   return (data?.google_auth_mode as string) || "auto";
 }
 

@@ -88,7 +88,7 @@ export function CinematicFooter() {
 
   const { data: s } = useQuery({
     queryKey: ['site-settings'],
-    queryFn: async () => (await supabase.from('site_settings').select('*').limit(1).maybeSingle()).data,
+    queryFn: async () => (await supabase.from('site_settings_public').select('*').limit(1).maybeSingle()).data,
   });
 
   useEffect(() => {

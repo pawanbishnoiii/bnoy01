@@ -28,3 +28,4 @@
 - Serve independent software details at /app/$id and derive public project/software metadata from narrow published-only server reads so individual products can be shared and discovered without exposing private fields.
 - Store picture URLs as direct public-storage URLs (via media-url helpers) so images render on every deployed domain; private buckets stay private.
 - Admin backups run through admin-verified server functions with an allowlist of tables; auth secrets are never exported and identity/settings tables cannot be deleted.
+- Public reads of mixed-sensitivity settings and review tables use narrow database views; base-table SELECT remains scoped to admins or record owners.

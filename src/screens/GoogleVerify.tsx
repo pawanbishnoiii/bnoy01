@@ -18,7 +18,7 @@ export default function GoogleVerify() {
     if (!file || !GOOGLE_FILE.test(file)) { setState('miss'); return; }
     let cancelled = false;
     (async () => {
-      const { data } = await supabase.from('site_settings').select('*').limit(1).maybeSingle();
+      const { data } = await supabase.from('site_settings_public').select('google_verify_file_name, google_verify_file_content').limit(1).maybeSingle();
       if (cancelled) return;
       const name = (data as any)?.google_verify_file_name as string | undefined;
       const body = (data as any)?.google_verify_file_content as string | undefined;

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createClient } from "@supabase/supabase-js";
+import { publicCatalogClient } from "@/lib/public-catalog.server";
 import NotFound from "@/screens/NotFound";
 
 // Serves the Google / Bing HTML verification file an admin saved (e.g. /google1234abcd.html).
@@ -9,11 +9,9 @@ export const Route = createFileRoute("/$file")({
       GET: async ({ params, next }) => {
         const file = params.file;
         if (!/^(google[a-z0-9]+\.html|BingSiteAuth\.xml|yandex_[a-z0-9]+\.html)$/i.test(file)) return next();
-        const sb = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
-          auth: { persistSession: false, autoRefreshToken: false },
-        });
+        const sb = publicCatalogClient();
         const { data } = await sb
-          .from("site_settings")
+          .from("site_settings_public")
           .select("google_verify_file_name, google_verify_file_content")
           .limit(1)
           .maybeSingle();

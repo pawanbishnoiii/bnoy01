@@ -114,7 +114,7 @@ export default function CallBooking() {
   }, [date]);
   useEffect(() => {
     supabase
-      .from("site_settings")
+      .from("site_settings_public")
       .select("whatsapp_number")
       .limit(1)
       .maybeSingle()

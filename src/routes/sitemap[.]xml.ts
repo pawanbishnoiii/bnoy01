@@ -11,7 +11,7 @@ export const Route = createFileRoute("/sitemap.xml")({
         const sb = publicCatalogClient();
         const [projectResult, settingsResult, appResult] = await Promise.all([
           sb.from("projects").select("id, slug, created_at, noindex").eq("status", "published"),
-          sb.from("site_settings").select("site_url").limit(1).maybeSingle(),
+          sb.from("site_settings_public").select("site_url").limit(1).maybeSingle(),
           sb.from('apps').select('id,created_at').eq('status','published'),
         ]);
         if (projectResult.error || settingsResult.error || appResult.error) return new Response('Sitemap temporarily unavailable',{status:503});

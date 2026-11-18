@@ -30,7 +30,7 @@ const getHeadSettings = createServerFn({ method: "GET" }).handler(async () => {
     const { publicCatalogClient } = await import('@/lib/public-catalog.server');
     const sb = publicCatalogClient();
     const { data } = await sb
-      .from("site_settings")
+      .from("site_settings_public")
       .select("google_site_verification, bing_site_verification, ga_measurement_id, gtm_id, brand_name")
       .limit(1)
       .maybeSingle();

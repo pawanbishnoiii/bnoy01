@@ -24,7 +24,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const { data: settings } = useQuery({
     queryKey: ['site-settings'],
-    queryFn: async () => (await supabase.from('site_settings').select('*').limit(1).maybeSingle()).data,
+    queryFn: async () => (await supabase.from('site_settings_public').select('*').limit(1).maybeSingle()).data,
   });
   const { data: profile } = useQuery({
     queryKey: ['my-profile-avatar', user?.id],

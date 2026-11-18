@@ -1367,7 +1367,104 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_project_comments: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          project_id: string | null
+          rating: number | null
+          reviewer_avatar: string | null
+          reviewer_name: string | null
+        }
+        Relationships: []
+      }
+      site_settings_public: {
+        Row: {
+          address: string | null
+          banner_url: string | null
+          bing_site_verification: string | null
+          brand_name: string | null
+          brand_tagline: string | null
+          ga_measurement_id: string | null
+          google_auth_mode: string | null
+          google_site_verification: string | null
+          google_verify_file_content: string | null
+          google_verify_file_name: string | null
+          gtm_id: string | null
+          hero_badge: string | null
+          hero_bg_url: string | null
+          hero_lottie_url: string | null
+          hero_video_url: string | null
+          hide_watermarks: boolean | null
+          logo_url: string | null
+          refund_policy: string | null
+          site_url: string | null
+          social_github: string | null
+          social_instagram: string | null
+          social_linkedin: string | null
+          social_twitter: string | null
+          social_youtube: string | null
+          support_email: string | null
+          whatsapp_number: string | null
+        }
+        Insert: {
+          address?: string | null
+          banner_url?: string | null
+          bing_site_verification?: string | null
+          brand_name?: string | null
+          brand_tagline?: string | null
+          ga_measurement_id?: string | null
+          google_auth_mode?: string | null
+          google_site_verification?: string | null
+          google_verify_file_content?: string | null
+          google_verify_file_name?: string | null
+          gtm_id?: string | null
+          hero_badge?: string | null
+          hero_bg_url?: string | null
+          hero_lottie_url?: string | null
+          hero_video_url?: string | null
+          hide_watermarks?: boolean | null
+          logo_url?: string | null
+          refund_policy?: string | null
+          site_url?: string | null
+          social_github?: string | null
+          social_instagram?: string | null
+          social_linkedin?: string | null
+          social_twitter?: string | null
+          social_youtube?: string | null
+          support_email?: string | null
+          whatsapp_number?: string | null
+        }
+        Update: {
+          address?: string | null
+          banner_url?: string | null
+          bing_site_verification?: string | null
+          brand_name?: string | null
+          brand_tagline?: string | null
+          ga_measurement_id?: string | null
+          google_auth_mode?: string | null
+          google_site_verification?: string | null
+          google_verify_file_content?: string | null
+          google_verify_file_name?: string | null
+          gtm_id?: string | null
+          hero_badge?: string | null
+          hero_bg_url?: string | null
+          hero_lottie_url?: string | null
+          hero_video_url?: string | null
+          hide_watermarks?: boolean | null
+          logo_url?: string | null
+          refund_policy?: string | null
+          site_url?: string | null
+          social_github?: string | null
+          social_instagram?: string | null
+          social_linkedin?: string | null
+          social_twitter?: string | null
+          social_youtube?: string | null
+          support_email?: string | null
+          whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_taken_booking_slots: {

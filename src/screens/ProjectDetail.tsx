@@ -139,8 +139,8 @@ export default function ProjectDetail() {
   const { data: comments } = useQuery({
     queryKey: ['project-comments', id],
     queryFn: async () => {
-      const { data } = await supabase.from('project_comments')
-        .select('*, profiles(name, avatar_url, email)')
+      const { data } = await supabase.from('public_project_comments')
+        .select('project_id, content, rating, created_at, reviewer_name, reviewer_avatar')
         .eq('project_id', id!).order('created_at', { ascending: false });
       return data || [];
     },
@@ -491,10 +491,10 @@ export default function ProjectDetail() {
                     {(comments || []).map((c: any) => (
                       <div key={c.id} className="border-t border-border pt-4 first:border-0 first:pt-0">
                         <div className="flex items-center gap-3 mb-2">
-                          <img src={c.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.user_id}`}
+                          <img src={c.reviewer_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.reviewer_name || 'Member'}`}
                             alt="" className="w-9 h-9 rounded-full border border-border bg-warm-bg" />
                           <div>
-                            <p className="text-sm font-semibold text-ink">{c.profiles?.name || c.profiles?.email?.split('@')[0] || 'User'}</p>
+                            <p className="text-sm font-semibold text-ink">{c.reviewer_name || 'Member'}</p>
                             <div className="flex items-center gap-1">
                               {ratingStars(c.rating || 0, 'h-3 w-3')}
                               <span className="text-[11px] text-muted-foreground ml-1">{new Date(c.created_at).toLocaleDateString()}</span>

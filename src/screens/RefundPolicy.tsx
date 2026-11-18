@@ -8,7 +8,7 @@ import AuthModal from '@/components/AuthModal';
 export default function RefundPolicy() {
   const { data } = useQuery({
     queryKey: ['site-settings'],
-    queryFn: async () => (await supabase.from('site_settings').select('*').limit(1).maybeSingle()).data,
+    queryFn: async () => (await supabase.from('site_settings_public').select('*').limit(1).maybeSingle()).data,
   });
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="min-h-screen bg-background">

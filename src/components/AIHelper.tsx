@@ -1,11 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
 import { Bot, Send, Sparkles, Loader2, RefreshCw, User as UserIcon } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
@@ -30,12 +27,6 @@ export default function AIHelper() {
   const [error, setError] = useState<string | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
 
-  const { data: settings, isLoading } = useQuery({
-    queryKey: ['site-settings'],
-    queryFn: async () => (await supabase.from('site_settings').select('*').limit(1).maybeSingle()).data,
-  });
-  const systemPrompt = ((settings as any)?.ai_system_prompt || '').trim();
-
   useEffect(() => {
     scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: reduced ? 'auto' : 'smooth' });
   }, [messages, reduced]);
@@ -50,11 +41,10 @@ export default function AIHelper() {
     setStreaming(true);
 
     try {
-      void supabase;
       const res = await fetch(`/api/public/ai-chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: next, systemPrompt }),
+        body: JSON.stringify({ messages: next }),
       });
       if (!res.ok || !res.body) throw new Error(res.status === 429 ? 'Too many requests — try again shortly.' : 'Assistant is unavailable right now.');
 
@@ -112,13 +102,7 @@ export default function AIHelper() {
       </div>
 
       <div ref={scroller} className="h-[340px] overflow-y-auto p-4 space-y-3">
-        {isLoading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-14 w-3/4 rounded-2xl" />
-            <Skeleton className="h-10 w-1/2 rounded-2xl ml-auto" />
-            <Skeleton className="h-20 w-4/5 rounded-2xl" />
-          </div>
-        ) : messages.length === 0 ? (
+        {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center gap-4">
             <motion.div
               animate={reduced ? undefined : { y: [0, -6, 0] }}

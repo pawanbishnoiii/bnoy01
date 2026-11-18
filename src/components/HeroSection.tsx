@@ -28,7 +28,7 @@ export default function HeroSection() {
 
   const { data: settings } = useQuery({
     queryKey: ['site-settings'],
-    queryFn: async () => (await supabase.from('site_settings').select('*').limit(1).maybeSingle()).data,
+    queryFn: async () => (await supabase.from('site_settings_public').select('*').limit(1).maybeSingle()).data,
   });
   const brand = settings?.brand_name || 'Bnoy Studios';
   const tagline = settings?.brand_tagline || 'Premium web & mobile codebases, ready to ship in minutes.';

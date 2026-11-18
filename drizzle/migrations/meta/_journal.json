@@ -36,6 +36,13 @@
       "when": 1791646800000,
       "tag": "0004_public_booking_api",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794994844170,
+      "tag": "0005_restrict_public_data_reads",
+      "breakpoints": true
     }
   ]
 }
